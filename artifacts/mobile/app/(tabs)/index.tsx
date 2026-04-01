@@ -16,18 +16,19 @@ import { useJobs } from "@/context/JobsContext";
 import { useMessages } from "@/context/MessagesContext";
 import * as Haptics from "expo-haptics";
 
-const QUICK_ACTIONS_WORKER = [
-  { icon: "search", label: "Find Jobs", route: "/(tabs)/jobs", color: "#2563EB", bg: "#dbeafe" },
-  { icon: "send", label: "Applications", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe" },
-  { icon: "bookmark", label: "Saved", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe" },
-  { icon: "message-circle", label: "Messages", route: "/(tabs)/messages", color: "#059669", bg: "#d1fae5" },
+const CATEGORIES = [
+  { label: "Warehouse", icon: "package", color: "#f59e0b", bg: "#fef3c7" },
+  { label: "Hospitality", icon: "coffee", color: "#ec4899", bg: "#fce7f3" },
+  { label: "Admin", icon: "clipboard", color: "#6366f1", bg: "#e0e7ff" },
+  { label: "Retail", icon: "shopping-bag", color: "#10b981", bg: "#d1fae5" },
+  { label: "Cleaning", icon: "wind", color: "#0891b2", bg: "#cffafe" },
+  { label: "Driving", icon: "truck", color: "#f97316", bg: "#ffedd5" },
 ];
 
 const QUICK_ACTIONS_EMPLOYER = [
-  { icon: "plus-circle", label: "Post Job", route: "/post-job", color: "#2563EB", bg: "#dbeafe" },
-  { icon: "users", label: "Applicants", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe" },
-  { icon: "briefcase", label: "My Jobs", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe" },
-  { icon: "message-circle", label: "Messages", route: "/(tabs)/messages", color: "#059669", bg: "#d1fae5" },
+  { icon: "plus-circle", label: "Post Job", route: "/post-job", color: "#2563EB", bg: "#dbeafe", badge: null },
+  { icon: "users", label: "Applicants", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe", badge: null },
+  { icon: "briefcase", label: "My Jobs", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe", badge: null },
 ];
 
 function getTimeOfDay() {
@@ -48,13 +49,17 @@ export default function HomeScreen() {
   const isEmployer = userRole === "employer";
 
   const myApplications = applications.filter((a) => a.workerId === "me");
-  const pendingApps = myApplications.filter((a) => a.status === "pending").length;
-  const acceptedApps = myApplications.filter((a) => a.status === "accepted").length;
   const myJobs = jobs.filter((j) => j.employerId === "emp-me");
   const urgentJobs = jobs.filter((j) => j.urgency === "urgent").slice(0, 3);
   const totalUnread = conversations.reduce((s, c) => s + c.unreadCount, 0);
 
-  const quickActions = isEmployer ? QUICK_ACTIONS_EMPLOYER : QUICK_ACTIONS_WORKER;
+  const workerQuickActions = [
+    { icon: "search", label: "Find Jobs", route: "/(tabs)/jobs", color: "#2563EB", bg: "#dbeafe", badge: null },
+    { icon: "send", label: "Applied", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length > 0 ? myApplications.length : null },
+    { icon: "bookmark", label: "Saved", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe", badge: savedJobs.length > 0 ? savedJobs.length : null },
+  ];
+
+  const quickActions = isEmployer ? QUICK_ACTIONS_EMPLOYER : workerQuickActions;
 
   return (
     <ScrollView
@@ -139,8 +144,15 @@ export default function HomeScreen() {
               }}
               activeOpacity={0.82}
             >
-              <View style={[styles.quickIcon, { backgroundColor: a.bg }]}>
-                <Feather name={a.icon as any} size={20} color={a.color} />
+              <View style={styles.quickIconWrap}>
+                <View style={[styles.quickIcon, { backgroundColor: a.bg }]}>
+                  <Feather name={a.icon as any} size={20} color={a.color} />
+                </View>
+                {a.badge != null && (
+                  <View style={styles.quickBadge}>
+                    <Text style={styles.quickBadgeText}>{a.badge}</Text>
+                  </View>
+                )}
               </View>
               <Text style={[styles.quickLabel, { color: "#111827" }]}>{a.label}</Text>
             </TouchableOpacity>
@@ -148,49 +160,35 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* ── WORKER: Application status ── */}
-      {!isEmployer && (
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <Text style={[styles.sectionLabel, { color: "#374151" }]}>Applications</Text>
-            <Text style={[styles.sectionSub, { color: "#6b7280" }]}>{myApplications.length} total</Text>
-          </View>
-          <View style={styles.appStatusRow}>
-            <AppStatusCard label="Pending" count={pendingApps} color="#f59e0b" bg="#fffbeb" border="#fde68a" icon="clock" />
-            <AppStatusCard label="Accepted" count={acceptedApps} color="#10b981" bg="#ecfdf5" border="#a7f3d0" icon="check-circle" />
-            <AppStatusCard label="Saved" count={savedJobs.length} color="#2563EB" bg="#eff6ff" border="#bfdbfe" icon="bookmark" />
-          </View>
-
-          {myApplications.length > 0 && (
-            <View style={styles.recentApps}>
-              {myApplications.slice(-2).reverse().map((app) => {
-                const job = jobs.find((j) => j.id === app.jobId);
-                if (!job) return null;
-                const statusColor = app.status === "accepted" ? "#10b981" : app.status === "pending" ? "#f59e0b" : "#6b7280";
-                const statusBg = app.status === "accepted" ? "#ecfdf5" : app.status === "pending" ? "#fffbeb" : "#f3f4f6";
-                return (
-                  <TouchableOpacity
-                    key={app.id}
-                    style={[styles.recentAppRow, { backgroundColor: "#fff" }]}
-                    onPress={() => router.push(`/job/${job.id}`)}
-                    activeOpacity={0.85}
-                  >
-                    <View style={[styles.recentAppDot, { backgroundColor: statusColor }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.recentAppTitle, { color: "#111827" }]}>{job.title}</Text>
-                      <Text style={[styles.recentAppSub, { color: "#6b7280" }]}>{job.company}</Text>
-                    </View>
-                    <View style={[styles.statusPill, { backgroundColor: statusBg }]}>
-                      <Text style={[styles.statusPillText, { color: statusColor }]}>{app.status}</Text>
-                    </View>
-                    <Feather name="chevron-right" size={16} color="#9ca3af" />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
+      {/* ── BROWSE BY CATEGORY ── */}
+      <View style={styles.section}>
+        <View style={styles.sectionRow}>
+          <Text style={[styles.sectionLabel, { color: "#374151" }]}>Browse by Category</Text>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/jobs")}>
+            <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
+          </TouchableOpacity>
         </View>
-      )}
+        <View style={styles.categoryGrid}>
+          {CATEGORIES.map((cat) => (
+            <TouchableOpacity
+              key={cat.label}
+              style={[styles.categoryCard, { backgroundColor: "#fff" }]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                router.push("/(tabs)/jobs");
+              }}
+              activeOpacity={0.82}
+            >
+              <View style={[styles.categoryIcon, { backgroundColor: cat.bg }]}>
+                <Feather name={cat.icon as any} size={20} color={cat.color} />
+              </View>
+              <Text style={[styles.categoryLabel, { color: "#111827" }]} numberOfLines={1}>
+                {cat.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
 
       {/* ── EMPLOYER: My job posts ── */}
       {isEmployer && (
@@ -528,6 +526,9 @@ const styles = StyleSheet.create({
       android: { elevation: 2 },
     }),
   },
+  quickIconWrap: {
+    position: "relative",
+  },
   quickIcon: {
     width: 44,
     height: 44,
@@ -535,7 +536,56 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  quickBadge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#ef4444",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "#f0f4f8",
+  },
+  quickBadgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "700",
+  },
   quickLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+
+  // ── CATEGORY GRID ──
+  categoryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  categoryCard: {
+    width: "30.5%",
+    borderRadius: 14,
+    padding: 14,
+    alignItems: "center",
+    gap: 9,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
+      android: { elevation: 1 },
+    }),
+  },
+  categoryIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoryLabel: {
     fontSize: 12,
     fontWeight: "600",
     textAlign: "center",
