@@ -1,0 +1,238 @@
+You are a world-class **Product Designer, UX Strategist, and SaaS Growth Expert** who has designed high-converting platforms in the **gig economy, staffing, and marketplace industry** (similar to Upwork, Fiverr, Indeed, Uber).
+
+I am building **TrueGigs.com**, a temporary staffing platform that connects **businesses (employers)** with **temporary workers (gig workers)** for short-term jobs.
+
+Your job is to **completely rethink, redesign, and optimize the entire product experience from 0 → 1**, as if you were founding designer of a $100M startup.
+
+---
+
+# 🎯 CORE OBJECTIVE:
+
+Design a **frictionless, trust-first, conversion-optimized platform** that:
+
+* Maximizes **job postings (employers)**
+* Maximizes **job applications (workers)**
+* Feels **instant, simple, and reliable**
+* Outperforms competitors in **speed, clarity, and usability**
+
+---
+
+# 🔬 PHASE 1: DEEP MARKET & UX ANALYSIS (CRITICAL)
+
+Analyze platforms like:
+
+* Upwork
+* Fiverr
+* Indeed
+* Uber (gig flow simplicity)
+
+### Extract:
+
+1. Their **UX strengths** (what makes them successful)
+2. Their **UX weaknesses & friction points**
+3. Gaps in the market (especially for temporary staffing)
+
+👉 Go beyond surface-level observations. Think in terms of:
+
+* Cognitive load
+* Time-to-value
+* Trust creation
+* Decision fatigue
+* Drop-off points
+
+---
+
+# 🧩 PHASE 2: USER PSYCHOLOGY & JOURNEYS
+
+Define 2 core personas:
+
+### 👨‍💼 Employer (Hiring Manager)
+
+* Needs fast hiring
+* Wants reliable workers
+* Hates complexity
+
+### 👷 Worker (Job Seeker)
+
+* Wants quick income
+* Needs easy applications
+* Values transparency & trust
+
+### Map full journeys:
+
+Landing → Signup → Onboarding → Core Action → Retention
+
+👉 Identify:
+
+* Friction points
+* Emotional states
+* Opportunities to simplify
+
+---
+
+# 🏗️ PHASE 3: PRODUCT & UX ARCHITECTURE
+
+Design the **entire platform structure**, including:
+
+### Core Flows:
+
+* Job Posting Flow (ultra simple, step-by-step wizard)
+* Job Discovery Flow (fast filtering, recommendations)
+* Application Flow (1-click or low friction)
+* Hiring Flow (selection → chat → confirmation)
+
+### Navigation:
+
+* Clear, minimal, scalable
+* Role-based UX (Employer vs Worker)
+
+---
+
+# 🎨 PHASE 4: COMPLETE UI/UX REDESIGN (FROM SCRATCH)
+
+Design each screen in detail (layout + sections + UX logic):
+
+### 1. Homepage (Conversion Engine)
+
+* Strong value proposition
+* Clear CTAs (Hire Talent / Find Work)
+* Trust signals
+* Social proof
+
+### 2. Job Search Page
+
+* Smart filters (location, pay, type)
+* Clean card-based UI
+* AI recommendations
+
+### 3. Job Detail Page
+
+* Clear job info hierarchy
+* Trust indicators (company, ratings)
+* Sticky apply CTA
+
+### 4. Job Posting Flow
+
+* Multi-step wizard
+* Progress indicator
+* Autofill & suggestions
+
+### 5. Dashboards
+
+* Employer dashboard (manage jobs, applicants)
+* Worker dashboard (applied jobs, earnings)
+
+### 6. Profiles
+
+* Ratings, reviews, verification badges
+* Work history
+* Trust-building UI
+
+### 7. Messaging System
+
+* Real-time chat UX
+* File sharing
+* Status indicators
+
+---
+
+# 🚀 PHASE 5: CONVERSION & GROWTH SYSTEM
+
+Design UX with **growth in mind**:
+
+* Reduce steps in key actions
+* Add:
+
+  * One-click apply
+  * Smart suggestions
+  * Urgency triggers (e.g., “5 people applied”)
+* Optimize CTA placements
+* Introduce trust boosters:
+
+  * Reviews
+  * Verification badges
+  * Activity indicators
+
+---
+
+# 🎯 PHASE 6: DESIGN SYSTEM (MODERN SaaS UI)
+
+Define a complete system:
+
+### Visual Identity:
+
+* Color palette (trust + tech + clean)
+* Typography (modern, readable)
+* Spacing system (8px grid)
+
+### Components:
+
+* Buttons (primary, secondary, states)
+* Cards
+* Forms
+* Modals
+* Alerts
+
+### Style Direction:
+
+* Minimal
+* Clean
+* High contrast
+* Premium SaaS feel (like Stripe / Linear / Notion)
+
+---
+
+# 📱 PHASE 7: MOBILE-FIRST UX
+
+* Design mobile-first flows
+* Simplify interactions
+* Thumb-friendly UI
+* Fast loading & minimal steps
+
+---
+
+# ⚡ PHASE 8: DIFFERENTIATION STRATEGY
+
+Propose **unique features** that make TrueGigs stand out:
+
+Examples:
+
+* AI-based worker-job matching
+* Instant hiring (like Uber)
+* Worker reliability score
+* Smart recommendations
+
+---
+
+# ⚠️ STRICT RULES:
+
+* Do NOT copy existing platforms
+* Do NOT give generic advice
+* Be specific, actionable, and strategic
+* Think like a startup aiming for **rapid growth + high retention**
+* Focus on **speed, simplicity, trust, and conversion**
+
+---
+
+# 💎 OUTPUT FORMAT:
+
+1. Market & UX Insights
+2. User Psychology & Journey Maps
+3. Product Architecture
+4. Screen-by-Screen UX Breakdown
+5. Design System
+6. Conversion Strategy
+7. Mobile UX Plan
+8. Differentiation Ideas
+
+---
+
+# 🔥 FINAL EXPECTATION:
+
+Deliver a design strategy that feels like it was created for a **venture-backed startup aiming for $10M–$100M scale** — not a basic website.
+
+Make TrueGigs:
+
+* Faster than competitors
+* Easier than competitors
+* More trustworthy than competitors
