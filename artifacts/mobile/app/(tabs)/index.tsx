@@ -147,7 +147,7 @@ export default function HomeScreen() {
             >
               <View style={styles.quickIconWrap}>
                 <View style={[styles.quickIcon, { backgroundColor: a.bg }]}>
-                  <Feather name={a.icon as any} size={20} color={a.color} />
+                  <Feather name={a.icon as any} size={16} color={a.color} />
                 </View>
                 {a.badge != null && (
                   <View style={styles.quickBadge}>
@@ -185,7 +185,7 @@ export default function HomeScreen() {
               activeOpacity={0.82}
             >
               <View style={[styles.categoryIcon, { backgroundColor: cat.bg }]}>
-                <Feather name={cat.icon as any} size={20} color={cat.color} />
+                <Feather name={cat.icon as any} size={16} color={cat.color} />
               </View>
               <Text style={[styles.categoryLabel, { color: "#111827" }]} numberOfLines={1}>
                 {cat.label}
@@ -518,50 +518,51 @@ const styles = StyleSheet.create({
   // ── QUICK ACTIONS ──
   quickGrid: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
   },
   quickCard: {
     flex: 1,
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
     alignItems: "center",
-    gap: 10,
+    gap: 7,
     ...Platform.select({
-      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
-      android: { elevation: 2 },
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
+      android: { elevation: 1 },
     }),
   },
   quickIconWrap: {
     position: "relative",
   },
   quickIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
   quickBadge: {
     position: "absolute",
-    top: -6,
-    right: -6,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    top: -5,
+    right: -5,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: "#ef4444",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 4,
-    borderWidth: 2,
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
     borderColor: "#f0f4f8",
   },
   quickBadgeText: {
     color: "#fff",
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "700",
   },
   quickLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
     textAlign: "center",
   },
@@ -569,29 +570,29 @@ const styles = StyleSheet.create({
   // ── CATEGORY GRID ──
   categoryGrid: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
   },
   categoryCard: {
-    width: 90,
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 6,
+    width: 76,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
     alignItems: "center",
-    gap: 9,
+    gap: 7,
     ...Platform.select({
-      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3 },
       android: { elevation: 1 },
     }),
   },
   categoryIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
   categoryLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
     textAlign: "center",
   },
