@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  FlatList,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -168,7 +169,11 @@ export default function HomeScreen() {
             <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.categoryGrid}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 10, paddingRight: 4 }}
+        >
           {CATEGORIES.map((cat) => (
             <TouchableOpacity
               key={cat.label}
@@ -187,7 +192,7 @@ export default function HomeScreen() {
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
       </View>
 
       {/* ── EMPLOYER: My job posts ── */}
@@ -564,13 +569,13 @@ const styles = StyleSheet.create({
   // ── CATEGORY GRID ──
   categoryGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: 10,
   },
   categoryCard: {
-    width: "30.5%",
+    width: 90,
     borderRadius: 14,
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
     alignItems: "center",
     gap: 9,
     ...Platform.select({
