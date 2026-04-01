@@ -325,9 +325,7 @@ export default function HomeScreen() {
             onPress={() => router.push("/(tabs)/jobs")}
             activeOpacity={0.88}
           >
-            <Feather name="search" size={18} color="#fff" />
             <Text style={styles.browseBtnText}>Browse All Jobs</Text>
-            <Feather name="arrow-right" size={18} color="rgba(255,255,255,0.7)" />
           </TouchableOpacity>
         </View>
       )}
@@ -853,7 +851,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
-    flex: 1,
     textAlign: "center",
   },
 });
