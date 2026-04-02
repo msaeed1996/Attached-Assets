@@ -130,6 +130,42 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* ── ACTIVE JOB CARD (worker only) ── */}
+      {!isEmployer && (() => {
+        const acceptedApp = myApplications.find((a) => a.status === "accepted");
+        const activeJob = acceptedApp ? jobs.find((j) => j.id === acceptedApp.jobId) : jobs[0];
+        if (!activeJob) return null;
+        return (
+          <View style={styles.activeJobSection}>
+            <View style={styles.activeJobCard}>
+              <View style={styles.activeJobHeader}>
+                <View style={styles.activeDot} />
+                <Text style={styles.activeJobBadge}>ACTIVE JOB — #{activeJob.id.slice(-5).toUpperCase()}</Text>
+              </View>
+              <Text style={styles.activeJobTitle}>{activeJob.title}</Text>
+              <View style={styles.activeJobLocation}>
+                <Feather name="map-pin" size={11} color="#2563EB" />
+                <Text style={styles.activeJobLocationText}>{activeJob.location}</Text>
+              </View>
+              <View style={styles.activeJobFooter}>
+                <View style={styles.activeJobPayRow}>
+                  <Text style={styles.activeJobPay}>${activeJob.pay}.00</Text>
+                  <Text style={styles.activeJobPayUnit}>/{activeJob.payType}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.clockInBtn}
+                  onPress={() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="clock" size={13} color="#2563EB" />
+                  <Text style={styles.clockInText}>CLOCK IN</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        );
+      })()}
+
       {/* ── QUICK ACTIONS ── */}
       <View style={styles.section}>
         <Text style={[styles.sectionLabel, { color: "#374151" }]}>Quick Actions</Text>
@@ -508,6 +544,100 @@ const styles = StyleSheet.create({
   },
   sectionSub: {
     fontSize: 13,
+  },
+
+  // ── ACTIVE JOB CARD ──
+  activeJobSection: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  activeJobCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: "#2563EB",
+    gap: 6,
+    ...Platform.select({
+      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 8 },
+      android: { elevation: 3 },
+    }),
+  },
+  activeJobHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  activeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#10b981",
+  },
+  activeJobBadge: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#2563EB",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  activeJobTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.3,
+  },
+  activeJobLocation: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  activeJobLocationText: {
+    fontSize: 12,
+    color: "#2563EB",
+    fontWeight: "500",
+  },
+  activeJobFooter: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    marginTop: 4,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#e5e7eb",
+  },
+  activeJobPayRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 2,
+  },
+  activeJobPay: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.4,
+  },
+  activeJobPayUnit: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "500",
+  },
+  clockInBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#eff6ff",
+    borderWidth: 1.5,
+    borderColor: "#2563EB",
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  clockInText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#2563EB",
+    letterSpacing: 0.5,
   },
 
   // ── QUICK ACTIONS ──
