@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -44,8 +44,6 @@ export default function HomeScreen() {
   const { userProfile, userRole } = useApp();
   const { jobs, applications, savedJobs } = useJobs();
   const { conversations } = useMessages();
-  const [isAvailable, setIsAvailable] = useState(true);
-
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const isEmployer = userRole === "employer";
 
@@ -58,7 +56,7 @@ export default function HomeScreen() {
     { icon: "briefcase", label: "Available Jobs", route: "/(tabs)/jobs", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
     { icon: "mail", label: "Job Invitation", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length > 0 ? myApplications.length : null, isAvailability: false },
     { icon: "clock", label: "Time Sheet", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe", badge: null, isAvailability: false },
-    { icon: isAvailable ? "check-circle" : "x-circle", label: "Availability", route: null, color: isAvailable ? "#10b981" : "#ef4444", bg: isAvailable ? "#d1fae5" : "#fee2e2", badge: null, isAvailability: true },
+    { icon: "calendar", label: "Availability", route: "/availability", color: "#10b981", bg: "#d1fae5", badge: null, isAvailability: false },
   ];
 
   const quickActions = isEmployer ? QUICK_ACTIONS_EMPLOYER : workerQuickActions;
@@ -139,14 +137,10 @@ export default function HomeScreen() {
           {quickActions.map((a) => (
             <TouchableOpacity
               key={a.label}
-              style={[styles.quickCard, { backgroundColor: "#fff", borderWidth: a.isAvailability ? 1.5 : 0, borderColor: a.isAvailability ? a.color : "transparent" }]}
+              style={[styles.quickCard, { backgroundColor: "#fff" }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                if (a.isAvailability) {
-                  setIsAvailable((v) => !v);
-                } else if (a.route) {
-                  router.push(a.route as any);
-                }
+                if (a.route) router.push(a.route as any);
               }}
               activeOpacity={0.82}
             >
@@ -161,11 +155,6 @@ export default function HomeScreen() {
                 )}
               </View>
               <Text style={[styles.quickLabel, { color: "#111827" }]}>{a.label}</Text>
-              {a.isAvailability && (
-                <Text style={[styles.availabilityStatus, { color: a.color }]}>
-                  {isAvailable ? "Available" : "Off"}
-                </Text>
-              )}
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -346,10 +335,10 @@ export default function HomeScreen() {
 function StatTile({ icon, value, label, accent }: { icon: string; value: string; label: string; accent: string }) {
   return (
     <View style={styles.statTile}>
-      <View style={[styles.statTileIcon, { backgroundColor: `${accent}22` }]}>
-        <Feather name={icon as any} size={12} color={accent} />
+      <View style={styles.statTileTop}>
+        <Feather name={icon as any} size={13} color={accent} />
+        <Text style={styles.statTileValue}>{value}</Text>
       </View>
-      <Text style={styles.statTileValue}>{value}</Text>
       <Text style={styles.statTileLabel}>{label}</Text>
     </View>
   );
@@ -474,33 +463,31 @@ const styles = StyleSheet.create({
   },
   statTile: {
     flex: 1,
-    backgroundColor: "rgba(255,255,255,0.07)",
-    borderRadius: 12,
-    padding: 10,
-    gap: 4,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    gap: 3,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(255,255,255,0.1)",
   },
-  statTileIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
-    justifyContent: "center",
+  statTileTop: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 1,
+    gap: 5,
   },
   statTileValue: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "800",
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
   statTileLabel: {
-    color: "rgba(255,255,255,0.5)",
+    color: "rgba(255,255,255,0.55)",
     fontSize: 9,
-    fontWeight: "500",
+    fontWeight: "600",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
 
   // ── SECTIONS ──

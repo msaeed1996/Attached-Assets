@@ -31,6 +31,7 @@ function RootLayoutNav() {
       <Stack.Screen name="job/[id]" options={{ presentation: "card" }} />
       <Stack.Screen name="post-job" options={{ presentation: "modal" }} />
       <Stack.Screen name="chat/[id]" options={{ presentation: "card" }} />
+      <Stack.Screen name="availability" options={{ presentation: "card" }} />
     </Stack>
   );
 }
