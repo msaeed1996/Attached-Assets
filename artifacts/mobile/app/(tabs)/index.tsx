@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  FlatList,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -27,9 +26,9 @@ const CATEGORIES = [
 ];
 
 const QUICK_ACTIONS_EMPLOYER = [
-  { icon: "plus-circle", label: "Post Job", route: "/post-job", color: "#2563EB", bg: "#dbeafe", badge: null },
-  { icon: "users", label: "Applicants", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe", badge: null },
-  { icon: "briefcase", label: "My Jobs", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe", badge: null },
+  { icon: "plus-circle", label: "Post Job", route: "/post-job", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
+  { icon: "users", label: "Applicants", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe", badge: null, isAvailability: false },
+  { icon: "briefcase", label: "My Jobs", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe", badge: null, isAvailability: false },
 ];
 
 function getTimeOfDay() {
@@ -45,6 +44,7 @@ export default function HomeScreen() {
   const { userProfile, userRole } = useApp();
   const { jobs, applications, savedJobs } = useJobs();
   const { conversations } = useMessages();
+  const [isAvailable, setIsAvailable] = useState(true);
 
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const isEmployer = userRole === "employer";
@@ -55,9 +55,10 @@ export default function HomeScreen() {
   const totalUnread = conversations.reduce((s, c) => s + c.unreadCount, 0);
 
   const workerQuickActions = [
-    { icon: "search", label: "Find Jobs", route: "/(tabs)/jobs", color: "#2563EB", bg: "#dbeafe", badge: null },
-    { icon: "send", label: "Applied", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length > 0 ? myApplications.length : null },
-    { icon: "bookmark", label: "Saved", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe", badge: savedJobs.length > 0 ? savedJobs.length : null },
+    { icon: "briefcase", label: "Available Jobs", route: "/(tabs)/jobs", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
+    { icon: "mail", label: "Job Invitation", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length > 0 ? myApplications.length : null, isAvailability: false },
+    { icon: "clock", label: "Time Sheet", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe", badge: null, isAvailability: false },
+    { icon: isAvailable ? "check-circle" : "x-circle", label: "Availability", route: null, color: isAvailable ? "#10b981" : "#ef4444", bg: isAvailable ? "#d1fae5" : "#fee2e2", badge: null, isAvailability: true },
   ];
 
   const quickActions = isEmployer ? QUICK_ACTIONS_EMPLOYER : workerQuickActions;
@@ -134,14 +135,18 @@ export default function HomeScreen() {
       {/* ── QUICK ACTIONS ── */}
       <View style={styles.section}>
         <Text style={[styles.sectionLabel, { color: "#374151" }]}>Quick Actions</Text>
-        <View style={styles.quickGrid}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
           {quickActions.map((a) => (
             <TouchableOpacity
               key={a.label}
-              style={[styles.quickCard, { backgroundColor: "#fff" }]}
+              style={[styles.quickCard, { backgroundColor: "#fff", borderWidth: a.isAvailability ? 1.5 : 0, borderColor: a.isAvailability ? a.color : "transparent" }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push(a.route as any);
+                if (a.isAvailability) {
+                  setIsAvailable((v) => !v);
+                } else if (a.route) {
+                  router.push(a.route as any);
+                }
               }}
               activeOpacity={0.82}
             >
@@ -156,9 +161,14 @@ export default function HomeScreen() {
                 )}
               </View>
               <Text style={[styles.quickLabel, { color: "#111827" }]}>{a.label}</Text>
+              {a.isAvailability && (
+                <Text style={[styles.availabilityStatus, { color: a.color }]}>
+                  {isAvailable ? "Available" : "Off"}
+                </Text>
+              )}
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
       </View>
 
       {/* ── BROWSE BY CATEGORY ── */}
@@ -337,7 +347,7 @@ function StatTile({ icon, value, label, accent }: { icon: string; value: string;
   return (
     <View style={styles.statTile}>
       <View style={[styles.statTileIcon, { backgroundColor: `${accent}22` }]}>
-        <Feather name={icon as any} size={15} color={accent} />
+        <Feather name={icon as any} size={12} color={accent} />
       </View>
       <Text style={styles.statTileValue}>{value}</Text>
       <Text style={styles.statTileLabel}>{label}</Text>
@@ -465,29 +475,29 @@ const styles = StyleSheet.create({
   statTile: {
     flex: 1,
     backgroundColor: "rgba(255,255,255,0.07)",
-    borderRadius: 16,
-    padding: 14,
-    gap: 6,
+    borderRadius: 12,
+    padding: 10,
+    gap: 4,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
   },
   statTileIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 7,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 2,
+    marginBottom: 1,
   },
   statTileValue: {
     color: "#fff",
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: "800",
     letterSpacing: -0.3,
   },
   statTileLabel: {
     color: "rgba(255,255,255,0.5)",
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "500",
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -563,6 +573,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     textAlign: "center",
+  },
+  availabilityStatus: {
+    fontSize: 9,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
 
   // ── CATEGORY GRID ──
