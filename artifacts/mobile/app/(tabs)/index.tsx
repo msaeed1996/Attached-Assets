@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
 
   // ── HERO ──
   hero: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "#0759af",
     paddingHorizontal: 20,
     paddingBottom: 28,
     borderBottomLeftRadius: 28,
