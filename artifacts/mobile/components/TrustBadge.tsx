@@ -30,7 +30,7 @@ export function TrustBadge({ rating, reviewCount, verified, size = "md" }: Props
         <View style={[styles.verifiedBadge, { backgroundColor: colors.accent }]}>
           <Feather name="check-circle" size={starSize - 1} color={colors.primary} />
           <Text style={[styles.verifiedText, { fontSize: fontSize - 2, color: colors.primary }]}>
-            Verified
+            Approved
           </Text>
         </View>
       )}

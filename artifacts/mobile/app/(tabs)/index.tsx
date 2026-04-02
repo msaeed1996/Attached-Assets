@@ -108,7 +108,7 @@ export default function HomeScreen() {
           {userProfile?.verified && (
             <View style={styles.verifiedPill}>
               <Feather name="check-circle" size={11} color="#60a5fa" />
-              <Text style={styles.verifiedPillText}>Verified</Text>
+              <Text style={styles.verifiedPillText}>Approved</Text>
             </View>
           )}
         </View>
