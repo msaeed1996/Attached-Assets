@@ -10,607 +10,674 @@ import {
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors } from "@/hooks/useColors";
 import * as Haptics from "expo-haptics";
 
-interface ShiftEntry {
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+const DAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+interface ShiftEvent {
   id: string;
-  date: string;
-  dayLabel: string;
+  time: string;
+  endTime: string;
   jobTitle: string;
   company: string;
-  clockIn: string;
-  clockOut: string | null;
-  hoursWorked: number;
-  payRate: number;
-  status: "completed" | "active" | "missed";
+  status: "accepted" | "invited" | "missed";
+  pay: number;
+  payType: string;
 }
 
-const WEEKS = ["This Week", "Last Week", "2 Weeks Ago"];
+type WeekSchedule = Record<number, ShiftEvent[]>;
 
-const SHIFTS: ShiftEntry[] = [
-  {
-    id: "s1",
-    date: "Mon, Apr 1",
-    dayLabel: "Mon",
-    jobTitle: "Warehouse Associate",
-    company: "Amazon Logistics",
-    clockIn: "07:02 AM",
-    clockOut: "03:31 PM",
-    hoursWorked: 8.5,
-    payRate: 22,
-    status: "completed",
-  },
-  {
-    id: "s2",
-    date: "Tue, Apr 2",
-    dayLabel: "Tue",
-    jobTitle: "Warehouse Associate",
-    company: "Amazon Logistics",
-    clockIn: "06:58 AM",
-    clockOut: "03:14 PM",
-    hoursWorked: 8.25,
-    payRate: 22,
-    status: "completed",
-  },
-  {
-    id: "s3",
-    date: "Wed, Apr 3",
-    dayLabel: "Wed",
-    jobTitle: "Forklift Operator",
-    company: "FreshFoods Distribution",
-    clockIn: "08:00 AM",
-    clockOut: null,
-    hoursWorked: 4.0,
-    payRate: 26,
-    status: "active",
-  },
-  {
-    id: "s4",
-    date: "Thu, Apr 4",
-    dayLabel: "Thu",
-    jobTitle: "Warehouse Associate",
-    company: "Amazon Logistics",
-    clockIn: "—",
-    clockOut: "—",
-    hoursWorked: 0,
-    payRate: 22,
-    status: "missed",
-  },
-  {
-    id: "s5",
-    date: "Fri, Mar 29",
-    dayLabel: "Fri",
-    jobTitle: "Event Staff",
-    company: "Prestige Events Co.",
-    clockIn: "05:00 PM",
-    clockOut: "10:45 PM",
-    hoursWorked: 5.75,
-    payRate: 30,
-    status: "completed",
-  },
-  {
-    id: "s6",
-    date: "Sat, Mar 30",
-    dayLabel: "Sat",
-    jobTitle: "Event Staff",
-    company: "Prestige Events Co.",
-    clockIn: "04:00 PM",
-    clockOut: "11:00 PM",
-    hoursWorked: 7.0,
-    payRate: 30,
-    status: "completed",
-  },
-];
+const SCHEDULE: WeekSchedule = {
+  0: [
+    {
+      id: "e1",
+      time: "8:00 AM",
+      endTime: "4:00 PM",
+      jobTitle: "Warehouse Associate",
+      company: "Amazon Logistics",
+      status: "accepted",
+      pay: 22,
+      payType: "hourly",
+    },
+  ],
+  1: [
+    {
+      id: "e2",
+      time: "9:00 AM",
+      endTime: "5:00 PM",
+      jobTitle: "Office Receptionist",
+      company: "MetaLaw LLP",
+      status: "accepted",
+      pay: 18,
+      payType: "hourly",
+    },
+  ],
+  2: [
+    {
+      id: "e3",
+      time: "4:00 PM",
+      endTime: "12:00 AM",
+      jobTitle: "Lead Bartender",
+      company: "The Grand Hotel",
+      status: "accepted",
+      pay: 30,
+      payType: "hourly",
+    },
+  ],
+  3: [],
+  4: [
+    {
+      id: "e4",
+      time: "10:00 AM",
+      endTime: "6:00 PM",
+      jobTitle: "Retail Floor Associate",
+      company: "Nordstrom Rack",
+      status: "invited",
+      pay: 16,
+      payType: "hourly",
+    },
+  ],
+  5: [
+    {
+      id: "e5",
+      time: "6:00 PM",
+      endTime: "11:00 PM",
+      jobTitle: "Event Staff",
+      company: "Prestige Events Co.",
+      status: "accepted",
+      pay: 250,
+      payType: "daily",
+    },
+  ],
+  6: [
+    {
+      id: "e6",
+      time: "2:00 PM",
+      endTime: "8:00 PM",
+      jobTitle: "Forklift Operator",
+      company: "FreshFoods Distribution",
+      status: "invited",
+      pay: 26,
+      payType: "hourly",
+    },
+  ],
+};
 
-const LAST_WEEK_SHIFTS: ShiftEntry[] = [
-  {
-    id: "lw1",
-    date: "Mon, Mar 25",
-    dayLabel: "Mon",
-    jobTitle: "Retail Associate",
-    company: "Nordstrom Rack",
-    clockIn: "09:00 AM",
-    clockOut: "05:00 PM",
-    hoursWorked: 8.0,
-    payRate: 16,
-    status: "completed",
-  },
-  {
-    id: "lw2",
-    date: "Tue, Mar 26",
-    dayLabel: "Tue",
-    jobTitle: "Retail Associate",
-    company: "Nordstrom Rack",
-    clockIn: "09:05 AM",
-    clockOut: "05:02 PM",
-    hoursWorked: 7.95,
-    payRate: 16,
-    status: "completed",
-  },
-  {
-    id: "lw3",
-    date: "Wed, Mar 27",
-    dayLabel: "Wed",
-    jobTitle: "Commercial Cleaner",
-    company: "SparkleClean Services",
-    clockIn: "08:00 PM",
-    clockOut: "11:30 PM",
-    hoursWorked: 3.5,
-    payRate: 19,
-    status: "completed",
-  },
-  {
-    id: "lw4",
-    date: "Thu, Mar 28",
-    dayLabel: "Thu",
-    jobTitle: "Commercial Cleaner",
-    company: "SparkleClean Services",
-    clockIn: "08:00 PM",
-    clockOut: "11:15 PM",
-    hoursWorked: 3.25,
-    payRate: 19,
-    status: "completed",
-  },
-];
-
-const WEEK_DATA = [SHIFTS, LAST_WEEK_SHIFTS, []];
-
-function calcEarnings(shifts: ShiftEntry[]) {
-  return shifts.reduce((sum, s) => sum + s.hoursWorked * s.payRate, 0);
+function getWeekDates(baseDate: Date) {
+  const day = baseDate.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  const monday = new Date(baseDate);
+  monday.setDate(baseDate.getDate() + diff);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
 }
 
-function calcHours(shifts: ShiftEntry[]) {
-  return shifts.reduce((sum, s) => sum + s.hoursWorked, 0);
+function isSameDay(a: Date, b: Date) {
+  return a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
 }
 
 export default function TimesheetScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
-  const [selectedWeek, setSelectedWeek] = useState(0);
-
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
-  const shifts = WEEK_DATA[selectedWeek] ?? [];
-  const totalHours = calcHours(shifts);
-  const totalEarnings = calcEarnings(shifts);
-  const completedShifts = shifts.filter((s) => s.status === "completed").length;
+
+  const today = new Date();
+  const [baseDate, setBaseDate] = useState(today);
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+
+  const weekDates = getWeekDates(baseDate);
+  const selectedDayIndex = weekDates.findIndex((d) => isSameDay(d, selectedDate));
+  const dayEvents: ShiftEvent[] = SCHEDULE[selectedDayIndex === -1 ? 0 : selectedDayIndex] ?? [];
+
+  function prevMonth() {
+    Haptics.selectionAsync();
+    const d = new Date(currentYear, currentMonth - 1, 1);
+    setCurrentMonth(d.getMonth());
+    setCurrentYear(d.getFullYear());
+    const newBase = new Date(baseDate);
+    newBase.setMonth(newBase.getMonth() - 1);
+    setBaseDate(newBase);
+    setSelectedDate(newBase);
+  }
+
+  function nextMonth() {
+    Haptics.selectionAsync();
+    const d = new Date(currentYear, currentMonth + 1, 1);
+    setCurrentMonth(d.getMonth());
+    setCurrentYear(d.getFullYear());
+    const newBase = new Date(baseDate);
+    newBase.setMonth(newBase.getMonth() + 1);
+    setBaseDate(newBase);
+    setSelectedDate(newBase);
+  }
+
+  function selectDay(date: Date, index: number) {
+    Haptics.selectionAsync();
+    setSelectedDate(date);
+  }
+
+  const hasEvent = (index: number) => (SCHEDULE[index] ?? []).length > 0;
+  const getEventStatus = (index: number): "accepted" | "invited" | null => {
+    const evts = SCHEDULE[index] ?? [];
+    if (evts.length === 0) return null;
+    if (evts.some((e) => e.status === "invited")) return "invited";
+    return "accepted";
+  };
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPadding + 12, backgroundColor: "#0759af" }]}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => router.back()}
-          >
-            <Feather name="arrow-left" size={20} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Time Sheet</Text>
-          <TouchableOpacity style={styles.exportBtn}>
-            <Feather name="download" size={18} color="#fff" />
-          </TouchableOpacity>
-        </View>
+    <View style={styles.root}>
+      {/* ── HEADER ── */}
+      <View style={[styles.header, { paddingTop: topPadding + 12 }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Feather name="arrow-left" size={20} color="#111827" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Schedule</Text>
 
-        {/* Week selector */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingBottom: 16 }}
-        >
-          {WEEKS.map((w, i) => (
-            <TouchableOpacity
-              key={w}
-              style={[
-                styles.weekChip,
-                { backgroundColor: selectedWeek === i ? "#fff" : "rgba(255,255,255,0.15)" },
-              ]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setSelectedWeek(i);
-              }}
-            >
-              <Text style={[styles.weekChipText, { color: selectedWeek === i ? "#0759af" : "#fff" }]}>
-                {w}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Summary tiles */}
-        <View style={styles.summaryRow}>
-          <SummaryTile label="Hours Worked" value={`${totalHours.toFixed(1)}h`} icon="clock" accent="#60a5fa" />
-          <SummaryTile label="Total Earned" value={`$${totalEarnings.toFixed(0)}`} icon="dollar-sign" accent="#34d399" />
-          <SummaryTile label="Shifts Done" value={String(completedShifts)} icon="check-circle" accent="#a78bfa" />
+        {/* Month navigator */}
+        <View style={styles.monthNav}>
+          <TouchableOpacity style={styles.monthArrow} onPress={prevMonth}>
+            <Feather name="chevron-left" size={16} color="#6b7280" />
+          </TouchableOpacity>
+          <Text style={styles.monthLabel}>
+            {MONTHS[currentMonth]} {currentYear}
+          </Text>
+          <TouchableOpacity style={styles.monthArrow} onPress={nextMonth}>
+            <Feather name="chevron-right" size={16} color="#6b7280" />
+          </TouchableOpacity>
         </View>
       </View>
 
+      {/* ── WEEK STRIP ── */}
+      <View style={styles.weekStrip}>
+        {weekDates.map((date, i) => {
+          const isSelected = isSameDay(date, selectedDate);
+          const isToday = isSameDay(date, today);
+          const status = getEventStatus(i);
+
+          return (
+            <TouchableOpacity
+              key={i}
+              style={styles.dayCol}
+              onPress={() => selectDay(date, i)}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.dayLabel, isSelected && styles.dayLabelSelected]}>
+                {DAY_LABELS[i]}
+              </Text>
+              <View style={[styles.dayPill, isSelected && styles.dayPillSelected, isToday && !isSelected && styles.dayPillToday]}>
+                <Text style={[styles.dayNum, isSelected && styles.dayNumSelected, isToday && !isSelected && styles.dayNumToday]}>
+                  {date.getDate()}
+                </Text>
+              </View>
+              {status ? (
+                <View style={[styles.eventDot, { backgroundColor: status === "accepted" ? "#10b981" : "#f59e0b" }]} />
+              ) : (
+                <View style={styles.eventDotEmpty} />
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <View style={[styles.divider]} />
+
+      {/* ── LEGEND ── */}
+      <View style={styles.legend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: "#10b981" }]} />
+          <Text style={styles.legendText}>Accepted</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: "#f59e0b" }]} />
+          <Text style={styles.legendText}>Invited</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: "#d1d5db" }]} />
+          <Text style={styles.legendText}>No Shift</Text>
+        </View>
+      </View>
+
+      {/* ── TIMELINE ── */}
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 100, paddingTop: 20 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.timeline, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
-        {shifts.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={[styles.emptyIcon, { backgroundColor: colors.muted }]}>
-              <Feather name="clock" size={32} color={colors.mutedForeground} />
+        {dayEvents.length === 0 ? (
+          <View style={styles.emptyDay}>
+            <View style={styles.emptyIconWrap}>
+              <Feather name="calendar" size={28} color="#9ca3af" />
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No shifts recorded</Text>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              Your worked shifts will appear here once you clock in.
+            <Text style={styles.emptyTitle}>No shifts scheduled</Text>
+            <Text style={styles.emptyText}>
+              You're free on this day. Add an availability block to get discovered.
             </Text>
+            <TouchableOpacity style={styles.addBlockBtnInline}>
+              <Feather name="plus" size={15} color="#10b981" />
+              <Text style={styles.addBlockBtnInlineText}>Add Availability Block</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <>
-            {/* Section label */}
-            <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
-              {WEEKS[selectedWeek].toUpperCase()} · {shifts.length} SHIFT{shifts.length !== 1 ? "S" : ""}
-            </Text>
+            {dayEvents.map((event) => (
+              <View key={event.id} style={styles.timelineRow}>
+                {/* Time label */}
+                <View style={styles.timeCol}>
+                  <Text style={styles.timeText}>{event.time}</Text>
+                </View>
 
-            {shifts.map((shift) => (
-              <ShiftCard key={shift.id} shift={shift} colors={colors} />
+                {/* Connector */}
+                <View style={styles.connectorCol}>
+                  <View style={[styles.connectorDot, { backgroundColor: event.status === "accepted" ? "#10b981" : "#f59e0b" }]} />
+                  <View style={[styles.connectorLine, { backgroundColor: event.status === "accepted" ? "#d1fae5" : "#fef3c7" }]} />
+                </View>
+
+                {/* Event card */}
+                <View style={[styles.eventCard, {
+                  borderLeftColor: event.status === "accepted" ? "#10b981" : "#f59e0b",
+                }]}>
+                  <View style={styles.eventCardTop}>
+                    <Text style={styles.eventTitle}>{event.jobTitle}</Text>
+                    <View style={[styles.statusChip, {
+                      backgroundColor: event.status === "accepted" ? "#dcfce7" : "#fef3c7",
+                    }]}>
+                      <Text style={[styles.statusChipText, {
+                        color: event.status === "accepted" ? "#10b981" : "#f59e0b",
+                      }]}>
+                        {event.status === "accepted" ? "Accepted" : "Invited"}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.eventMeta}>
+                    {event.company} • {event.time} – {event.endTime}
+                  </Text>
+                  <View style={styles.eventFooter}>
+                    <View style={styles.eventPayRow}>
+                      <Feather name="dollar-sign" size={12} color="#10b981" />
+                      <Text style={styles.eventPay}>
+                        {event.payType === "daily"
+                          ? `$${event.pay} flat`
+                          : `$${event.pay}/hr`}
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => Haptics.selectionAsync()}>
+                      <Text style={styles.viewDetails}>View Details</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
             ))}
 
-            {/* Weekly total footer */}
-            <View style={[styles.totalCard, { backgroundColor: "#0759af" }]}>
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total Hours</Text>
-                <Text style={styles.totalValue}>{totalHours.toFixed(2)} hrs</Text>
+            {/* Earnings summary for day */}
+            <View style={styles.daySummary}>
+              <View style={styles.daySummaryItem}>
+                <Text style={styles.daySummaryValue}>{dayEvents.length}</Text>
+                <Text style={styles.daySummaryLabel}>Shift{dayEvents.length !== 1 ? "s" : ""}</Text>
               </View>
-              <View style={[styles.totalDivider, { backgroundColor: "rgba(255,255,255,0.2)" }]} />
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Gross Earnings</Text>
-                <Text style={[styles.totalValue, { fontSize: 22, fontWeight: "800" }]}>
-                  ${totalEarnings.toFixed(2)}
+              <View style={styles.daySummaryDivider} />
+              <View style={styles.daySummaryItem}>
+                <Text style={styles.daySummaryValue}>
+                  {dayEvents.reduce((s, e) => {
+                    if (e.payType === "daily") return s + e.pay;
+                    const hrs = parseFloat(e.endTime) - parseFloat(e.time) || 8;
+                    return s + e.pay * 8;
+                  }, 0) > 0
+                    ? `$${dayEvents.reduce((s, e) => s + (e.payType === "daily" ? e.pay : e.pay * 8), 0)}`
+                    : "—"}
                 </Text>
+                <Text style={styles.daySummaryLabel}>Est. Earnings</Text>
               </View>
-              <Text style={styles.totalNote}>* Taxes and deductions not included</Text>
+              <View style={styles.daySummaryDivider} />
+              <View style={styles.daySummaryItem}>
+                <Text style={[styles.daySummaryValue, { color: dayEvents.every(e => e.status === "accepted") ? "#10b981" : "#f59e0b" }]}>
+                  {dayEvents.every(e => e.status === "accepted") ? "Confirmed" : "Pending"}
+                </Text>
+                <Text style={styles.daySummaryLabel}>Status</Text>
+              </View>
             </View>
           </>
         )}
+
+        {/* Add availability block */}
+        <TouchableOpacity
+          style={styles.addBlockBtn}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push("/(tabs)/availability");
+          }}
+          activeOpacity={0.8}
+        >
+          <Feather name="plus" size={16} color="#9ca3af" />
+          <Text style={styles.addBlockText}>Add Availability Block</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
-function SummaryTile({ label, value, icon, accent }: { label: string; value: string; icon: string; accent: string }) {
-  return (
-    <View style={styles.summaryTile}>
-      <Feather name={icon as any} size={13} color={accent} />
-      <Text style={styles.summaryValue}>{value}</Text>
-      <Text style={styles.summaryLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function ShiftCard({ shift, colors }: { shift: ShiftEntry; colors: any }) {
-  const statusConfig = {
-    completed: { color: "#10b981", bg: "#ecfdf5", icon: "check-circle", label: "Completed" },
-    active: { color: "#f59e0b", bg: "#fffbeb", icon: "zap", label: "Active" },
-    missed: { color: "#ef4444", bg: "#fef2f2", icon: "x-circle", label: "Missed" },
-  }[shift.status];
-
-  const earnings = shift.hoursWorked * shift.payRate;
-
-  return (
-    <View style={[styles.shiftCard, {
-      backgroundColor: colors.card,
-      borderColor: shift.status === "active" ? "#f59e0b" : colors.border,
-      borderWidth: shift.status === "active" ? 1.5 : 1,
-    }]}>
-      {shift.status === "active" && (
-        <View style={styles.activeBanner}>
-          <View style={styles.activePulse} />
-          <Text style={styles.activeBannerText}>CURRENTLY WORKING</Text>
-        </View>
-      )}
-
-      {/* Top row */}
-      <View style={styles.shiftTop}>
-        <View style={styles.shiftDateBlock}>
-          <Text style={[styles.shiftDay, { color: colors.primary }]}>{shift.dayLabel}</Text>
-          <Text style={[styles.shiftDate, { color: colors.mutedForeground }]}>
-            {shift.date.split(",")[1]?.trim()}
-          </Text>
-        </View>
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={[styles.shiftJobTitle, { color: colors.foreground }]} numberOfLines={1}>
-            {shift.jobTitle}
-          </Text>
-          <Text style={[styles.shiftCompany, { color: colors.mutedForeground }]}>
-            {shift.company}
-          </Text>
-        </View>
-        <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-          <Feather name={statusConfig.icon as any} size={11} color={statusConfig.color} />
-          <Text style={[styles.statusBadgeText, { color: statusConfig.color }]}>
-            {statusConfig.label}
-          </Text>
-        </View>
-      </View>
-
-      {/* Time row */}
-      <View style={[styles.timeRow, { borderColor: colors.border }]}>
-        <TimeBlock label="Clock In" time={shift.clockIn} icon="log-in" colors={colors} accent="#2563EB" />
-        <View style={[styles.timeDivider, { backgroundColor: colors.border }]} />
-        <TimeBlock
-          label="Clock Out"
-          time={shift.clockOut ?? "Active"}
-          icon="log-out"
-          colors={colors}
-          accent={shift.clockOut ? "#10b981" : "#f59e0b"}
-        />
-        <View style={[styles.timeDivider, { backgroundColor: colors.border }]} />
-        <TimeBlock
-          label="Hours"
-          time={`${shift.hoursWorked.toFixed(2)}h`}
-          icon="clock"
-          colors={colors}
-          accent="#7c3aed"
-        />
-      </View>
-
-      {/* Earnings row */}
-      <View style={styles.earningsRow}>
-        <Text style={[styles.earningsRate, { color: colors.mutedForeground }]}>
-          ${shift.payRate}/hr × {shift.hoursWorked.toFixed(2)}h
-        </Text>
-        <Text style={[styles.earningsTotal, { color: shift.status === "missed" ? colors.mutedForeground : "#10b981" }]}>
-          {shift.status === "missed" ? "$0.00" : `$${earnings.toFixed(2)}`}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function TimeBlock({ label, time, icon, colors, accent }: {
-  label: string; time: string; icon: string; colors: any; accent: string;
-}) {
-  return (
-    <View style={styles.timeBlock}>
-      <Feather name={icon as any} size={12} color={accent} />
-      <Text style={[styles.timeValue, { color: colors.foreground }]}>{time}</Text>
-      <Text style={[styles.timeLabel, { color: colors.mutedForeground }]}>{label}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  header: {
-    paddingHorizontal: 16,
+  root: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
   },
-  headerRow: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    backgroundColor: "#fff",
   },
   backBtn: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "#f3f4f6",
     justifyContent: "center",
     alignItems: "center",
   },
   headerTitle: {
-    color: "#fff",
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "800",
-    letterSpacing: -0.3,
+    color: "#111827",
+    letterSpacing: -0.4,
   },
-  exportBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    justifyContent: "center",
+  monthNav: {
+    flexDirection: "row",
     alignItems: "center",
-  },
-  weekChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    gap: 6,
+    backgroundColor: "#f3f4f6",
     borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
   },
-  weekChipText: {
+  monthArrow: {
+    padding: 2,
+  },
+  monthLabel: {
     fontSize: 13,
     fontWeight: "600",
-  },
-  summaryRow: {
-    flexDirection: "row",
-    gap: 10,
-    paddingBottom: 20,
-  },
-  summaryTile: {
-    flex: 1,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    alignItems: "center",
-    gap: 4,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-  },
-  summaryValue: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: -0.3,
-  },
-  summaryLabel: {
-    color: "rgba(255,255,255,0.6)",
-    fontSize: 9,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
+    color: "#374151",
+    minWidth: 110,
     textAlign: "center",
   },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    marginBottom: 12,
+  weekStrip: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    paddingHorizontal: 12,
+    paddingBottom: 12,
   },
-  emptyState: {
+  dayCol: {
+    flex: 1,
     alignItems: "center",
-    paddingVertical: 60,
-    gap: 12,
+    gap: 6,
   },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
+  dayLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#9ca3af",
+    letterSpacing: 0.4,
+  },
+  dayLabelSelected: {
+    color: "#10b981",
+  },
+  dayPill: {
+    width: 36,
+    height: 42,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
   },
-  emptyTitle: {
-    fontSize: 18,
+  dayPillSelected: {
+    backgroundColor: "#10b981",
+  },
+  dayPillToday: {
+    backgroundColor: "#f0fdf4",
+  },
+  dayNum: {
+    fontSize: 17,
     fontWeight: "700",
+    color: "#374151",
   },
-  emptyText: {
-    fontSize: 14,
-    textAlign: "center",
-    lineHeight: 20,
+  dayNumSelected: {
+    color: "#fff",
+  },
+  dayNumToday: {
+    color: "#10b981",
+  },
+  eventDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  eventDotEmpty: {
+    width: 6,
+    height: 6,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#e5e7eb",
+  },
+  legend: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
     paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
   },
-  shiftCard: {
-    borderRadius: 16,
-    marginBottom: 12,
-    overflow: "hidden",
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#6b7280",
+  },
+  timeline: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    gap: 0,
+  },
+  timelineRow: {
+    flexDirection: "row",
+    marginBottom: 20,
+    gap: 0,
+  },
+  timeCol: {
+    width: 68,
+    paddingTop: 2,
+  },
+  timeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6b7280",
+  },
+  connectorCol: {
+    width: 24,
+    alignItems: "center",
+  },
+  connectorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginTop: 4,
+    zIndex: 1,
+  },
+  connectorLine: {
+    width: 2,
+    flex: 1,
+    marginTop: 4,
+    borderRadius: 1,
+  },
+  eventCard: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 14,
+    marginLeft: 12,
+    borderLeftWidth: 3,
+    gap: 6,
     ...Platform.select({
-      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 },
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 6 },
       android: { elevation: 2 },
     }),
   },
-  activeBanner: {
+  eventCardTop: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
-    backgroundColor: "#f59e0b",
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    justifyContent: "space-between",
   },
-  activePulse: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: "#fff",
-  },
-  activeBannerText: {
-    color: "#fff",
-    fontSize: 10,
+  eventTitle: {
+    fontSize: 15,
     fontWeight: "800",
-    letterSpacing: 0.5,
-  },
-  shiftTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 14,
-    paddingBottom: 10,
-  },
-  shiftDateBlock: {
-    alignItems: "center",
-    minWidth: 36,
-  },
-  shiftDay: {
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: -0.2,
-  },
-  shiftDate: {
-    fontSize: 10,
-    fontWeight: "500",
-    marginTop: 1,
-  },
-  shiftJobTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    marginBottom: 2,
-  },
-  shiftCompany: {
-    fontSize: 12,
-  },
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  statusBadgeText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  timeRow: {
-    flexDirection: "row",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    marginHorizontal: 14,
-  },
-  timeBlock: {
+    color: "#111827",
     flex: 1,
+    marginRight: 8,
+  },
+  statusChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  statusChipText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  eventMeta: {
+    fontSize: 12,
+    color: "#6b7280",
+    lineHeight: 17,
+  },
+  eventFooter: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  eventPayRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 3,
   },
-  timeDivider: {
-    width: StyleSheet.hairlineWidth,
-    alignSelf: "stretch",
-  },
-  timeValue: {
+  eventPay: {
     fontSize: 13,
     fontWeight: "700",
+    color: "#10b981",
   },
-  timeLabel: {
-    fontSize: 9,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.3,
+  viewDetails: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#10b981",
   },
-  earningsRow: {
+  daySummary: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
+      android: { elevation: 1 },
+    }),
+  },
+  daySummaryItem: {
+    flex: 1,
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    gap: 3,
   },
-  earningsRate: {
-    fontSize: 12,
+  daySummaryDivider: {
+    width: StyleSheet.hairlineWidth,
+    backgroundColor: "#e5e7eb",
+    alignSelf: "stretch",
   },
-  earningsTotal: {
+  daySummaryValue: {
     fontSize: 16,
     fontWeight: "800",
+    color: "#111827",
   },
-  totalCard: {
-    borderRadius: 16,
-    padding: 18,
-    marginTop: 8,
-    marginBottom: 8,
-    gap: 12,
+  daySummaryLabel: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#9ca3af",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  emptyDay: {
     alignItems: "center",
+    paddingVertical: 40,
+    gap: 10,
   },
-  totalLabel: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 14,
-    fontWeight: "500",
+  emptyIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: "#f3f4f6",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
   },
-  totalValue: {
-    color: "#fff",
+  emptyTitle: {
     fontSize: 16,
     fontWeight: "700",
+    color: "#374151",
   },
-  totalDivider: {
-    height: StyleSheet.hairlineWidth,
+  emptyText: {
+    fontSize: 13,
+    color: "#9ca3af",
+    textAlign: "center",
+    lineHeight: 19,
+    paddingHorizontal: 20,
   },
-  totalNote: {
-    color: "rgba(255,255,255,0.45)",
-    fontSize: 11,
-    marginTop: -4,
+  addBlockBtnInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "#f0fdf4",
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+  },
+  addBlockBtnInlineText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#10b981",
+  },
+  addBlockBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: "#e5e7eb",
+    borderStyle: "dashed",
+    borderRadius: 14,
+    paddingVertical: 16,
+    marginTop: 4,
+    backgroundColor: "#fff",
+  },
+  addBlockText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#9ca3af",
   },
 });
