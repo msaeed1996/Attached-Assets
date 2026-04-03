@@ -178,20 +178,20 @@ export default function TimesheetScreen() {
       {/* ── HEADER ── */}
       <View style={[styles.header, { paddingTop: topPadding + 12 }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={20} color="#111827" />
+          <Feather name="arrow-left" size={20} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Schedule</Text>
 
         {/* Month navigator */}
         <View style={styles.monthNav}>
           <TouchableOpacity style={styles.monthArrow} onPress={prevMonth}>
-            <Feather name="chevron-left" size={16} color="#6b7280" />
+            <Feather name="chevron-left" size={16} color="#93c5fd" />
           </TouchableOpacity>
           <Text style={styles.monthLabel}>
             {MONTHS[currentMonth]} {currentYear}
           </Text>
           <TouchableOpacity style={styles.monthArrow} onPress={nextMonth}>
-            <Feather name="chevron-right" size={16} color="#6b7280" />
+            <Feather name="chevron-right" size={16} color="#93c5fd" />
           </TouchableOpacity>
         </View>
       </View>
@@ -255,14 +255,14 @@ export default function TimesheetScreen() {
         {dayEvents.length === 0 ? (
           <View style={styles.emptyDay}>
             <View style={styles.emptyIconWrap}>
-              <Feather name="calendar" size={28} color="#9ca3af" />
+              <Feather name="calendar" size={28} color="#2563EB" />
             </View>
             <Text style={styles.emptyTitle}>No shifts scheduled</Text>
             <Text style={styles.emptyText}>
               You're free on this day. Add an availability block to get discovered.
             </Text>
             <TouchableOpacity style={styles.addBlockBtnInline}>
-              <Feather name="plus" size={15} color="#10b981" />
+              <Feather name="plus" size={15} color="#2563EB" />
               <Text style={styles.addBlockBtnInlineText}>Add Availability Block</Text>
             </TouchableOpacity>
           </View>
@@ -356,7 +356,7 @@ export default function TimesheetScreen() {
           }}
           activeOpacity={0.8}
         >
-          <Feather name="plus" size={16} color="#9ca3af" />
+          <Feather name="plus" size={16} color="#93c5fd" />
           <Text style={styles.addBlockText}>Add Availability Block</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -367,35 +367,35 @@ export default function TimesheetScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#eff6ff",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: "#fff",
+    paddingBottom: 18,
+    backgroundColor: "#0759af",
   },
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "rgba(255,255,255,0.15)",
     justifyContent: "center",
     alignItems: "center",
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: "800",
-    color: "#111827",
+    color: "#fff",
     letterSpacing: -0.4,
   },
   monthNav: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "#f3f4f6",
+    gap: 4,
+    backgroundColor: "rgba(255,255,255,0.15)",
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -404,17 +404,18 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   monthLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
-    color: "#374151",
-    minWidth: 110,
+    color: "#fff",
+    minWidth: 106,
     textAlign: "center",
   },
   weekStrip: {
     flexDirection: "row",
-    backgroundColor: "#fff",
-    paddingHorizontal: 12,
-    paddingBottom: 12,
+    backgroundColor: "#0759af",
+    paddingHorizontal: 8,
+    paddingBottom: 16,
+    paddingTop: 4,
   },
   dayCol: {
     flex: 1,
@@ -424,11 +425,11 @@ const styles = StyleSheet.create({
   dayLabel: {
     fontSize: 10,
     fontWeight: "700",
-    color: "#9ca3af",
+    color: "rgba(255,255,255,0.55)",
     letterSpacing: 0.4,
   },
   dayLabelSelected: {
-    color: "#10b981",
+    color: "#fff",
   },
   dayPill: {
     width: 36,
@@ -438,21 +439,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   dayPillSelected: {
-    backgroundColor: "#10b981",
+    backgroundColor: "#2563EB",
+    ...Platform.select({
+      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 6 },
+      android: { elevation: 4 },
+    }),
   },
   dayPillToday: {
-    backgroundColor: "#f0fdf4",
+    backgroundColor: "rgba(255,255,255,0.18)",
   },
   dayNum: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#374151",
+    color: "rgba(255,255,255,0.7)",
   },
   dayNumSelected: {
     color: "#fff",
   },
   dayNumToday: {
-    color: "#10b981",
+    color: "#fff",
   },
   eventDot: {
     width: 6,
@@ -465,15 +470,17 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: "#bfdbfe",
   },
   legend: {
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 11,
     backgroundColor: "#fff",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#e0f2fe",
   },
   legendItem: {
     flexDirection: "row",
@@ -507,7 +514,7 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#6b7280",
+    color: "#2563EB",
   },
   connectorCol: {
     width: 24,
@@ -535,7 +542,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     gap: 6,
     ...Platform.select({
-      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 6 },
+      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8 },
       android: { elevation: 2 },
     }),
   },
@@ -579,12 +586,12 @@ const styles = StyleSheet.create({
   eventPay: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#10b981",
+    color: "#2563EB",
   },
   viewDetails: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#10b981",
+    color: "#2563EB",
   },
   daySummary: {
     flexDirection: "row",
@@ -592,8 +599,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#dbeafe",
     ...Platform.select({
-      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
+      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },
@@ -604,18 +613,18 @@ const styles = StyleSheet.create({
   },
   daySummaryDivider: {
     width: StyleSheet.hairlineWidth,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: "#dbeafe",
     alignSelf: "stretch",
   },
   daySummaryValue: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#111827",
+    color: "#1e40af",
   },
   daySummaryLabel: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#9ca3af",
+    color: "#93c5fd",
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
@@ -628,7 +637,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 20,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#dbeafe",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 4,
@@ -636,11 +645,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#374151",
+    color: "#1e40af",
   },
   emptyText: {
     fontSize: 13,
-    color: "#9ca3af",
+    color: "#6b7280",
     textAlign: "center",
     lineHeight: 19,
     paddingHorizontal: 20,
@@ -653,14 +662,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: "#f0fdf4",
+    backgroundColor: "#eff6ff",
     borderWidth: 1,
-    borderColor: "#a7f3d0",
+    borderColor: "#bfdbfe",
   },
   addBlockBtnInlineText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#10b981",
+    color: "#2563EB",
   },
   addBlockBtn: {
     flexDirection: "row",
@@ -668,7 +677,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     borderWidth: 1.5,
-    borderColor: "#e5e7eb",
+    borderColor: "#bfdbfe",
     borderStyle: "dashed",
     borderRadius: 14,
     paddingVertical: 16,
@@ -678,6 +687,6 @@ const styles = StyleSheet.create({
   addBlockText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#9ca3af",
+    color: "#93c5fd",
   },
 });
