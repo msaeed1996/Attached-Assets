@@ -94,15 +94,16 @@ export default function HomeScreen() {
         {/* Role + Verification pill */}
         <View style={styles.rolePill}>
           <View style={[styles.roleDot, { backgroundColor: isEmployer ? "#60a5fa" : "#34d399" }]} />
-          <Text style={styles.rolePillText}>
-            {isEmployer
-              ? `Employer · ${userProfile?.company || ""}`
-              : userProfile?.name?.split(" ")[0] || "Jordan"}
-          </Text>
-          {(!isEmployer || userProfile?.verified) && (
-            <View style={styles.verifiedPill}>
-              <Feather name="check-circle" size={11} color="#60a5fa" />
-              <Text style={styles.verifiedPillText}>Approved</Text>
+          {isEmployer ? (
+            <Text style={styles.rolePillText}>
+              {`Employer · ${userProfile?.company || ""}`}
+            </Text>
+          ) : (
+            <View style={[styles.verifiedPill, { backgroundColor: "rgba(52,211,153,0.18)", borderColor: "rgba(52,211,153,0.3)", borderWidth: 1 }]}>
+              <Feather name="check-circle" size={11} color="#34d399" />
+              <Text style={[styles.verifiedPillText, { color: "#34d399" }]}>
+                {userProfile?.name?.split(" ")[0] || "Jordan"} · Approved
+              </Text>
             </View>
           )}
         </View>
