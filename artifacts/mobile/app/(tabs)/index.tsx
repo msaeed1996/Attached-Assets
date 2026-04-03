@@ -66,9 +66,17 @@ export default function HomeScreen() {
         <View style={styles.topBar}>
           <View>
             <Text style={styles.heroGreeting}>{getTimeOfDay()}</Text>
-            <Text style={styles.heroName}>
-              {userProfile?.name?.split(" ")[0] || "Welcome"}
-            </Text>
+            <View style={styles.heroNameRow}>
+              <Text style={styles.heroName}>
+                {userProfile?.name?.split(" ")[0] || "Welcome"}
+              </Text>
+              {!isEmployer && (
+                <View style={styles.approvedBadge}>
+                  <Feather name="check-circle" size={12} color="#34d399" />
+                  <Text style={styles.approvedBadgeText}>Approved</Text>
+                </View>
+              )}
+            </View>
           </View>
           <View style={styles.topBarRight}>
             {totalUnread > 0 && (
@@ -91,22 +99,15 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Role + Verification pill */}
-        <View style={styles.rolePill}>
-          <View style={[styles.roleDot, { backgroundColor: isEmployer ? "#60a5fa" : "#34d399" }]} />
-          {isEmployer ? (
+        {/* Role pill — employer only */}
+        {isEmployer && (
+          <View style={styles.rolePill}>
+            <View style={[styles.roleDot, { backgroundColor: "#60a5fa" }]} />
             <Text style={styles.rolePillText}>
               {`Employer · ${userProfile?.company || ""}`}
             </Text>
-          ) : (
-            <View style={[styles.verifiedPill, { backgroundColor: "rgba(52,211,153,0.18)", borderColor: "rgba(52,211,153,0.3)", borderWidth: 1 }]}>
-              <Feather name="check-circle" size={11} color="#34d399" />
-              <Text style={[styles.verifiedPillText, { color: "#34d399" }]}>
-                {userProfile?.name?.split(" ")[0] || "Jordan"} · Approved
-              </Text>
-            </View>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* ── STAT TILES ── */}
         <View style={styles.statTiles}>
@@ -430,6 +431,29 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "800",
     letterSpacing: -0.6,
+  },
+  heroNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  approvedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(52,211,153,0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(52,211,153,0.35)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: 2,
+  },
+  approvedBadgeText: {
+    color: "#34d399",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.2,
   },
   topBarRight: {
     flexDirection: "row",
