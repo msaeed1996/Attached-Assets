@@ -48,7 +48,7 @@ export default function HomeScreen() {
   const workerQuickActions = [
     { icon: "briefcase", label: "Available Jobs", route: "/(tabs)/jobs", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
     { icon: "mail", label: "Job Invitation", route: "/(tabs)/invitations", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length > 0 ? myApplications.length : null, isAvailability: false },
-    { icon: "clock", label: "Time Sheet", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe", badge: null, isAvailability: false },
+    { icon: "clock", label: "Time Sheet", route: "/timesheet", color: "#0891b2", bg: "#cffafe", badge: null, isAvailability: false },
     { icon: "calendar", label: "Availability", route: "/(tabs)/availability", color: "#10b981", bg: "#d1fae5", badge: null, isAvailability: false },
   ];
 
@@ -95,9 +95,11 @@ export default function HomeScreen() {
         <View style={styles.rolePill}>
           <View style={[styles.roleDot, { backgroundColor: isEmployer ? "#60a5fa" : "#34d399" }]} />
           <Text style={styles.rolePillText}>
-            {isEmployer ? `Employer · ${userProfile?.company || ""}` : "Gig Worker"}
+            {isEmployer
+              ? `Employer · ${userProfile?.company || ""}`
+              : userProfile?.name?.split(" ")[0] || "Jordan"}
           </Text>
-          {userProfile?.verified && (
+          {(!isEmployer || userProfile?.verified) && (
             <View style={styles.verifiedPill}>
               <Feather name="check-circle" size={11} color="#60a5fa" />
               <Text style={styles.verifiedPillText}>Approved</Text>
