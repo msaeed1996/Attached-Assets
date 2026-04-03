@@ -16,14 +16,6 @@ import { useJobs } from "@/context/JobsContext";
 import { useMessages } from "@/context/MessagesContext";
 import * as Haptics from "expo-haptics";
 
-const CATEGORIES = [
-  { label: "Warehouse", icon: "package", color: "#f59e0b", bg: "#fef3c7" },
-  { label: "Hospitality", icon: "coffee", color: "#ec4899", bg: "#fce7f3" },
-  { label: "Admin", icon: "clipboard", color: "#6366f1", bg: "#e0e7ff" },
-  { label: "Retail", icon: "shopping-bag", color: "#10b981", bg: "#d1fae5" },
-  { label: "Cleaning", icon: "wind", color: "#0891b2", bg: "#cffafe" },
-  { label: "Driving", icon: "truck", color: "#f97316", bg: "#ffedd5" },
-];
 
 const QUICK_ACTIONS_EMPLOYER = [
   { icon: "plus-circle", label: "Post Job", route: "/post-job", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
@@ -138,9 +130,9 @@ export default function HomeScreen() {
         if (!activeJob) return null;
         return (
           <View style={styles.activeJobSection}>
-            <View style={styles.activeJobCard}>
+            <View style={[styles.activeJobCard, { borderColor: isClockedIn ? "#10b981" : "#2563EB" }]}>
               <View style={styles.activeJobHeader}>
-                <View style={styles.activeDot} />
+                <View style={[styles.activeDot, { backgroundColor: isClockedIn ? "#10b981" : "#10b981" }]} />
                 <Text style={styles.activeJobBadge}>ACTIVE JOB — #{activeJob.id.slice(-5).toUpperCase()}</Text>
               </View>
               <Text style={styles.activeJobTitle}>{activeJob.title}</Text>
@@ -205,39 +197,44 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
-      {/* ── BROWSE BY CATEGORY ── */}
-      <View style={styles.section}>
-        <View style={styles.sectionRow}>
-          <Text style={[styles.sectionLabel, { color: "#374151" }]}>Browse by Category</Text>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/jobs")}>
-            <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
-          </TouchableOpacity>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 10, paddingRight: 4 }}
-        >
-          {CATEGORIES.map((cat) => (
+      {/* ── UPCOMING JOBS ── */}
+      {!isEmployer && (
+        <View style={styles.section}>
+          <View style={styles.sectionRow}>
+            <Text style={[styles.sectionLabel, { color: "#374151" }]}>Upcoming Jobs</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/jobs")}>
+              <Text style={[styles.seeAllText, { color: "#2563EB" }]}>Browse all</Text>
+            </TouchableOpacity>
+          </View>
+          {jobs.slice(0, 3).map((job) => (
             <TouchableOpacity
-              key={cat.label}
-              style={[styles.categoryCard, { backgroundColor: "#fff" }]}
+              key={job.id}
+              style={styles.upcomingJobRow}
               onPress={() => {
-                Haptics.selectionAsync();
-                router.push("/(tabs)/jobs");
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/job/${job.id}`);
               }}
-              activeOpacity={0.82}
+              activeOpacity={0.85}
             >
-              <View style={[styles.categoryIcon, { backgroundColor: cat.bg }]}>
-                <Feather name={cat.icon as any} size={16} color={cat.color} />
+              <View style={[styles.upcomingJobIcon, { backgroundColor: job.urgency === "urgent" ? "#fef2f2" : "#eff6ff" }]}>
+                <Feather name="briefcase" size={17} color={job.urgency === "urgent" ? "#ef4444" : "#2563EB"} />
               </View>
-              <Text style={[styles.categoryLabel, { color: "#111827" }]} numberOfLines={1}>
-                {cat.label}
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.upcomingJobTitle, { color: "#111827" }]} numberOfLines={1}>{job.title}</Text>
+                <Text style={[styles.upcomingJobMeta, { color: "#6b7280" }]}>{job.company} · {job.startDate}</Text>
+              </View>
+              <View style={styles.upcomingJobRight}>
+                <Text style={[styles.upcomingJobPay, { color: "#2563EB" }]}>${job.pay}<Text style={[styles.upcomingJobPayType, { color: "#9ca3af" }]}>/{job.payType}</Text></Text>
+                {job.urgency === "urgent" && (
+                  <View style={styles.upcomingUrgentTag}>
+                    <Text style={styles.upcomingUrgentText}>Urgent</Text>
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
           ))}
-        </ScrollView>
-      </View>
+        </View>
+      )}
 
       {/* ── EMPLOYER: My job posts ── */}
       {isEmployer && (
@@ -713,29 +710,58 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  categoryCard: {
-    width: 76,
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 4,
+  upcomingJobRow: {
+    flexDirection: "row",
     alignItems: "center",
-    gap: 7,
+    gap: 12,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 13,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     ...Platform.select({
-      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3 },
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
       android: { elevation: 1 },
     }),
   },
-  categoryIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+  upcomingJobIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
-  categoryLabel: {
+  upcomingJobTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 3,
+  },
+  upcomingJobMeta: {
+    fontSize: 12,
+  },
+  upcomingJobRight: {
+    alignItems: "flex-end",
+    gap: 4,
+  },
+  upcomingJobPay: {
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  upcomingJobPayType: {
     fontSize: 11,
-    fontWeight: "600",
-    textAlign: "center",
+    fontWeight: "400",
+  },
+  upcomingUrgentTag: {
+    backgroundColor: "#fef2f2",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  upcomingUrgentText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#ef4444",
   },
 
   // ── APP STATUS ──
