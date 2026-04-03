@@ -16,9 +16,13 @@ function NativeTabLayout() {
         <Icon sf={{ default: "house", selected: "house.fill" }} />
         <Label>Home</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="jobs">
-        <Icon sf={{ default: "briefcase", selected: "briefcase.fill" }} />
-        <Label>Jobs</Label>
+      <NativeTabs.Trigger name="availability">
+        <Icon sf={{ default: "calendar", selected: "calendar.fill" }} />
+        <Label>Availability</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="invitations">
+        <Icon sf={{ default: "envelope", selected: "envelope.fill" }} />
+        <Label>Invitations</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="messages">
         <Icon sf={{ default: "message", selected: "message.fill" }} />
@@ -82,14 +86,26 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="jobs"
+        name="availability"
         options={{
-          title: "Jobs",
+          title: "Availability",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="briefcase" tintColor={color} size={24} />
+              <SymbolView name="calendar" tintColor={color} size={24} />
             ) : (
-              <Feather name="briefcase" size={22} color={color} />
+              <Feather name="calendar" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="invitations"
+        options={{
+          title: "Invitations",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="envelope" tintColor={color} size={24} />
+            ) : (
+              <Feather name="mail" size={22} color={color} />
             ),
         }}
       />
@@ -107,10 +123,6 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="dashboard"
-        options={{ href: null }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
@@ -122,6 +134,8 @@ function ClassicTabLayout() {
             ),
         }}
       />
+      <Tabs.Screen name="jobs" options={{ href: null }} />
+      <Tabs.Screen name="dashboard" options={{ href: null }} />
     </Tabs>
   );
 }

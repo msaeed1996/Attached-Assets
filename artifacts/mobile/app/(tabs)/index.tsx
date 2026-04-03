@@ -46,6 +46,7 @@ export default function HomeScreen() {
   const { conversations } = useMessages();
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const isEmployer = userRole === "employer";
+  const [isClockedIn, setIsClockedIn] = React.useState(false);
 
   const myApplications = applications.filter((a) => a.workerId === "me");
   const myJobs = jobs.filter((j) => j.employerId === "emp-me");
@@ -54,9 +55,9 @@ export default function HomeScreen() {
 
   const workerQuickActions = [
     { icon: "briefcase", label: "Available Jobs", route: "/(tabs)/jobs", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
-    { icon: "mail", label: "Job Invitation", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length > 0 ? myApplications.length : null, isAvailability: false },
+    { icon: "mail", label: "Job Invitation", route: "/(tabs)/invitations", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length > 0 ? myApplications.length : null, isAvailability: false },
     { icon: "clock", label: "Time Sheet", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe", badge: null, isAvailability: false },
-    { icon: "calendar", label: "Availability", route: "/availability", color: "#10b981", bg: "#d1fae5", badge: null, isAvailability: false },
+    { icon: "calendar", label: "Availability", route: "/(tabs)/availability", color: "#10b981", bg: "#d1fae5", badge: null, isAvailability: false },
   ];
 
   const quickActions = isEmployer ? QUICK_ACTIONS_EMPLOYER : workerQuickActions;
@@ -153,12 +154,20 @@ export default function HomeScreen() {
                   <Text style={styles.activeJobPayUnit}>/{activeJob.payType}</Text>
                 </View>
                 <TouchableOpacity
-                  style={styles.clockInBtn}
-                  onPress={() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)}
+                  style={[
+                    styles.clockInBtn,
+                    { backgroundColor: isClockedIn ? "#10b981" : "#2563EB", borderColor: isClockedIn ? "#10b981" : "#2563EB" }
+                  ]}
+                  onPress={() => {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    setIsClockedIn((v) => !v);
+                  }}
                   activeOpacity={0.85}
                 >
-                  <Feather name="clock" size={13} color="#2563EB" />
-                  <Text style={styles.clockInText}>CLOCK IN</Text>
+                  <Feather name={isClockedIn ? "log-out" : "clock"} size={13} color="#fff" />
+                  <Text style={[styles.clockInText, { color: "#fff" }]}>
+                    {isClockedIn ? "CLOCK OUT" : "CLOCK IN"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -626,17 +635,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#eff6ff",
-    borderWidth: 1.5,
-    borderColor: "#2563EB",
-    paddingHorizontal: 16,
-    paddingVertical: 9,
+    borderWidth: 0,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: 10,
+    ...Platform.select({
+      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 6 },
+      android: { elevation: 3 },
+    }),
   },
   clockInText: {
     fontSize: 12,
     fontWeight: "800",
-    color: "#2563EB",
     letterSpacing: 0.5,
   },
 
