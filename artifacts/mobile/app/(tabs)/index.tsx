@@ -81,7 +81,7 @@ export default function HomeScreen() {
             {totalUnread > 0 && (
               <TouchableOpacity
                 style={styles.notifBtn}
-                onPress={() => router.push("/(tabs)/messages")}
+                onPress={() => router.push("/notifications")}
               >
                 <Feather name="bell" size={20} color="#fff" />
                 <View style={styles.notifDot} />
