@@ -376,25 +376,32 @@ export default function NotificationsSheet({ visible, onClose }: Props) {
               </TouchableOpacity>
             </View>
 
-            {/* Detail card */}
-            <View style={[styles.detailCard, { borderColor: NOTIF_META[selected.type].color + "33" }]}>
-              <View style={styles.detailCardTop}>
-                <View style={[styles.detailIconBig, { backgroundColor: NOTIF_META[selected.type].bg }]}>
-                  <Feather name={NOTIF_META[selected.type].icon as any} size={26} color={NOTIF_META[selected.type].color} />
+            {/* Scrollable detail content */}
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ paddingBottom: 24 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Detail card */}
+              <View style={[styles.detailCard, { borderColor: NOTIF_META[selected.type].color + "33" }]}>
+                <View style={styles.detailCardTop}>
+                  <View style={[styles.detailIconBig, { backgroundColor: NOTIF_META[selected.type].bg }]}>
+                    <Feather name={NOTIF_META[selected.type].icon as any} size={26} color={NOTIF_META[selected.type].color} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.detailCategory, { color: NOTIF_META[selected.type].color }]}>
+                      {selected.category}
+                    </Text>
+                    <Text style={styles.detailTime}>{selected.time}</Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.detailCategory, { color: NOTIF_META[selected.type].color }]}>
-                    {selected.category}
-                  </Text>
-                  <Text style={styles.detailTime}>{selected.time}</Text>
-                </View>
+                <Text style={styles.detailTitle}>{selected.title}</Text>
+                <Text style={styles.detailBody}>{selected.detail}</Text>
               </View>
-              <Text style={styles.detailTitle}>{selected.title}</Text>
-              <Text style={styles.detailBody}>{selected.detail}</Text>
-            </View>
+            </ScrollView>
 
-            {/* Mute / Dismiss actions */}
-            <View style={styles.detailActions}>
+            {/* Mute / Dismiss actions — pinned at bottom */}
+            <View style={[styles.detailActions, { paddingTop: 12 }]}>
               <TouchableOpacity
                 style={styles.muteBtn}
                 onPress={() => { muteNotif(selected.id); setSelected(null); }}
@@ -530,13 +537,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    height: "86%",
     backgroundColor: "rgba(255,255,255,0.97)",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 18,
     paddingTop: 10,
-    maxHeight: "86%",
     overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
     ...Platform.select({
       ios: { shadowColor: "#000", shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.18, shadowRadius: 28 },
       android: { elevation: 28 },
@@ -681,7 +690,7 @@ const styles = StyleSheet.create({
   dismissedTime: { fontSize: 10, color: "#94a3b8", fontWeight: "600" },
 
   // ── Detail View ──
-  detailView: { flex: 1 },
+  detailView: { flex: 1, display: "flex", flexDirection: "column" },
   detailHeader: {
     flexDirection: "row",
     alignItems: "center",
