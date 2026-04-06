@@ -49,7 +49,6 @@ export default function HomeScreen() {
     { icon: "briefcase", label: "Available Jobs", route: "/(tabs)/jobs", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
     { icon: "mail", label: "Job Invitation", route: "/(tabs)/invitations", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length > 0 ? myApplications.length : null, isAvailability: false },
     { icon: "clock", label: "Time Sheet", route: "/timesheet", color: "#0891b2", bg: "#cffafe", badge: null, isAvailability: false },
-    { icon: "calendar", label: "Availability", route: "/(tabs)/availability", color: "#10b981", bg: "#d1fae5", badge: null, isAvailability: false },
   ];
 
   const quickActions = isEmployer ? QUICK_ACTIONS_EMPLOYER : workerQuickActions;
@@ -201,11 +200,52 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
-      {/* ── UPCOMING JOBS ── */}
+      {/* ── ASAP JOBS (Urgent Near You) ── */}
+      {!isEmployer && urgentJobs.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionRow}>
+            <View style={styles.urgentTitleRow}>
+              <View style={styles.liveDot} />
+              <Text style={[styles.sectionLabel, { color: "#374151" }]}>ASAP Jobs</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/jobs")}>
+              <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
+            </TouchableOpacity>
+          </View>
+          {urgentJobs.map((job) => (
+            <TouchableOpacity
+              key={job.id}
+              style={styles.urgentJobRow}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/job/${job.id}`);
+              }}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.urgentCategoryDot, { backgroundColor: "#fef2f2" }]}>
+                <Feather name="zap" size={14} color="#ef4444" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.urgentJobTitle, { color: "#111827" }]}>{job.title}</Text>
+                <Text style={[styles.urgentJobMeta, { color: "#6b7280" }]}>
+                  {job.company} · {job.location}
+                </Text>
+              </View>
+              <View style={styles.urgentPayBox}>
+                <Text style={[styles.urgentPay, { color: "#2563EB" }]}>${job.pay}</Text>
+                <Text style={[styles.urgentPayType, { color: "#9ca3af" }]}>/{job.payType}</Text>
+              </View>
+              <Feather name="chevron-right" size={16} color="#9ca3af" />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {/* ── PUBLIC JOBS ── */}
       {!isEmployer && (
         <View style={styles.section}>
           <View style={styles.sectionRow}>
-            <Text style={[styles.sectionLabel, { color: "#374151" }]}>Upcoming Jobs</Text>
+            <Text style={[styles.sectionLabel, { color: "#374151" }]}>Public Jobs</Text>
             <TouchableOpacity onPress={() => router.push("/(tabs)/jobs")}>
               <Text style={[styles.seeAllText, { color: "#2563EB" }]}>Browse all</Text>
             </TouchableOpacity>
@@ -292,47 +332,6 @@ export default function HomeScreen() {
               </TouchableOpacity>
             ))
           )}
-        </View>
-      )}
-
-      {/* ── URGENT NEARBY JOBS ── */}
-      {urgentJobs.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <View style={styles.urgentTitleRow}>
-              <View style={styles.liveDot} />
-              <Text style={[styles.sectionLabel, { color: "#374151" }]}>Urgent Near You</Text>
-            </View>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/jobs")}>
-              <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
-            </TouchableOpacity>
-          </View>
-          {urgentJobs.map((job) => (
-            <TouchableOpacity
-              key={job.id}
-              style={styles.urgentJobRow}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push(`/job/${job.id}`);
-              }}
-              activeOpacity={0.85}
-            >
-              <View style={[styles.urgentCategoryDot, { backgroundColor: "#fef2f2" }]}>
-                <Feather name="zap" size={14} color="#ef4444" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.urgentJobTitle, { color: "#111827" }]}>{job.title}</Text>
-                <Text style={[styles.urgentJobMeta, { color: "#6b7280" }]}>
-                  {job.company} · {job.location}
-                </Text>
-              </View>
-              <View style={styles.urgentPayBox}>
-                <Text style={[styles.urgentPay, { color: "#2563EB" }]}>${job.pay}</Text>
-                <Text style={[styles.urgentPayType, { color: "#9ca3af" }]}>/{job.payType}</Text>
-              </View>
-              <Feather name="chevron-right" size={16} color="#9ca3af" />
-            </TouchableOpacity>
-          ))}
         </View>
       )}
 
