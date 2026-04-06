@@ -15,6 +15,7 @@ import { useApp } from "@/context/AppContext";
 import { useJobs } from "@/context/JobsContext";
 import { useMessages } from "@/context/MessagesContext";
 import * as Haptics from "expo-haptics";
+import NotificationsSheet from "@/components/NotificationsSheet";
 
 
 const QUICK_ACTIONS_EMPLOYER = [
@@ -39,6 +40,7 @@ export default function HomeScreen() {
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const isEmployer = userRole === "employer";
   const [isClockedIn, setIsClockedIn] = React.useState(false);
+  const [notifVisible, setNotifVisible] = React.useState(false);
 
   const myApplications = applications.filter((a) => a.workerId === "me");
   const myJobs = jobs.filter((j) => j.employerId === "emp-me");
@@ -54,8 +56,9 @@ export default function HomeScreen() {
   const quickActions = isEmployer ? QUICK_ACTIONS_EMPLOYER : workerQuickActions;
 
   return (
+    <View style={[styles.root, { backgroundColor: "#f0f4f8" }]}>
     <ScrollView
-      style={[styles.root, { backgroundColor: "#f0f4f8" }]}
+      style={{ flex: 1 }}
       contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
       showsVerticalScrollIndicator={false}
     >
@@ -81,7 +84,10 @@ export default function HomeScreen() {
             {totalUnread > 0 && (
               <TouchableOpacity
                 style={styles.notifBtn}
-                onPress={() => router.push("/notifications")}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setNotifVisible(true);
+                }}
               >
                 <Feather name="bell" size={20} color="#fff" />
                 <View style={styles.notifDot} />
@@ -374,6 +380,9 @@ export default function HomeScreen() {
         </View>
       )}
     </ScrollView>
+
+    <NotificationsSheet visible={notifVisible} onClose={() => setNotifVisible(false)} />
+    </View>
   );
 }
 
