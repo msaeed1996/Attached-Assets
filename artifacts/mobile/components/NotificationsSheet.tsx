@@ -401,7 +401,7 @@ export default function NotificationsSheet({ visible, onClose }: Props) {
             </ScrollView>
 
             {/* Mute / Dismiss actions — pinned at bottom */}
-            <View style={[styles.detailActions, { paddingTop: 12 }]}>
+            <View style={[styles.detailActions, { paddingTop: 12, paddingHorizontal: 2, paddingBottom: 8 }]}>
               <TouchableOpacity
                 style={styles.muteBtn}
                 onPress={() => { muteNotif(selected.id); setSelected(null); }}
@@ -752,6 +752,10 @@ const styles = StyleSheet.create({
   detailActions: {
     flexDirection: "row",
     gap: 10,
+    marginHorizontal: 2,
+    marginBottom: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#f1f5f9",
   },
   muteBtn: {
     flex: 1,
