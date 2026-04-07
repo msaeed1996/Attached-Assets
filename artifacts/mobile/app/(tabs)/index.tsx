@@ -236,14 +236,11 @@ export default function HomeScreen() {
                 router.push("/upcoming-schedule");
               }}
             >
-              {/* Top accent bar */}
-              <View style={styles.upcomingCardAccent} />
-
               <View style={styles.upcomingCardInner}>
-                {/* Header */}
+                {/* Header row */}
                 <View style={styles.upcomingCardHeader}>
                   <View style={styles.upcomingIconWrap}>
-                    <Feather name="briefcase" size={20} color="#2563eb" />
+                    <Feather name="briefcase" size={16} color="#2563eb" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.upcomingCardTitle} numberOfLines={1}>{next.jobTitle}</Text>
@@ -251,41 +248,36 @@ export default function HomeScreen() {
                   </View>
                   <View style={styles.upcomingEarningsBadge}>
                     <Text style={styles.upcomingEarningsValue}>${next.estimatedEarnings}</Text>
-                    <Text style={styles.upcomingEarningsLabel}>est.</Text>
                   </View>
                 </View>
 
-                {/* Details grid */}
+                {/* Inline details */}
                 <View style={styles.upcomingDetailsGrid}>
                   <View style={styles.upcomingDetailItem}>
-                    <Feather name="calendar" size={12} color="#6366f1" />
+                    <Feather name="calendar" size={11} color="#6366f1" />
                     <Text style={styles.upcomingDetailText}>{next.displayDate}</Text>
                   </View>
+                  <View style={styles.upcomingDetailDot} />
                   <View style={styles.upcomingDetailItem}>
-                    <Feather name="clock" size={12} color="#6366f1" />
+                    <Feather name="clock" size={11} color="#6366f1" />
                     <Text style={styles.upcomingDetailText}>{next.startTime} – {next.endTime}</Text>
                   </View>
+                  <View style={styles.upcomingDetailDot} />
                   <View style={styles.upcomingDetailItem}>
-                    <Feather name="map-pin" size={12} color="#6366f1" />
-                    <Text style={styles.upcomingDetailText} numberOfLines={1}>{next.location}</Text>
-                  </View>
-                  <View style={styles.upcomingDetailItem}>
-                    <Feather name="dollar-sign" size={12} color="#6366f1" />
-                    <Text style={styles.upcomingDetailText}>
-                      {next.durationHours}h · ${next.payRate}{next.payType === "hourly" ? "/hr" : " flat"}
-                    </Text>
+                    <Feather name="dollar-sign" size={11} color="#6366f1" />
+                    <Text style={styles.upcomingDetailText}>${next.payRate}{next.payType === "hourly" ? "/hr" : " flat"}</Text>
                   </View>
                 </View>
 
                 {/* Footer */}
                 <View style={styles.upcomingCardFooter}>
                   <View style={styles.confirmedBadge}>
-                    <Feather name="check-circle" size={12} color="#10b981" />
+                    <Feather name="check-circle" size={11} color="#10b981" />
                     <Text style={styles.confirmedBadgeText}>Confirmed</Text>
                   </View>
                   <View style={styles.seeScheduleBtn}>
-                    <Text style={styles.seeScheduleBtnText}>View Schedule</Text>
-                    <Feather name="arrow-right" size={13} color="#2563eb" />
+                    <Text style={styles.seeScheduleBtnText}>View all</Text>
+                    <Feather name="arrow-right" size={12} color="#2563eb" />
                   </View>
                 </View>
               </View>
@@ -849,114 +841,111 @@ const styles = StyleSheet.create({
   // ── UPCOMING SCHEDULE CARD ──
   upcomingCard: {
     backgroundColor: "#fff",
-    borderRadius: 20,
-    overflow: "hidden",
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "#e0e7ff",
+    overflow: "hidden",
     ...Platform.select({
-      ios: { shadowColor: "#4f46e5", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 14 },
-      android: { elevation: 5 },
+      ios: { shadowColor: "#4f46e5", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8 },
+      android: { elevation: 3 },
     }),
   },
-  upcomingCardAccent: {
-    height: 5,
-    backgroundColor: "#2563eb",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
   upcomingCardInner: {
-    padding: 16,
-    gap: 14,
+    padding: 13,
+    gap: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: "#2563eb",
+    borderRadius: 16,
   },
   upcomingCardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   upcomingIconWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: "#dbeafe",
     justifyContent: "center",
     alignItems: "center",
   },
   upcomingCardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
     color: "#111827",
-    letterSpacing: -0.2,
+    letterSpacing: -0.1,
   },
   upcomingCardCompany: {
-    fontSize: 13,
+    fontSize: 12,
     color: "#6b7280",
     fontWeight: "500",
-    marginTop: 2,
+    marginTop: 1,
   },
   upcomingEarningsBadge: {
-    alignItems: "flex-end",
+    backgroundColor: "#ecfdf5",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
   },
   upcomingEarningsValue: {
-    fontSize: 18,
+    fontSize: 13,
     fontWeight: "800",
     color: "#10b981",
-    letterSpacing: -0.4,
-  },
-  upcomingEarningsLabel: {
-    fontSize: 11,
-    color: "#9ca3af",
-    fontWeight: "600",
   },
   upcomingDetailsGrid: {
-    backgroundColor: "#f5f7ff",
-    borderRadius: 14,
-    padding: 12,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: "#e8eeff",
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
   },
   upcomingDetailItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 4,
   },
   upcomingDetailText: {
-    fontSize: 13,
-    color: "#374151",
+    fontSize: 12,
+    color: "#4b5563",
     fontWeight: "500",
-    flex: 1,
+  },
+  upcomingDetailDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "#d1d5db",
   },
   upcomingCardFooter: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 10,
+    paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: "#f3f4f6",
   },
   confirmedBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 4,
     backgroundColor: "#ecfdf5",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#a7f3d0",
   },
   confirmedBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     color: "#10b981",
   },
   seeScheduleBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 4,
   },
   seeScheduleBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
     color: "#2563eb",
   },
