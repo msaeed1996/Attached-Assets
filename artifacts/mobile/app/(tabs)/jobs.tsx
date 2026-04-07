@@ -50,7 +50,7 @@ export default function JobsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPadding + 16, backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Find Work</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>Available Jobs</Text>
         <View style={[styles.searchRow, { borderColor: colors.border, backgroundColor: colors.card }]}>
           <Feather name="search" size={18} color={colors.mutedForeground} />
           <TextInput
