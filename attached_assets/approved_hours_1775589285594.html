@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueGigs Approved Hours Redesign</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200 flex justify-center h-screen font-sans pb-10 pt-10">
+
+    <div class="w-full max-w-md bg-gray-50 h-full flex flex-col shadow-2xl rounded-3xl overflow-hidden border border-gray-300 relative">
+        
+        <header class="bg-blue-600 text-white p-4 sticky top-0 z-10 shadow-md shrink-0">
+            <h1 class="text-center text-xl font-bold tracking-wide">TrueGigs</h1>
+            
+            <nav class="flex justify-between mt-6 text-sm font-medium">
+                <div class="flex flex-col items-center opacity-70 hover:opacity-100 cursor-pointer">
+                    <i class="fas fa-user mb-1"></i> Profile
+                </div>
+                <div class="flex flex-col items-center opacity-70 hover:opacity-100 cursor-pointer">
+                    <i class="fas fa-briefcase mb-1"></i> My Jobs
+                </div>
+                <div class="flex flex-col items-center opacity-70 hover:opacity-100 cursor-pointer">
+                    <i class="fas fa-calendar-alt mb-1"></i> Availability
+                </div>
+                <div class="flex flex-col items-center text-yellow-300 border-b-2 border-yellow-300 pb-1 cursor-pointer">
+                    <i class="fas fa-check-circle mb-1"></i> Approved
+                </div>
+            </nav>
+        </header>
+
+        <div class="flex justify-around bg-white border-b border-gray-200 text-sm font-medium text-gray-500 sticky top-[104px] z-10 shrink-0">
+            <button class="py-3 px-4 hover:text-blue-600 transition">Dashboard</button>
+            <button class="py-3 px-4 hover:text-blue-600 transition">Job Board</button>
+            <button class="py-3 px-4 text-blue-600 border-b-2 border-blue-600">Approved Hrs</button>
+        </div>
+
+        <main class="flex-1 overflow-y-auto p-4 space-y-4">
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 transition hover:shadow-md">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">ASAP - Dishwasher</h2>
+                        <span class="text-sm text-gray-500 font-medium"><i class="far fa-calendar-alt mr-1"></i> 4th Mar 2026</span>
+                    </div>
+                    <div class="bg-green-100 text-green-800 font-bold px-3 py-1.5 rounded-lg text-lg shadow-sm">
+                        $110.40
+                    </div>
+                </div>
+                
+                <div class="space-y-2.5 text-sm text-gray-700 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <div class="flex items-start">
+                        <i class="far fa-building w-5 mt-0.5 text-blue-500"></i> 
+                        <span class="font-medium text-gray-900">Active Hospitality</span>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-map-marker-alt w-5 mt-0.5 text-blue-500"></i> 
+                        <span class="leading-snug">10018 4th Ave, Brooklyn, NY 11209</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-3">
+                    <div class="flex flex-col">
+                        <span class="text-gray-500 text-xs font-bold uppercase tracking-wide">Shift Time</span>
+                        <span class="font-medium text-gray-900"><i class="far fa-clock text-blue-400 mr-1"></i> 3:57 AM - 10:05 AM</span>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <span class="text-gray-500 text-xs font-bold uppercase tracking-wide">Total Hours</span>
+                        <span class="font-bold text-gray-900">6.13 hrs</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 transition hover:shadow-md">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">ASAP - Cook</h2>
+                        <span class="text-sm text-gray-500 font-medium"><i class="far fa-calendar-alt mr-1"></i> 2nd Mar 2026</span>
+                    </div>
+                    <div class="bg-green-100 text-green-800 font-bold px-3 py-1.5 rounded-lg text-lg shadow-sm">
+                        $127.92
+                    </div>
+                </div>
+                
+                <div class="space-y-2.5 text-sm text-gray-700 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <div class="flex items-start">
+                        <i class="far fa-building w-5 mt-0.5 text-blue-500"></i> 
+                        <span class="font-medium text-gray-900">Active Hospitality</span>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-map-marker-alt w-5 mt-0.5 text-blue-500"></i> 
+                        <span class="leading-snug">150 Main street Huntington NY 11743</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-3">
+                    <div class="flex flex-col">
+                        <span class="text-gray-500 text-xs font-bold uppercase tracking-wide">Shift Time</span>
+                        <span class="font-medium text-gray-900"><i class="far fa-clock text-blue-400 mr-1"></i> 11:35 PM - 4:42 AM</span>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <span class="text-gray-500 text-xs font-bold uppercase tracking-wide">Total Hours</span>
+                        <span class="font-bold text-gray-900">5.11 hrs</span>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+</body>
+</html>
