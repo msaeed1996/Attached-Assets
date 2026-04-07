@@ -182,25 +182,24 @@ export default function HomeScreen() {
                   <Feather name="map-pin" size={11} color="#2563EB" />
                   <Text style={styles.activeJobLocationText}>{activeJob.location}</Text>
                 </View>
-                <View style={styles.activeJobPayRow}>
-                  <Text style={styles.activeJobPay}>${activeJob.pay}.00</Text>
-                  <Text style={styles.activeJobPayUnit}>/{activeJob.payType}</Text>
-                </View>
               </View>
-              {/* Right: clock in */}
-              <TouchableOpacity
-                style={[styles.clockInBtn, { backgroundColor: isClockedIn ? "#10b981" : "#2563EB" }]}
-                onPress={() => {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  setIsClockedIn((v) => !v);
-                }}
-                activeOpacity={0.85}
-              >
-                <Feather name={isClockedIn ? "log-out" : "clock"} size={14} color="#fff" />
-                <Text style={styles.clockInText}>
-                  {isClockedIn ? "CLOCK OUT" : "CLOCK IN"}
-                </Text>
-              </TouchableOpacity>
+              {/* Right: clock in + pay */}
+              <View style={styles.activeJobRight}>
+                <TouchableOpacity
+                  style={[styles.clockInBtn, { backgroundColor: isClockedIn ? "#10b981" : "#2563EB" }]}
+                  onPress={() => {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    setIsClockedIn((v) => !v);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Feather name={isClockedIn ? "log-out" : "clock"} size={14} color="#fff" />
+                  <Text style={styles.clockInText}>
+                    {isClockedIn ? "CLOCK OUT" : "CLOCK IN"}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.activeJobPayBelow}>${activeJob.pay}/{activeJob.payType}</Text>
+              </View>
             </View>
           </View>
         );
@@ -644,6 +643,16 @@ const styles = StyleSheet.create({
   activeJobLeft: {
     flex: 1,
     gap: 3,
+  },
+  activeJobRight: {
+    alignItems: "center",
+    gap: 5,
+  },
+  activeJobPayBelow: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#6b7280",
+    textAlign: "center",
   },
   activeJobHeader: {
     flexDirection: "row",
