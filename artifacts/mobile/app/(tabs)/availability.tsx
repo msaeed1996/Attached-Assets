@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Platform,
+  Animated,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -67,6 +68,22 @@ export default function AvailabilityTab() {
   const [availability, setAvailability] = useState<Record<string, AvailabilityEntry>>({});
   const [selectedKey, setSelectedKey]   = useState(todayKey);
   const [showFullCal, setShowFullCal]   = useState(false);
+
+  // online / offline
+  const [isOnline,  setIsOnline]  = useState(true);
+  const [showTip,   setShowTip]   = useState(true);
+  const tipAnim = useRef(new Animated.Value(1)).current;
+
+  function dismissTip() {
+    Animated.timing(tipAnim, { toValue: 0, duration: 280, useNativeDriver: true }).start(() => setShowTip(false));
+  }
+
+  function toggleOnline() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsOnline(v => !v);
+    setShowTip(true);
+    tipAnim.setValue(1);
+  }
 
   // modal
   const [modalVisible,   setModalVisible]   = useState(false);
@@ -147,14 +164,48 @@ export default function AvailabilityTab() {
 
       {/* ── BLUE HEADER ── */}
       <View style={[styles.header, { paddingTop: topPad }]}>
-        <Text style={styles.headerTitle}>My Availability</Text>
-        {markedCount > 0 && (
-          <View style={styles.headerBadge}>
-            <Feather name="calendar" size={12} color="#93c5fd" />
-            <Text style={styles.headerBadgeText}>{markedCount} day{markedCount !== 1 ? "s" : ""} set</Text>
-          </View>
-        )}
+        <View>
+          <Text style={styles.headerTitle}>My Availability</Text>
+          {markedCount > 0 && (
+            <Text style={styles.headerSub}>{markedCount} day{markedCount !== 1 ? "s" : ""} marked this month</Text>
+          )}
+        </View>
+
+        {/* Online / Offline toggle */}
+        <TouchableOpacity
+          style={[styles.onlineToggle, { backgroundColor: isOnline ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.12)" }]}
+          onPress={toggleOnline}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.onlineDot, { backgroundColor: isOnline ? "#4ade80" : "#9ca3af" }]} />
+          <Text style={[styles.onlineToggleText, { color: isOnline ? "#4ade80" : "rgba(255,255,255,0.5)" }]}>
+            {isOnline ? "Online" : "Offline"}
+          </Text>
+          <Feather name="chevron-down" size={12} color={isOnline ? "#4ade80" : "rgba(255,255,255,0.4)"} />
+        </TouchableOpacity>
       </View>
+
+      {/* ── STATUS TIP BANNER ── */}
+      {showTip && (
+        <Animated.View style={[styles.tipBanner, { opacity: tipAnim, backgroundColor: isOnline ? "#f0fdf4" : "#fff7ed", borderColor: isOnline ? "#bbf7d0" : "#fed7aa" }]}>
+          <View style={[styles.tipIcon, { backgroundColor: isOnline ? "#dcfce7" : "#ffedd5" }]}>
+            <Feather name={isOnline ? "wifi" : "wifi-off"} size={16} color={isOnline ? "#16a34a" : "#f97316"} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.tipTitle, { color: isOnline ? "#15803d" : "#c2410c" }]}>
+              {isOnline ? "You're visible to employers" : "You're hidden from employers"}
+            </Text>
+            <Text style={[styles.tipBody, { color: isOnline ? "#166534" : "#9a3412" }]}>
+              {isOnline
+                ? "Employers can see your profile and invite you to jobs. Tap \"Offline\" anytime to pause new invitations."
+                : "You won't receive new job invitations while offline. Tap \"Online\" to start receiving jobs again."}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={dismissTip} style={styles.tipClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Feather name="x" size={14} color={isOnline ? "#16a34a" : "#f97316"} />
+          </TouchableOpacity>
+        </Animated.View>
+      )}
 
       {/* ── CALENDAR CARD ── */}
       <View style={styles.calCard}>
@@ -407,14 +458,43 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0759af",
     paddingHorizontal: 20,
-    paddingBottom: 14,
+    paddingBottom: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   headerTitle: { fontSize: 24, fontWeight: "800", color: "#fff", letterSpacing: -0.5 },
+  headerSub: { fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 2, fontWeight: "500" },
   headerBadge: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(255,255,255,0.15)", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   headerBadgeText: { color: "#93c5fd", fontSize: 12, fontWeight: "600" },
+
+  // Online toggle
+  onlineToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  onlineDot: { width: 8, height: 8, borderRadius: 4 },
+  onlineToggleText: { fontSize: 13, fontWeight: "700" },
+
+  // Tip banner
+  tipBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  tipIcon: { width: 32, height: 32, borderRadius: 16, justifyContent: "center", alignItems: "center", flexShrink: 0, marginTop: 1 },
+  tipTitle: { fontSize: 13, fontWeight: "800", marginBottom: 2 },
+  tipBody: { fontSize: 12, lineHeight: 18, fontWeight: "400" },
+  tipClose: { padding: 4, marginTop: 2 },
 
   // Calendar card
   calCard: {
