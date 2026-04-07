@@ -242,10 +242,7 @@ export default function HomeScreen() {
         return (
           <View style={styles.section}>
             <View style={styles.sectionRow}>
-              <View style={styles.urgentTitleRow}>
-                <View style={[styles.liveDot, { backgroundColor: "#10b981" }]} />
-                <Text style={[styles.sectionLabel, { color: "#374151" }]}>Upcoming Schedule</Text>
-              </View>
+              <Text style={[styles.sectionLabel, { color: "#374151" }]}>Upcoming Schedule</Text>
               <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -256,58 +253,26 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Single next-shift card */}
             <TouchableOpacity
-              style={styles.upcomingCard}
-              activeOpacity={0.92}
+              style={styles.upcomingJobRow}
+              activeOpacity={0.85}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push("/upcoming-schedule");
               }}
             >
-              <View style={styles.upcomingCardInner}>
-                {/* Header row */}
-                <View style={styles.upcomingCardHeader}>
-                  <View style={styles.upcomingIconWrap}>
-                    <Feather name="briefcase" size={16} color="#2563eb" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.upcomingCardTitle} numberOfLines={1}>{next.jobTitle}</Text>
-                    <Text style={styles.upcomingCardCompany}>{next.company}</Text>
-                  </View>
-                  <View style={styles.upcomingEarningsBadge}>
-                    <Text style={styles.upcomingEarningsValue}>${next.estimatedEarnings}</Text>
-                  </View>
-                </View>
-
-                {/* Inline details */}
-                <View style={styles.upcomingDetailsGrid}>
-                  <View style={styles.upcomingDetailItem}>
-                    <Feather name="calendar" size={11} color="#6366f1" />
-                    <Text style={styles.upcomingDetailText}>{next.displayDate}</Text>
-                  </View>
-                  <View style={styles.upcomingDetailDot} />
-                  <View style={styles.upcomingDetailItem}>
-                    <Feather name="clock" size={11} color="#6366f1" />
-                    <Text style={styles.upcomingDetailText}>{next.startTime} – {next.endTime}</Text>
-                  </View>
-                  <View style={styles.upcomingDetailDot} />
-                  <View style={styles.upcomingDetailItem}>
-                    <Feather name="dollar-sign" size={11} color="#6366f1" />
-                    <Text style={styles.upcomingDetailText}>${next.payRate}{next.payType === "hourly" ? "/hr" : " flat"}</Text>
-                  </View>
-                </View>
-
-                {/* Footer */}
-                <View style={styles.upcomingCardFooter}>
-                  <View style={styles.confirmedBadge}>
-                    <Feather name="check-circle" size={11} color="#10b981" />
-                    <Text style={styles.confirmedBadgeText}>Confirmed</Text>
-                  </View>
-                  <View style={styles.seeScheduleBtn}>
-                    <Text style={styles.seeScheduleBtnText}>View all</Text>
-                    <Feather name="arrow-right" size={12} color="#2563eb" />
-                  </View>
+              <View style={[styles.upcomingJobIcon, { backgroundColor: "#dbeafe" }]}>
+                <Feather name="briefcase" size={17} color="#2563eb" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.upcomingJobTitle, { color: "#111827" }]} numberOfLines={1}>{next.jobTitle}</Text>
+                <Text style={[styles.upcomingJobMeta, { color: "#6b7280" }]}>{next.company} · {next.displayDate} · {next.startTime}</Text>
+              </View>
+              <View style={styles.upcomingJobRight}>
+                <Text style={[styles.upcomingJobPay, { color: "#10b981" }]}>${next.estimatedEarnings}</Text>
+                <View style={styles.confirmedBadge}>
+                  <Feather name="check-circle" size={10} color="#10b981" />
+                  <Text style={styles.confirmedBadgeText}>Confirmed</Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -319,87 +284,39 @@ export default function HomeScreen() {
       {!isEmployer && (
         <View style={styles.section}>
           <View style={styles.sectionRow}>
-            <View style={styles.urgentTitleRow}>
-              <Feather name="mail" size={15} color="#7c3aed" />
-              <Text style={[styles.sectionLabel, { color: "#374151" }]}>Job Invitations</Text>
-              <View style={styles.inviteBadgeCount}>
-                <Text style={styles.inviteBadgeCountText}>2</Text>
-              </View>
-            </View>
+            <Text style={[styles.sectionLabel, { color: "#374151" }]}>Job Invitations</Text>
             <TouchableOpacity onPress={() => router.push("/(tabs)/invitations")}>
               <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
             </TouchableOpacity>
           </View>
 
           {SAMPLE_INVITATIONS.slice(0, 2).map((inv) => (
-            <View key={inv.id} style={[styles.inviteCard, inv.urgent && styles.inviteCardUrgent]}>
-              {/* Urgent ribbon */}
-              {inv.urgent && (
-                <View style={styles.inviteUrgentRibbon}>
-                  <Feather name="zap" size={9} color="#fff" />
-                  <Text style={styles.inviteUrgentRibbonText}>URGENT</Text>
-                </View>
-              )}
-
-              {/* Top row */}
-              <View style={styles.inviteTop}>
-                <View style={[styles.inviteIconWrap, { backgroundColor: inv.urgent ? "#fef2f2" : "#ede9fe" }]}>
-                  <Feather name="briefcase" size={16} color={inv.urgent ? "#ef4444" : "#7c3aed"} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.inviteTitle} numberOfLines={1}>{inv.jobTitle}</Text>
-                  <Text style={styles.inviteCompany}>{inv.company} · ⭐ {inv.companyRating}</Text>
-                </View>
-                <View style={styles.invitePayBox}>
-                  <Text style={styles.invitePayValue}>
-                    ${inv.pay}
-                  </Text>
-                  <Text style={styles.invitePayType}>/{inv.payType}</Text>
-                </View>
+            <TouchableOpacity
+              key={inv.id}
+              style={styles.upcomingJobRow}
+              activeOpacity={0.85}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/(tabs)/invitations");
+              }}
+            >
+              <View style={[styles.upcomingJobIcon, { backgroundColor: inv.urgent ? "#fef2f2" : "#ede9fe" }]}>
+                <Feather name="mail" size={17} color={inv.urgent ? "#ef4444" : "#7c3aed"} />
               </View>
-
-              {/* Meta row */}
-              <View style={styles.inviteMeta}>
-                <View style={styles.inviteMetaItem}>
-                  <Feather name="map-pin" size={11} color="#6b7280" />
-                  <Text style={styles.inviteMetaText}>{inv.location}</Text>
-                </View>
-                <View style={styles.inviteMetaDot} />
-                <View style={styles.inviteMetaItem}>
-                  <Feather name="calendar" size={11} color="#6b7280" />
-                  <Text style={styles.inviteMetaText}>{inv.startDate}</Text>
-                </View>
-                <View style={styles.inviteMetaDot} />
-                <View style={styles.inviteMetaItem}>
-                  <Feather name="clock" size={11} color="#6b7280" />
-                  <Text style={styles.inviteMetaText}>{inv.duration}</Text>
-                </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.upcomingJobTitle, { color: "#111827" }]} numberOfLines={1}>{inv.jobTitle}</Text>
+                <Text style={[styles.upcomingJobMeta, { color: "#6b7280" }]}>{inv.company} · {inv.startDate}</Text>
               </View>
-
-              {/* Actions */}
-              <View style={styles.inviteActions}>
-                <TouchableOpacity
-                  style={styles.inviteDeclineBtn}
-                  onPress={() => Haptics.selectionAsync()}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.inviteDeclineBtnText}>Decline</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.inviteAcceptBtn}
-                  onPress={() => {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    router.push("/(tabs)/invitations");
-                  }}
-                  activeOpacity={0.85}
-                >
-                  <Feather name="check" size={13} color="#fff" />
-                  <Text style={styles.inviteAcceptBtnText}>Accept</Text>
-                </TouchableOpacity>
+              <View style={styles.upcomingJobRight}>
+                <Text style={[styles.upcomingJobPay, { color: "#2563EB" }]}>${inv.pay}<Text style={[styles.upcomingJobPayType, { color: "#9ca3af" }]}>/{inv.payType}</Text></Text>
+                {inv.urgent && (
+                  <View style={styles.upcomingUrgentTag}>
+                    <Text style={styles.upcomingUrgentText}>Urgent</Text>
+                  </View>
+                )}
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
-
         </View>
       )}
 
