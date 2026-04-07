@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   },
   statTileLabel: {
     color: "rgba(255,255,255,0.55)",
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.6,
