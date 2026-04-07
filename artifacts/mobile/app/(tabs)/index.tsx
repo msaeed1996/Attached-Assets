@@ -140,38 +140,37 @@ export default function HomeScreen() {
         if (!activeJob) return null;
         return (
           <View style={styles.activeJobSection}>
-            <View style={[styles.activeJobCard, { borderColor: isClockedIn ? "#10b981" : "#2563EB" }]}>
-              <View style={styles.activeJobHeader}>
-                <View style={[styles.activeDot, { backgroundColor: isClockedIn ? "#10b981" : "#10b981" }]} />
-                <Text style={styles.activeJobBadge}>ACTIVE JOB — #{activeJob.id.slice(-5).toUpperCase()}</Text>
-              </View>
-              <Text style={styles.activeJobTitle}>{activeJob.title}</Text>
-              <View style={styles.activeJobLocation}>
-                <Feather name="map-pin" size={11} color="#2563EB" />
-                <Text style={styles.activeJobLocationText}>{activeJob.location}</Text>
-              </View>
-              <View style={styles.activeJobFooter}>
+            <View style={styles.activeJobCard}>
+              {/* Left: info */}
+              <View style={styles.activeJobLeft}>
+                <View style={styles.activeJobHeader}>
+                  <View style={styles.activeDot} />
+                  <Text style={styles.activeJobBadge}>ACTIVE JOB — #1</Text>
+                </View>
+                <Text style={styles.activeJobTitle} numberOfLines={1}>{activeJob.title}</Text>
+                <View style={styles.activeJobLocation}>
+                  <Feather name="map-pin" size={11} color="#2563EB" />
+                  <Text style={styles.activeJobLocationText}>{activeJob.location}</Text>
+                </View>
                 <View style={styles.activeJobPayRow}>
                   <Text style={styles.activeJobPay}>${activeJob.pay}.00</Text>
                   <Text style={styles.activeJobPayUnit}>/{activeJob.payType}</Text>
                 </View>
-                <TouchableOpacity
-                  style={[
-                    styles.clockInBtn,
-                    { backgroundColor: isClockedIn ? "#10b981" : "#2563EB", borderColor: isClockedIn ? "#10b981" : "#2563EB" }
-                  ]}
-                  onPress={() => {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    setIsClockedIn((v) => !v);
-                  }}
-                  activeOpacity={0.85}
-                >
-                  <Feather name={isClockedIn ? "log-out" : "clock"} size={13} color="#fff" />
-                  <Text style={[styles.clockInText, { color: "#fff" }]}>
-                    {isClockedIn ? "CLOCK OUT" : "CLOCK IN"}
-                  </Text>
-                </TouchableOpacity>
               </View>
+              {/* Right: clock in */}
+              <TouchableOpacity
+                style={[styles.clockInBtn, { backgroundColor: isClockedIn ? "#10b981" : "#2563EB" }]}
+                onPress={() => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  setIsClockedIn((v) => !v);
+                }}
+                activeOpacity={0.85}
+              >
+                <Feather name={isClockedIn ? "log-out" : "clock"} size={14} color="#fff" />
+                <Text style={styles.clockInText}>
+                  {isClockedIn ? "CLOCK OUT" : "CLOCK IN"}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         );
@@ -633,69 +632,68 @@ const styles = StyleSheet.create({
   },
   activeJobCard: {
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1.5,
-    borderColor: "#2563EB",
-    gap: 6,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "#dbeafe",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     ...Platform.select({
-      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 8 },
-      android: { elevation: 3 },
+      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6 },
+      android: { elevation: 2 },
     }),
+  },
+  activeJobLeft: {
+    flex: 1,
+    gap: 3,
   },
   activeJobHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
   activeDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: "#10b981",
   },
   activeJobBadge: {
     fontSize: 10,
     fontWeight: "700",
     color: "#2563EB",
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   activeJobTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "800",
     color: "#111827",
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
   activeJobLocation: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 3,
   },
   activeJobLocationText: {
     fontSize: 12,
-    color: "#2563EB",
+    color: "#6b7280",
     fontWeight: "500",
-  },
-  activeJobFooter: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    marginTop: 4,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e5e7eb",
   },
   activeJobPayRow: {
     flexDirection: "row",
     alignItems: "baseline",
-    gap: 2,
+    gap: 1,
+    marginTop: 1,
   },
   activeJobPay: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "800",
     color: "#111827",
-    letterSpacing: -0.4,
+    letterSpacing: -0.3,
   },
   activeJobPayUnit: {
     fontSize: 12,
@@ -706,21 +704,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    borderWidth: 0,
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
     ...Platform.select({
-      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 6 },
+      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 5 },
       android: { elevation: 3 },
     }),
   },
   clockInText: {
     fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 0.5,
+    color: "#fff",
+    letterSpacing: 0.4,
   },
-
   // ── QUICK ACTIONS ──
   quickGrid: {
     flexDirection: "row",
