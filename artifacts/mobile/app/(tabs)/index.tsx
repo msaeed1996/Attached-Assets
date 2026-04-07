@@ -16,6 +16,7 @@ import { useJobs } from "@/context/JobsContext";
 import { useMessages } from "@/context/MessagesContext";
 import * as Haptics from "expo-haptics";
 import NotificationsSheet from "@/components/NotificationsSheet";
+import { UPCOMING_SHIFTS } from "@/data/upcomingShifts";
 
 
 const QUICK_ACTIONS_EMPLOYER = [
@@ -206,46 +207,92 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
-      {/* ── ASAP JOBS (Urgent Near You) ── */}
-      {!isEmployer && urgentJobs.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <View style={styles.urgentTitleRow}>
-              <View style={styles.liveDot} />
-              <Text style={[styles.sectionLabel, { color: "#374151" }]}>ASAP Jobs</Text>
+      {/* ── UPCOMING SCHEDULE ── */}
+      {!isEmployer && UPCOMING_SHIFTS.length > 0 && (() => {
+        const next = UPCOMING_SHIFTS[0];
+        return (
+          <View style={styles.section}>
+            <View style={styles.sectionRow}>
+              <View style={styles.urgentTitleRow}>
+                <View style={[styles.liveDot, { backgroundColor: "#10b981" }]} />
+                <Text style={[styles.sectionLabel, { color: "#374151" }]}>Upcoming Schedule</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push("/upcoming-schedule");
+                }}
+              >
+                <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all ({UPCOMING_SHIFTS.length})</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/jobs")}>
-              <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
-            </TouchableOpacity>
-          </View>
-          {urgentJobs.map((job) => (
+
+            {/* Single next-shift card */}
             <TouchableOpacity
-              key={job.id}
-              style={styles.urgentJobRow}
+              style={styles.upcomingCard}
+              activeOpacity={0.92}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push(`/job/${job.id}`);
+                router.push("/upcoming-schedule");
               }}
-              activeOpacity={0.85}
             >
-              <View style={[styles.urgentCategoryDot, { backgroundColor: "#fef2f2" }]}>
-                <Feather name="zap" size={14} color="#ef4444" />
+              {/* Top accent bar */}
+              <View style={styles.upcomingCardAccent} />
+
+              <View style={styles.upcomingCardInner}>
+                {/* Header */}
+                <View style={styles.upcomingCardHeader}>
+                  <View style={styles.upcomingIconWrap}>
+                    <Feather name="briefcase" size={20} color="#2563eb" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.upcomingCardTitle} numberOfLines={1}>{next.jobTitle}</Text>
+                    <Text style={styles.upcomingCardCompany}>{next.company}</Text>
+                  </View>
+                  <View style={styles.upcomingEarningsBadge}>
+                    <Text style={styles.upcomingEarningsValue}>${next.estimatedEarnings}</Text>
+                    <Text style={styles.upcomingEarningsLabel}>est.</Text>
+                  </View>
+                </View>
+
+                {/* Details grid */}
+                <View style={styles.upcomingDetailsGrid}>
+                  <View style={styles.upcomingDetailItem}>
+                    <Feather name="calendar" size={12} color="#6366f1" />
+                    <Text style={styles.upcomingDetailText}>{next.displayDate}</Text>
+                  </View>
+                  <View style={styles.upcomingDetailItem}>
+                    <Feather name="clock" size={12} color="#6366f1" />
+                    <Text style={styles.upcomingDetailText}>{next.startTime} – {next.endTime}</Text>
+                  </View>
+                  <View style={styles.upcomingDetailItem}>
+                    <Feather name="map-pin" size={12} color="#6366f1" />
+                    <Text style={styles.upcomingDetailText} numberOfLines={1}>{next.location}</Text>
+                  </View>
+                  <View style={styles.upcomingDetailItem}>
+                    <Feather name="dollar-sign" size={12} color="#6366f1" />
+                    <Text style={styles.upcomingDetailText}>
+                      {next.durationHours}h · ${next.payRate}{next.payType === "hourly" ? "/hr" : " flat"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Footer */}
+                <View style={styles.upcomingCardFooter}>
+                  <View style={styles.confirmedBadge}>
+                    <Feather name="check-circle" size={12} color="#10b981" />
+                    <Text style={styles.confirmedBadgeText}>Confirmed</Text>
+                  </View>
+                  <View style={styles.seeScheduleBtn}>
+                    <Text style={styles.seeScheduleBtnText}>View Schedule</Text>
+                    <Feather name="arrow-right" size={13} color="#2563eb" />
+                  </View>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.urgentJobTitle, { color: "#111827" }]}>{job.title}</Text>
-                <Text style={[styles.urgentJobMeta, { color: "#6b7280" }]}>
-                  {job.company} · {job.location}
-                </Text>
-              </View>
-              <View style={styles.urgentPayBox}>
-                <Text style={[styles.urgentPay, { color: "#2563EB" }]}>${job.pay}</Text>
-                <Text style={[styles.urgentPayType, { color: "#9ca3af" }]}>/{job.payType}</Text>
-              </View>
-              <Feather name="chevron-right" size={16} color="#9ca3af" />
             </TouchableOpacity>
-          ))}
-        </View>
-      )}
+          </View>
+        );
+      })()}
 
       {/* ── PUBLIC JOBS ── */}
       {!isEmployer && (
@@ -797,6 +844,121 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
     color: "#ef4444",
+  },
+
+  // ── UPCOMING SCHEDULE CARD ──
+  upcomingCard: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#e0e7ff",
+    ...Platform.select({
+      ios: { shadowColor: "#4f46e5", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 14 },
+      android: { elevation: 5 },
+    }),
+  },
+  upcomingCardAccent: {
+    height: 5,
+    backgroundColor: "#2563eb",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  upcomingCardInner: {
+    padding: 16,
+    gap: 14,
+  },
+  upcomingCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  upcomingIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: "#dbeafe",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  upcomingCardTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.2,
+  },
+  upcomingCardCompany: {
+    fontSize: 13,
+    color: "#6b7280",
+    fontWeight: "500",
+    marginTop: 2,
+  },
+  upcomingEarningsBadge: {
+    alignItems: "flex-end",
+  },
+  upcomingEarningsValue: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#10b981",
+    letterSpacing: -0.4,
+  },
+  upcomingEarningsLabel: {
+    fontSize: 11,
+    color: "#9ca3af",
+    fontWeight: "600",
+  },
+  upcomingDetailsGrid: {
+    backgroundColor: "#f5f7ff",
+    borderRadius: 14,
+    padding: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#e8eeff",
+  },
+  upcomingDetailItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  upcomingDetailText: {
+    fontSize: 13,
+    color: "#374151",
+    fontWeight: "500",
+    flex: 1,
+  },
+  upcomingCardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+  },
+  confirmedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#ecfdf5",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+  },
+  confirmedBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#10b981",
+  },
+  seeScheduleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  seeScheduleBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2563eb",
   },
 
   // ── APP STATUS ──
