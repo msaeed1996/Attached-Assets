@@ -19,28 +19,9 @@ const DAYS_SHORT  = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const DAYS_LONG   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-type ShiftType   = "Morning" | "Afternoon" | "Evening" | "Night";
-type JobStatus   = "ACCEPTED" | "INVITED" | "PENDING" | "CONFIRMED";
-type AvailabilityEntry = { shifts: ShiftType[]; note: string };
-type BlockEntry  = { dayBlocked: boolean; blockedShifts: ShiftType[] };
-
-const SHIFT_META: Record<ShiftType, {
-  shiftRange: string; icon: string; color: string; bg: string;
-  jobTitle: string; location: string;
-  startTime: string; endTime: string; status: JobStatus;
-}> = {
-  Morning:   { shiftRange: "6am – 12pm",  icon: "sun",   color: "#f59e0b", bg: "#fef3c7", jobTitle: "Breakfast Prep Cook",  location: "Visitor Center Dr",               startTime: "9:00 AM",  endTime: "1:00 PM",  status: "ACCEPTED" },
-  Afternoon: { shiftRange: "12pm – 6pm",  icon: "cloud", color: "#f97316", bg: "#fff7ed", jobTitle: "Food Service Worker",  location: "Legion Field, 400 Graymont Ave W", startTime: "1:00 PM",  endTime: "6:00 PM",  status: "INVITED"  },
-  Evening:   { shiftRange: "6pm – 10pm",  icon: "moon",  color: "#10b981", bg: "#f0fdf4", jobTitle: "Event Server",         location: "Grand Hotel Ballroom",            startTime: "6:00 PM",  endTime: "10:00 PM", status: "ACCEPTED" },
-  Night:     { shiftRange: "10pm – 6am",  icon: "star",  color: "#6b7280", bg: "#f9fafb", jobTitle: "Security Staff",       location: "Metro Station West",              startTime: "10:00 PM", endTime: "6:00 AM",  status: "PENDING"  },
-};
-
-const STATUS_STYLE: Record<JobStatus, { color: string; bg: string; border: string; bar: string }> = {
-  ACCEPTED:  { color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", bar: "#22c55e" },
-  INVITED:   { color: "#c2410c", bg: "#fff7ed", border: "#fed7aa", bar: "#f97316" },
-  CONFIRMED: { color: "#1d4ed8", bg: "#eff6ff", border: "#bfdbfe", bar: "#3b82f6" },
-  PENDING:   { color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb", bar: "#9ca3af" },
-};
+type TimeSlot = { id: string; startH: number; startM: number; endH: number; endM: number };
+type AvailabilityEntry = { slots: TimeSlot[] };
+type BlockEntry = { dayBlocked: boolean; blockedSlots: TimeSlot[] };
 
 function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDay(y: number, m: number) { return new Date(y, m, 1).getDay(); }
@@ -55,6 +36,89 @@ function formatDayHeader(key: string) {
   const [y, m, d] = key.split("-").map(Number);
   return `${DAYS_LONG[parseDow(key)]}, ${MONTH_NAMES[m - 1]} ${d}`;
 }
+function fmt(h: number, min: number) {
+  const ap = h >= 12 ? "PM" : "AM";
+  const hh = h % 12 === 0 ? 12 : h % 12;
+  return `${hh}:${String(min).padStart(2, "0")} ${ap}`;
+}
+function uid() { return Math.random().toString(36).slice(2, 9); }
+
+const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+function TimePicker({
+  label, hour, minute, onHourChange, onMinuteChange,
+}: {
+  label: string; hour: number; minute: number;
+  onHourChange: (h: number) => void; onMinuteChange: (m: number) => void;
+}) {
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const display12 = hour % 12 === 0 ? 12 : hour % 12;
+
+  function stepHour(dir: 1 | -1) {
+    Haptics.selectionAsync();
+    onHourChange((hour + dir + 24) % 24);
+  }
+  function stepMinute(dir: 1 | -1) {
+    Haptics.selectionAsync();
+    const idx = MINUTES.indexOf(minute);
+    const next = (idx + dir + MINUTES.length) % MINUTES.length;
+    onMinuteChange(MINUTES[next]);
+  }
+  function toggleAmPm() {
+    Haptics.selectionAsync();
+    onHourChange((hour + 12) % 24);
+  }
+
+  return (
+    <View style={tpStyles.wrap}>
+      <Text style={tpStyles.label}>{label}</Text>
+      <View style={tpStyles.row}>
+        {/* Hour */}
+        <View style={tpStyles.col}>
+          <TouchableOpacity style={tpStyles.arrow} onPress={() => stepHour(1)}>
+            <Feather name="chevron-up" size={18} color="#2563EB" />
+          </TouchableOpacity>
+          <Text style={tpStyles.timeNum}>{String(display12).padStart(2, "0")}</Text>
+          <TouchableOpacity style={tpStyles.arrow} onPress={() => stepHour(-1)}>
+            <Feather name="chevron-down" size={18} color="#2563EB" />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={tpStyles.colon}>:</Text>
+
+        {/* Minute */}
+        <View style={tpStyles.col}>
+          <TouchableOpacity style={tpStyles.arrow} onPress={() => stepMinute(1)}>
+            <Feather name="chevron-up" size={18} color="#2563EB" />
+          </TouchableOpacity>
+          <Text style={tpStyles.timeNum}>{String(minute).padStart(2, "0")}</Text>
+          <TouchableOpacity style={tpStyles.arrow} onPress={() => stepMinute(-1)}>
+            <Feather name="chevron-down" size={18} color="#2563EB" />
+          </TouchableOpacity>
+        </View>
+
+        {/* AM / PM */}
+        <TouchableOpacity style={tpStyles.ampmBox} onPress={toggleAmPm} activeOpacity={0.8}>
+          <Text style={[tpStyles.ampmHalf, ampm === "AM" && tpStyles.ampmActive]}>AM</Text>
+          <Text style={[tpStyles.ampmHalf, ampm === "PM" && tpStyles.ampmActive]}>PM</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const tpStyles = StyleSheet.create({
+  wrap: { flex: 1, alignItems: "center" },
+  label: { fontSize: 11, fontWeight: "700", color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 },
+  row: { flexDirection: "row", alignItems: "center", gap: 6 },
+  col: { alignItems: "center", gap: 4 },
+  arrow: { width: 32, height: 28, justifyContent: "center", alignItems: "center" },
+  timeNum: { fontSize: 28, fontWeight: "800", color: "#0f172a", width: 42, textAlign: "center" },
+  colon: { fontSize: 26, fontWeight: "800", color: "#0f172a", marginBottom: 4 },
+  ampmBox: { backgroundColor: "#f1f5f9", borderRadius: 10, overflow: "hidden", marginLeft: 4 },
+  ampmHalf: { paddingHorizontal: 10, paddingVertical: 8, fontSize: 12, fontWeight: "700", color: "#9ca3af" },
+  ampmActive: { backgroundColor: "#2563EB", color: "#fff" },
+});
 
 export default function AvailabilityTab() {
   const colors = useColors();
@@ -67,9 +131,9 @@ export default function AvailabilityTab() {
   const [viewYear,  setViewYear]  = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [availability, setAvailability] = useState<Record<string, AvailabilityEntry>>({});
-  const [dayBlocks, setDayBlocks] = useState<Record<string, BlockEntry>>({});
-  const [selectedKey, setSelectedKey] = useState(todayKey);
-  const [showFullCal, setShowFullCal] = useState(false);
+  const [dayBlocks,    setDayBlocks]    = useState<Record<string, BlockEntry>>({});
+  const [selectedKey,  setSelectedKey]  = useState(todayKey);
+  const [showFullCal,  setShowFullCal]  = useState(false);
 
   // global online/offline
   const [isOnline, setIsOnline] = useState(true);
@@ -87,14 +151,60 @@ export default function AvailabilityTab() {
     tipAnim.setValue(1);
   }
 
-  // availability modal
-  const [modalVisible,  setModalVisible]  = useState(false);
-  const [editingShifts, setEditingShifts] = useState<ShiftType[]>([]);
+  // ── Add-time modal ──
+  const [addVisible,  setAddVisible]  = useState(false);
+  const [startH, setStartH] = useState(9);
+  const [startM, setStartM] = useState(0);
+  const [endH,   setEndH]   = useState(17);
+  const [endM,   setEndM]   = useState(0);
 
-  // block modal
+  function openAddModal() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setStartH(9); setStartM(0); setEndH(17); setEndM(0);
+    setAddVisible(true);
+  }
+  function saveSlot() {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const slot: TimeSlot = { id: uid(), startH, startM, endH, endM };
+    setAvailability(prev => {
+      const existing = prev[selectedKey]?.slots ?? [];
+      return { ...prev, [selectedKey]: { slots: [...existing, slot] } };
+    });
+    setAddVisible(false);
+  }
+  function deleteSlot(id: string) {
+    Haptics.selectionAsync();
+    setAvailability(prev => {
+      const slots = (prev[selectedKey]?.slots ?? []).filter(s => s.id !== id);
+      if (slots.length === 0) {
+        const next = { ...prev }; delete next[selectedKey]; return next;
+      }
+      return { ...prev, [selectedKey]: { slots } };
+    });
+  }
+
+  // ── Block modal ──
   const [blockVisible,      setBlockVisible]      = useState(false);
   const [editingDayBlocked, setEditingDayBlocked] = useState(false);
-  const [editingBlockedShifts, setEditingBlockedShifts] = useState<ShiftType[]>([]);
+
+  function openBlockModal() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setEditingDayBlocked(dayBlocks[selectedKey]?.dayBlocked ?? false);
+    setBlockVisible(true);
+  }
+  function saveBlock() {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (!editingDayBlocked) {
+      const next = { ...dayBlocks }; delete next[selectedKey]; setDayBlocks(next);
+    } else {
+      setDayBlocks(prev => ({ ...prev, [selectedKey]: { dayBlocked: true, blockedSlots: [] } }));
+    }
+    setBlockVisible(false);
+  }
+  function clearBlock() {
+    const next = { ...dayBlocks }; delete next[selectedKey]; setDayBlocks(next);
+    setBlockVisible(false);
+  }
 
   const daysInMonth = getDaysInMonth(viewYear, viewMonth);
   const firstDay    = getFirstDay(viewYear, viewMonth);
@@ -109,152 +219,85 @@ export default function AvailabilityTab() {
     if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
     else setViewMonth(m => m + 1);
   }
-
   function selectDay(key: string) {
     Haptics.selectionAsync();
     setSelectedKey(key);
     if (showFullCal) setShowFullCal(false);
   }
 
-  // ── Availability modal ──
-  function openModal() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setEditingShifts(availability[selectedKey]?.shifts ?? []);
-    setModalVisible(true);
-  }
-  function toggleShift(s: ShiftType) {
-    Haptics.selectionAsync();
-    setEditingShifts(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
-  }
-  function saveDay() {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    if (editingShifts.length === 0) {
-      const next = { ...availability }; delete next[selectedKey]; setAvailability(next);
-    } else {
-      setAvailability(prev => ({ ...prev, [selectedKey]: { shifts: editingShifts, note: "" } }));
-    }
-    setModalVisible(false);
-  }
-  function clearDay() {
-    Haptics.selectionAsync();
-    const next = { ...availability }; delete next[selectedKey]; setAvailability(next);
-    setModalVisible(false);
-  }
-
-  // ── Block modal ──
-  function openBlockModal() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const existing = dayBlocks[selectedKey];
-    setEditingDayBlocked(existing?.dayBlocked ?? false);
-    setEditingBlockedShifts(existing?.blockedShifts ?? []);
-    setBlockVisible(true);
-  }
-  function toggleBlockShift(s: ShiftType) {
-    Haptics.selectionAsync();
-    setEditingBlockedShifts(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
-  }
-  function saveBlock() {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const hasAnything = editingDayBlocked || editingBlockedShifts.length > 0;
-    if (!hasAnything) {
-      const next = { ...dayBlocks }; delete next[selectedKey]; setDayBlocks(next);
-    } else {
-      setDayBlocks(prev => ({ ...prev, [selectedKey]: { dayBlocked: editingDayBlocked, blockedShifts: editingBlockedShifts } }));
-    }
-    setBlockVisible(false);
-  }
-  function clearBlock() {
-    Haptics.selectionAsync();
-    const next = { ...dayBlocks }; delete next[selectedKey]; setDayBlocks(next);
-    setBlockVisible(false);
-  }
-
-  // ── helpers ──
-  function getCalInfo(key: string) {
-    const shifts = availability[key]?.shifts ?? [];
-    const block  = dayBlocks[key];
-    const hasAccepted = shifts.some(s => ["ACCEPTED","CONFIRMED"].includes(SHIFT_META[s].status));
-    const hasInvited  = shifts.some(s => SHIFT_META[s].status === "INVITED");
-    const hasPending  = shifts.some(s => SHIFT_META[s].status === "PENDING");
-    return {
-      hasAccepted, hasInvited, hasPending, hasAny: shifts.length > 0,
-      isDayBlocked: block?.dayBlocked ?? false,
-      hasBlockedShifts: (block?.blockedShifts?.length ?? 0) > 0,
-    };
-  }
-
   const days  = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const cells = [...Array(firstDay).fill(null), ...days];
-  const selJobs  = availability[selectedKey]?.shifts ?? [];
-  const selBlock = dayBlocks[selectedKey];
+
+  const selSlots     = availability[selectedKey]?.slots ?? [];
+  const selBlock     = dayBlocks[selectedKey];
   const isDayBlocked = selBlock?.dayBlocked ?? false;
-  const blockedShifts = selBlock?.blockedShifts ?? [];
-  const hasAnyBlock = isDayBlocked || blockedShifts.length > 0;
 
   const markedCount = Object.keys(availability).filter(k =>
     k.startsWith(`${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`)
   ).length;
 
-  // ── shared day/cell renderer ──
-  function renderCalCell(day: number, compact = false) {
-    const key  = toKey(viewYear, viewMonth, day);
+  function getCalFlags(key: string) {
+    const hasSlots  = (availability[key]?.slots?.length ?? 0) > 0;
+    const isDayB    = dayBlocks[key]?.dayBlocked ?? false;
+    return { hasSlots, isDayB };
+  }
+
+  function renderDayCell(day: number, compact = false) {
+    const key   = toKey(viewYear, viewMonth, day);
     const isToday = key === todayKey;
     const isSel   = key === selectedKey;
-    const isPast  = new Date(viewYear, viewMonth, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const dow     = DAYS_SHORT[new Date(viewYear, viewMonth, day).getDay()];
-    const { hasAccepted, hasInvited, hasPending, hasAny, isDayBlocked: dayB, hasBlockedShifts } = getCalInfo(key);
+    const { hasSlots, isDayB } = getCalFlags(key);
 
     if (compact) {
-      // Full-month grid cell
       return (
         <TouchableOpacity
           key={key}
-          style={[styles.gridCell, isSel && styles.gridCellSel, isToday && !isSel && styles.gridCellToday, dayB && !isSel && styles.gridCellBlocked]}
+          style={[styles.gridCell, isSel && styles.gridCellSel, isToday && !isSel && styles.gridCellToday, isDayB && !isSel && styles.gridCellBlocked]}
           onPress={() => selectDay(key)}
           activeOpacity={0.7}
         >
-          {dayB
+          {isDayB
             ? <Feather name="x" size={14} color={isSel ? "#fff" : "#ef4444"} />
-            : <Text style={[styles.gridDayNum, isSel && { color: "#fff" }, isToday && !isSel && { color: "#2563EB", fontWeight: "800" }, isPast && !isSel && { color: "#cbd5e1" }]}>{day}</Text>
+            : <Text style={[styles.gridDayNum, isSel && { color: "#fff" }, isToday && !isSel && { color: "#2563EB", fontWeight: "800" }]}>{day}</Text>
           }
-          <View style={styles.dotRow}>
-            {!dayB && hasAccepted  && <View style={[styles.dot, { backgroundColor: isSel ? "#bbf7d0" : "#22c55e" }]} />}
-            {!dayB && hasInvited   && <View style={[styles.dot, { backgroundColor: isSel ? "#fed7aa" : "#f97316" }]} />}
-            {!dayB && hasPending   && <View style={[styles.dot, { backgroundColor: isSel ? "#e5e7eb" : "#9ca3af" }]} />}
-            {hasBlockedShifts && !dayB && <View style={[styles.dot, { backgroundColor: isSel ? "#fecaca" : "#ef4444" }]} />}
-          </View>
+          {hasSlots && !isDayB && (
+            <View style={[styles.dot, { backgroundColor: isSel ? "#bfdbfe" : "#2563EB" }]} />
+          )}
         </TouchableOpacity>
       );
     }
 
-    // Horizontal strip cell
     return (
       <TouchableOpacity
         key={key}
-        style={[styles.dayCell, isSel && styles.dayCellSel, isToday && !isSel && styles.dayCellToday, dayB && !isSel && styles.dayCellBlocked]}
+        style={[styles.dayCell, isSel && styles.dayCellSel, isToday && !isSel && styles.dayCellToday, isDayB && !isSel && styles.dayCellBlocked]}
         onPress={() => selectDay(key)}
         activeOpacity={0.75}
       >
-        <Text style={[styles.dayCellDow, isSel && { color: "#fff" }, isPast && !isSel && { color: "#cbd5e1" }, dayB && !isSel && { color: "#ef4444" }]}>{dow}</Text>
-        {dayB
+        <Text style={[styles.dayCellDow, isSel && { color: "#fff" }, isDayB && !isSel && { color: "#ef4444" }]}>{dow}</Text>
+        {isDayB
           ? <Feather name="x-circle" size={22} color={isSel ? "#fca5a5" : "#ef4444"} />
-          : <Text style={[styles.dayCellNum, isSel && { color: "#fff" }, isToday && !isSel && { color: "#2563EB", fontWeight: "800" }, isPast && !isSel && { color: "#cbd5e1" }]}>{day}</Text>
+          : <Text style={[styles.dayCellNum, isSel && { color: "#fff" }, isToday && !isSel && { color: "#2563EB", fontWeight: "800" }]}>{day}</Text>
         }
-        <View style={styles.dotRow}>
-          {!dayB && hasAccepted && <View style={[styles.dot, { backgroundColor: isSel ? "#bbf7d0" : "#22c55e" }]} />}
-          {!dayB && hasInvited  && <View style={[styles.dot, { backgroundColor: isSel ? "#fed7aa" : "#f97316" }]} />}
-          {!dayB && hasPending && !hasAccepted && !hasInvited && <View style={[styles.dot, { backgroundColor: isSel ? "#e5e7eb" : "#9ca3af" }]} />}
-          {hasBlockedShifts && !dayB && <View style={[styles.dot, { backgroundColor: isSel ? "#fca5a5" : "#ef4444" }]} />}
-          {!hasAny && !dayB && !hasBlockedShifts && <View style={{ width: 6, height: 6 }} />}
-        </View>
+        {hasSlots && !isDayB
+          ? <View style={[styles.dot, { backgroundColor: isSel ? "#bfdbfe" : "#2563EB" }]} />
+          : <View style={{ width: 6, height: 6 }} />
+        }
       </TouchableOpacity>
     );
   }
 
+  const isTimeValid = (() => {
+    const s = startH * 60 + startM;
+    const e = endH   * 60 + endM;
+    return e > s;
+  })();
+
   return (
     <View style={[styles.root, { backgroundColor: "#f1f5f9" }]}>
 
-      {/* ── BLUE HEADER ── */}
+      {/* ── HEADER ── */}
       <View style={[styles.header, { paddingTop: topPad }]}>
         <View>
           <Text style={styles.headerTitle}>My Availability</Text>
@@ -275,7 +318,7 @@ export default function AvailabilityTab() {
         </TouchableOpacity>
       </View>
 
-      {/* ── STATUS TIP BANNER ── */}
+      {/* ── TIP BANNER ── */}
       {showTip && (
         <Animated.View style={[styles.tipBanner, { opacity: tipAnim, backgroundColor: isOnline ? "#f0fdf4" : "#fff7ed", borderColor: isOnline ? "#bbf7d0" : "#fed7aa" }]}>
           <View style={[styles.tipIcon, { backgroundColor: isOnline ? "#dcfce7" : "#ffedd5" }]}>
@@ -287,8 +330,8 @@ export default function AvailabilityTab() {
             </Text>
             <Text style={[styles.tipBody, { color: isOnline ? "#166534" : "#9a3412" }]}>
               {isOnline
-                ? "You're online by default. Mark specific days or shifts as unavailable below."
-                : "You won't receive new job invitations. Tap \"Online\" to start receiving jobs again."}
+                ? "Tap any day, then add a time slot to mark your availability."
+                : "You won't receive new job invitations. Tap \"Online\" to resume."}
             </Text>
           </View>
           <TouchableOpacity onPress={dismissTip} style={styles.tipClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -297,7 +340,7 @@ export default function AvailabilityTab() {
         </Animated.View>
       )}
 
-      {/* ── CALENDAR CARD ── */}
+      {/* ── CALENDAR ── */}
       <View style={styles.calCard}>
         <View style={styles.monthNav}>
           <TouchableOpacity style={styles.navArrow} onPress={prevMonth}>
@@ -316,19 +359,16 @@ export default function AvailabilityTab() {
             </View>
             <View style={styles.gridWrap}>
               {cells.map((day, idx) =>
-                !day
-                  ? <View key={`e-${idx}`} style={styles.gridCell} />
-                  : renderCalCell(day, true)
+                !day ? <View key={`e-${idx}`} style={styles.gridCell} /> : renderDayCell(day, true)
               )}
             </View>
           </>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayStrip}>
-            {days.map(day => renderCalCell(day, false))}
+            {days.map(day => renderDayCell(day, false))}
           </ScrollView>
         )}
 
-        {/* Footer: toggle + legend */}
         <View style={styles.calFooter}>
           <TouchableOpacity
             style={styles.calToggleBtn}
@@ -338,15 +378,10 @@ export default function AvailabilityTab() {
             <Feather name={showFullCal ? "chevron-up" : "grid"} size={12} color="#2563EB" />
             <Text style={styles.calToggleText}>{showFullCal ? "Week view" : "Full month"}</Text>
           </TouchableOpacity>
-
           <View style={styles.legend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: "#22c55e" }]} />
-              <Text style={styles.legendText}>Accepted</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: "#f97316" }]} />
-              <Text style={styles.legendText}>Invited</Text>
+              <View style={[styles.legendDot, { backgroundColor: "#2563EB" }]} />
+              <Text style={styles.legendText}>Available</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: "#ef4444" }]} />
@@ -356,30 +391,28 @@ export default function AvailabilityTab() {
         </View>
       </View>
 
-      {/* ── JOB LIST ── */}
+      {/* ── DAY VIEW ── */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: insets.bottom + 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Day header + block status */}
         <View style={styles.dayHeaderRow}>
           <Text style={styles.dayHeader}>{formatDayHeader(selectedKey)}</Text>
           {isDayBlocked && (
             <View style={styles.dayBlockedBadge}>
               <Feather name="slash" size={11} color="#ef4444" />
-              <Text style={styles.dayBlockedBadgeText}>Day Blocked</Text>
+              <Text style={styles.dayBlockedBadgeText}>Blocked</Text>
             </View>
           )}
         </View>
 
-        {/* Day-blocked banner */}
         {isDayBlocked && (
           <View style={styles.blockedDayBanner}>
             <Feather name="alert-circle" size={16} color="#ef4444" />
             <View style={{ flex: 1 }}>
-              <Text style={styles.blockedDayBannerTitle}>You're marked unavailable this day</Text>
-              <Text style={styles.blockedDayBannerSub}>Employers won't be able to invite you for any shift on this date.</Text>
+              <Text style={styles.blockedDayBannerTitle}>Unavailable all day</Text>
+              <Text style={styles.blockedDayBannerSub}>Employers won't be able to invite you on this date.</Text>
             </View>
             <TouchableOpacity onPress={openBlockModal} style={styles.blockedEditBtn}>
               <Text style={styles.blockedEditBtnText}>Edit</Text>
@@ -387,149 +420,128 @@ export default function AvailabilityTab() {
           </View>
         )}
 
-        {selJobs.length > 0 ? (
-          selJobs.map(shift => {
-            const meta    = SHIFT_META[shift];
-            const sStyle  = STATUS_STYLE[meta.status];
-            const isShiftBlocked = !isDayBlocked && blockedShifts.includes(shift);
-            return (
-              <TouchableOpacity
-                key={shift}
-                style={[styles.jobCard, isShiftBlocked && styles.jobCardBlocked]}
-                onPress={() => openModal()}
-                activeOpacity={0.85}
-              >
-                <View style={[styles.jobBar, { backgroundColor: isShiftBlocked ? "#ef4444" : sStyle.bar }]} />
-                <View style={styles.jobBody}>
-                  <View style={styles.jobRow}>
-                    <View style={{ flex: 1, paddingRight: 8 }}>
-                      <Text style={[styles.jobTitle, isShiftBlocked && { color: "#9ca3af" }]}>{meta.jobTitle}</Text>
-                      <View style={styles.jobDetailRow}>
-                        <Feather name="map-pin" size={11} color={isShiftBlocked ? "#d1d5db" : "#3b82f6"} style={{ marginTop: 1 }} />
-                        <Text style={[styles.jobDetailText, isShiftBlocked && { color: "#d1d5db" }]} numberOfLines={1}>{meta.location}</Text>
-                      </View>
-                      <View style={styles.jobDetailRow}>
-                        <Feather name="clock" size={11} color={isShiftBlocked ? "#d1d5db" : "#3b82f6"} />
-                        <Text style={[styles.jobDetailText, isShiftBlocked && { color: "#d1d5db" }]}>{meta.startTime} – {meta.endTime}</Text>
-                      </View>
-                    </View>
-                    {isShiftBlocked ? (
-                      <View style={styles.shiftBlockedBadge}>
-                        <Feather name="slash" size={10} color="#ef4444" />
-                        <Text style={styles.shiftBlockedText}>UNAVAILABLE</Text>
-                      </View>
-                    ) : (
-                      <View style={[styles.statusBadge, { backgroundColor: sStyle.bg, borderColor: sStyle.border }]}>
-                        <Text style={[styles.statusText, { color: sStyle.color }]}>{meta.status}</Text>
-                      </View>
-                    )}
+        {/* Time slot cards */}
+        {selSlots.length > 0 ? (
+          selSlots
+            .sort((a, b) => a.startH * 60 + a.startM - (b.startH * 60 + b.startM))
+            .map(slot => (
+              <View key={slot.id} style={styles.slotCard}>
+                <View style={styles.slotTimeBox}>
+                  <Text style={styles.slotStartTime}>{fmt(slot.startH, slot.startM)}</Text>
+                  <View style={styles.slotArrow}>
+                    <Feather name="arrow-right" size={12} color="#94a3b8" />
                   </View>
+                  <Text style={styles.slotEndTime}>{fmt(slot.endH, slot.endM)}</Text>
                 </View>
-              </TouchableOpacity>
-            );
-          })
+                <View style={styles.slotMeta}>
+                  <Feather name="clock" size={12} color="#94a3b8" />
+                  <Text style={styles.slotDuration}>
+                    {(() => {
+                      const mins = (slot.endH * 60 + slot.endM) - (slot.startH * 60 + slot.startM);
+                      if (mins <= 0) return "—";
+                      const h = Math.floor(mins / 60);
+                      const m = mins % 60;
+                      return h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                    })()}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.slotDelete}
+                  onPress={() => deleteSlot(slot.id)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Feather name="trash-2" size={15} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+            ))
         ) : !isDayBlocked ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
-              <Feather name="calendar" size={30} color="#cbd5e1" />
+              <Feather name="clock" size={28} color="#cbd5e1" />
             </View>
-            <Text style={styles.emptyTitle}>No shifts scheduled</Text>
-            <Text style={styles.emptySub}>Mark yourself available by tapping the button below</Text>
+            <Text style={styles.emptyTitle}>No time slots</Text>
+            <Text style={styles.emptySub}>Tap "Add Time Slot" to set when you're available</Text>
           </View>
         ) : null}
 
-        {/* Action buttons */}
+        {/* Add time slot button */}
         {!isDayBlocked && (
-          <TouchableOpacity style={styles.addBtn} onPress={() => openModal()} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.addSlotBtn} onPress={openAddModal} activeOpacity={0.8}>
             <Feather name="plus" size={16} color="#2563EB" />
-            <Text style={styles.addBtnText}>Add Availability Block</Text>
+            <Text style={styles.addSlotBtnText}>Add Time Slot</Text>
           </TouchableOpacity>
         )}
 
         {/* Mark unavailable button */}
         <TouchableOpacity
-          style={[styles.blockBtn, hasAnyBlock && styles.blockBtnActive]}
+          style={[styles.blockBtn, isDayBlocked && styles.blockBtnActive]}
           onPress={openBlockModal}
           activeOpacity={0.8}
         >
-          <Feather name={hasAnyBlock ? "slash" : "x-circle"} size={16} color={hasAnyBlock ? "#ef4444" : "#ef4444"} />
-          <Text style={styles.blockBtnText}>
-            {hasAnyBlock ? "Edit Unavailability" : "Mark as Unavailable"}
-          </Text>
+          <Feather name={isDayBlocked ? "slash" : "x-circle"} size={16} color="#ef4444" />
+          <Text style={styles.blockBtnText}>{isDayBlocked ? "Edit Unavailability" : "Mark Day as Unavailable"}</Text>
         </TouchableOpacity>
       </ScrollView>
 
-      {/* ══ AVAILABILITY MODAL ══ */}
-      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
+      {/* ══ ADD TIME SLOT MODAL ══ */}
+      <Modal visible={addVisible} transparent animationType="slide" onRequestClose={() => setAddVisible(false)}>
         <View style={styles.modalOverlay}>
-          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setModalVisible(false)} />
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setAddVisible(false)} />
           <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 16 }]}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>{formatDayHeader(selectedKey)}</Text>
-            <Text style={styles.modalSub}>Select your available shifts</Text>
+            <Text style={styles.modalSub}>Select your available time range</Text>
 
-            <View style={styles.shiftsGrid}>
-              {(Object.keys(SHIFT_META) as ShiftType[]).map(shift => {
-                const meta   = SHIFT_META[shift];
-                const active = editingShifts.includes(shift);
-                return (
-                  <TouchableOpacity
-                    key={shift}
-                    style={[styles.shiftCard, { backgroundColor: active ? meta.bg : "#f9fafb", borderColor: active ? meta.color : "#e5e7eb" }]}
-                    onPress={() => toggleShift(shift)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={[styles.shiftIconBox, { backgroundColor: active ? meta.color + "22" : "#f3f4f6" }]}>
-                      <Feather name={meta.icon as any} size={18} color={active ? meta.color : "#9ca3af"} />
-                    </View>
-                    <Text style={[styles.shiftLabel, { color: active ? meta.color : "#374151" }]}>{shift}</Text>
-                    <Text style={[styles.shiftTime, { color: active ? meta.color : "#9ca3af" }]}>{meta.shiftRange}</Text>
-                    {active && (
-                      <View style={[styles.shiftCheck, { backgroundColor: meta.color }]}>
-                        <Feather name="check" size={9} color="#fff" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
+            {/* Time pickers */}
+            <View style={styles.pickersRow}>
+              <TimePicker label="Start Time" hour={startH} minute={startM} onHourChange={setStartH} onMinuteChange={setStartM} />
+              <View style={styles.pickerDivider} />
+              <TimePicker label="End Time"   hour={endH}   minute={endM}   onHourChange={setEndH}   onMinuteChange={setEndM}   />
             </View>
 
-            {editingShifts.length > 0 && (
-              <View style={styles.shiftSummary}>
-                <Feather name="check-circle" size={13} color="#2563EB" />
-                <Text style={styles.shiftSummaryText}>
-                  Available for <Text style={{ fontWeight: "700" }}>{editingShifts.join(", ")}</Text>
+            {/* Preview */}
+            <View style={[styles.slotPreview, !isTimeValid && { backgroundColor: "#fff1f2", borderColor: "#fecaca" }]}>
+              <Feather name={isTimeValid ? "clock" : "alert-circle"} size={14} color={isTimeValid ? "#2563EB" : "#ef4444"} />
+              {isTimeValid ? (
+                <Text style={styles.slotPreviewText}>
+                  Available <Text style={{ fontWeight: "800" }}>{fmt(startH, startM)}</Text> to <Text style={{ fontWeight: "800" }}>{fmt(endH, endM)}</Text>
                 </Text>
+              ) : (
+                <Text style={[styles.slotPreviewText, { color: "#ef4444" }]}>End time must be after start time</Text>
+              )}
+            </View>
+
+            {/* Existing slots for this day */}
+            {selSlots.length > 0 && (
+              <View style={styles.existingSlots}>
+                <Text style={styles.existingSlotsLabel}>Already added today</Text>
+                {selSlots.map(s => (
+                  <View key={s.id} style={styles.existingSlotRow}>
+                    <Feather name="check-circle" size={12} color="#22c55e" />
+                    <Text style={styles.existingSlotText}>{fmt(s.startH, s.startM)} – {fmt(s.endH, s.endM)}</Text>
+                  </View>
+                ))}
               </View>
             )}
 
-            <View style={styles.modalActions}>
-              {availability[selectedKey] && (
-                <TouchableOpacity style={styles.clearBtn} onPress={clearDay}>
-                  <Feather name="trash-2" size={15} color="#ef4444" />
-                  <Text style={styles.clearBtnText}>Clear</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: editingShifts.length > 0 ? "#2563EB" : "#9ca3af" }]}
-                onPress={saveDay}
-              >
-                <Feather name="check" size={15} color="#fff" />
-                <Text style={styles.saveBtnText}>Save Availability</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.saveBtn, { backgroundColor: isTimeValid ? "#2563EB" : "#d1d5db" }]}
+              onPress={isTimeValid ? saveSlot : undefined}
+              activeOpacity={isTimeValid ? 0.85 : 1}
+            >
+              <Feather name="check" size={16} color="#fff" />
+              <Text style={styles.saveBtnText}>Add Time Slot</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* ══ BLOCK / UNAVAILABILITY MODAL ══ */}
+      {/* ══ BLOCK MODAL ══ */}
       <Modal visible={blockVisible} transparent animationType="slide" onRequestClose={() => setBlockVisible(false)}>
         <View style={styles.modalOverlay}>
           <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setBlockVisible(false)} />
           <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 16 }]}>
             <View style={styles.modalHandle} />
-
-            {/* Header */}
             <View style={styles.blockModalHeader}>
               <View style={styles.blockModalIconBox}>
                 <Feather name="slash" size={18} color="#ef4444" />
@@ -540,7 +552,6 @@ export default function AvailabilityTab() {
               </View>
             </View>
 
-            {/* Block entire day toggle */}
             <View style={[styles.blockDayRow, editingDayBlocked && styles.blockDayRowActive]}>
               <View style={styles.blockDayRowLeft}>
                 <View style={[styles.blockDayIcon, { backgroundColor: editingDayBlocked ? "#fee2e2" : "#f3f4f6" }]}>
@@ -548,67 +559,17 @@ export default function AvailabilityTab() {
                 </View>
                 <View>
                   <Text style={[styles.blockDayLabel, editingDayBlocked && { color: "#ef4444" }]}>Block Entire Day</Text>
-                  <Text style={styles.blockDaySubLabel}>Unavailable for all shifts this day</Text>
+                  <Text style={styles.blockDaySubLabel}>Unavailable for all time slots this day</Text>
                 </View>
               </View>
               <Switch
                 value={editingDayBlocked}
-                onValueChange={v => { Haptics.selectionAsync(); setEditingDayBlocked(v); if (v) setEditingBlockedShifts([]); }}
+                onValueChange={v => { Haptics.selectionAsync(); setEditingDayBlocked(v); }}
                 trackColor={{ false: "#e5e7eb", true: "#fca5a5" }}
                 thumbColor={editingDayBlocked ? "#ef4444" : "#fff"}
               />
             </View>
 
-            {/* Per-shift blocks (only when day is not fully blocked) */}
-            {!editingDayBlocked && (
-              <>
-                <View style={styles.blockShiftsDivider}>
-                  <View style={styles.blockShiftsDividerLine} />
-                  <Text style={styles.blockShiftsDividerText}>OR BLOCK SPECIFIC SHIFTS</Text>
-                  <View style={styles.blockShiftsDividerLine} />
-                </View>
-
-                <View style={styles.blockShiftsList}>
-                  {(Object.keys(SHIFT_META) as ShiftType[]).map(shift => {
-                    const meta    = SHIFT_META[shift];
-                    const blocked = editingBlockedShifts.includes(shift);
-                    return (
-                      <TouchableOpacity
-                        key={shift}
-                        style={[styles.blockShiftRow, blocked && styles.blockShiftRowActive]}
-                        onPress={() => toggleBlockShift(shift)}
-                        activeOpacity={0.8}
-                      >
-                        <View style={[styles.blockShiftIcon, { backgroundColor: blocked ? "#fee2e2" : meta.bg }]}>
-                          <Feather name={meta.icon as any} size={15} color={blocked ? "#ef4444" : meta.color} />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.blockShiftName, blocked && { color: "#ef4444" }]}>{shift}</Text>
-                          <Text style={styles.blockShiftRange}>{meta.shiftRange}</Text>
-                        </View>
-                        {blocked ? (
-                          <View style={styles.blockShiftBadge}>
-                            <Feather name="slash" size={10} color="#ef4444" />
-                            <Text style={styles.blockShiftBadgeText}>Blocked</Text>
-                          </View>
-                        ) : (
-                          <View style={styles.blockShiftCheckbox}>
-                            <Feather name="circle" size={18} color="#d1d5db" />
-                          </View>
-                        )}
-                        {blocked && (
-                          <View style={[styles.blockShiftActiveIcon]}>
-                            <Feather name="x-circle" size={18} color="#ef4444" />
-                          </View>
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </>
-            )}
-
-            {/* Day-blocked summary */}
             {editingDayBlocked && (
               <View style={styles.blockSummary}>
                 <Feather name="alert-circle" size={13} color="#ef4444" />
@@ -617,16 +578,7 @@ export default function AvailabilityTab() {
                 </Text>
               </View>
             )}
-            {!editingDayBlocked && editingBlockedShifts.length > 0 && (
-              <View style={styles.blockSummary}>
-                <Feather name="info" size={13} color="#f97316" />
-                <Text style={[styles.blockSummaryText, { color: "#9a3412" }]}>
-                  Blocking <Text style={{ fontWeight: "700" }}>{editingBlockedShifts.join(", ")}</Text> shifts this day.
-                </Text>
-              </View>
-            )}
 
-            {/* Actions */}
             <View style={styles.modalActions}>
               {dayBlocks[selectedKey] && (
                 <TouchableOpacity style={styles.clearBtn} onPress={clearBlock}>
@@ -635,10 +587,7 @@ export default function AvailabilityTab() {
                 </TouchableOpacity>
               )}
               <TouchableOpacity
-                style={[styles.saveBtn, {
-                  backgroundColor: (editingDayBlocked || editingBlockedShifts.length > 0) ? "#ef4444" : "#9ca3af",
-                  flex: 1,
-                }]}
+                style={[styles.saveBtn, { backgroundColor: editingDayBlocked ? "#ef4444" : "#9ca3af", flex: 1 }]}
                 onPress={saveBlock}
               >
                 <Feather name="check" size={15} color="#fff" />
@@ -655,7 +604,6 @@ export default function AvailabilityTab() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
 
-  // Header
   header: { backgroundColor: "#0759af", paddingHorizontal: 20, paddingBottom: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   headerTitle: { fontSize: 24, fontWeight: "800", color: "#fff", letterSpacing: -0.5 },
   headerSub: { fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 2, fontWeight: "500" },
@@ -663,20 +611,18 @@ const styles = StyleSheet.create({
   onlineDot: { width: 8, height: 8, borderRadius: 4 },
   onlineToggleText: { fontSize: 13, fontWeight: "700" },
 
-  // Tip banner
   tipBanner: { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1 },
   tipIcon: { width: 32, height: 32, borderRadius: 16, justifyContent: "center", alignItems: "center", flexShrink: 0, marginTop: 1 },
   tipTitle: { fontSize: 13, fontWeight: "800", marginBottom: 2 },
   tipBody: { fontSize: 12, lineHeight: 18 },
   tipClose: { padding: 4, marginTop: 2 },
 
-  // Calendar
   calCard: { backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e5e7eb", ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 }, android: { elevation: 3 } }) },
   monthNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10 },
   navArrow: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#f3f4f6", justifyContent: "center", alignItems: "center" },
   monthLabel: { fontSize: 15, fontWeight: "800", color: "#111827", letterSpacing: -0.2 },
 
-  dayStrip: { paddingHorizontal: 10, paddingBottom: 4, gap: 4, flexDirection: "row" },
+  dayStrip: { paddingHorizontal: 10, paddingBottom: 4, flexDirection: "row" },
   dayCell: { width: 52, height: 72, borderRadius: 14, alignItems: "center", justifyContent: "center", gap: 2, marginHorizontal: 2 },
   dayCellSel: { backgroundColor: "#2563EB", ...Platform.select({ ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 }, android: { elevation: 6 } }) },
   dayCellToday: { backgroundColor: "#eff6ff", borderWidth: 1.5, borderColor: "#bfdbfe" },
@@ -693,7 +639,6 @@ const styles = StyleSheet.create({
   gridCellBlocked: { backgroundColor: "#fff1f2", borderWidth: 1, borderColor: "#fecaca" },
   gridDayNum: { fontSize: 13, fontWeight: "600", color: "#111827" },
 
-  dotRow: { flexDirection: "row", gap: 2, alignItems: "center", height: 8 },
   dot: { width: 6, height: 6, borderRadius: 3 },
 
   calFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#f1f5f9" },
@@ -704,8 +649,7 @@ const styles = StyleSheet.create({
   legendDot: { width: 7, height: 7, borderRadius: 4 },
   legendText: { fontSize: 10, fontWeight: "600", color: "#6b7280", textTransform: "uppercase", letterSpacing: 0.3 },
 
-  // Day header + block indicators
-  dayHeaderRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+  dayHeaderRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   dayHeader: { fontSize: 13, fontWeight: "700", color: "#6b7280", textTransform: "uppercase", letterSpacing: 0.6 },
   dayBlockedBadge: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#fee2e2", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
   dayBlockedBadgeText: { fontSize: 10, fontWeight: "800", color: "#ef4444", textTransform: "uppercase", letterSpacing: 0.4 },
@@ -716,51 +660,57 @@ const styles = StyleSheet.create({
   blockedEditBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, backgroundColor: "#fee2e2", alignSelf: "flex-start", marginTop: 2 },
   blockedEditBtnText: { fontSize: 12, fontWeight: "700", color: "#dc2626" },
 
-  // Job cards
-  jobCard: { backgroundColor: "#fff", borderRadius: 14, marginBottom: 10, flexDirection: "row", overflow: "hidden", borderWidth: 1, borderColor: "#e5e7eb", ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6 }, android: { elevation: 2 } }) },
-  jobCardBlocked: { borderColor: "#fecaca", backgroundColor: "#fffafa", opacity: 0.85 },
-  jobBar: { width: 5, flexShrink: 0 },
-  jobBody: { flex: 1, padding: 14 },
-  jobRow: { flexDirection: "row", alignItems: "flex-start" },
-  jobTitle: { fontSize: 15, fontWeight: "800", color: "#0f172a", marginBottom: 6, letterSpacing: -0.2 },
-  jobDetailRow: { flexDirection: "row", alignItems: "flex-start", gap: 5, marginBottom: 3 },
-  jobDetailText: { fontSize: 12, color: "#6b7280", fontWeight: "500", flex: 1 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1, flexShrink: 0 },
-  statusText: { fontSize: 10, fontWeight: "800", letterSpacing: 0.4, textTransform: "uppercase" },
-  shiftBlockedBadge: { flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 7, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: "#fecaca", backgroundColor: "#fff1f2", flexShrink: 0 },
-  shiftBlockedText: { fontSize: 9, fontWeight: "800", color: "#ef4444", letterSpacing: 0.3 },
+  // Slot cards
+  slotCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    marginBottom: 10,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 }, android: { elevation: 2 } }),
+  },
+  slotTimeBox: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8 },
+  slotStartTime: { fontSize: 16, fontWeight: "800", color: "#0f172a" },
+  slotArrow: { paddingHorizontal: 2 },
+  slotEndTime: { fontSize: 16, fontWeight: "800", color: "#0f172a" },
+  slotMeta: { flexDirection: "row", alignItems: "center", gap: 4 },
+  slotDuration: { fontSize: 12, color: "#94a3b8", fontWeight: "500" },
+  slotDelete: { padding: 6 },
 
-  // Empty state
   emptyState: { alignItems: "center", paddingVertical: 28, gap: 8 },
   emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: "#f1f5f9", justifyContent: "center", alignItems: "center", marginBottom: 4 },
   emptyTitle: { fontSize: 16, fontWeight: "700", color: "#374151" },
   emptySub: { fontSize: 13, color: "#9ca3af", textAlign: "center", paddingHorizontal: 20, lineHeight: 20 },
 
-  // Buttons
-  addBtn: { marginTop: 4, marginBottom: 10, borderWidth: 2, borderStyle: "dashed", borderColor: "#93c5fd", backgroundColor: "rgba(239,246,255,0.6)", borderRadius: 14, paddingVertical: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  addBtnText: { fontSize: 14, fontWeight: "700", color: "#2563EB" },
+  addSlotBtn: { marginBottom: 10, borderWidth: 2, borderStyle: "dashed", borderColor: "#93c5fd", backgroundColor: "rgba(239,246,255,0.6)", borderRadius: 14, paddingVertical: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  addSlotBtnText: { fontSize: 14, fontWeight: "700", color: "#2563EB" },
+
   blockBtn: { borderWidth: 2, borderStyle: "dashed", borderColor: "#fca5a5", backgroundColor: "rgba(255,241,242,0.6)", borderRadius: 14, paddingVertical: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   blockBtnActive: { borderColor: "#ef4444", backgroundColor: "#fff1f2" },
   blockBtnText: { fontSize: 14, fontWeight: "700", color: "#ef4444" },
 
-  // Modals
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
   modalSheet: { backgroundColor: "#fff", borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 20 }, android: { elevation: 20 } }) },
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "#e5e7eb", alignSelf: "center", marginBottom: 16 },
   modalTitle: { fontSize: 18, fontWeight: "800", color: "#0f172a", letterSpacing: -0.3, marginBottom: 2 },
   modalSub: { fontSize: 13, color: "#94a3b8", marginBottom: 16 },
 
-  shiftsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 12 },
-  shiftCard: { width: "47%", borderRadius: 14, padding: 14, gap: 6, borderWidth: 1.5, position: "relative" },
-  shiftIconBox: { width: 36, height: 36, borderRadius: 10, justifyContent: "center", alignItems: "center" },
-  shiftLabel: { fontSize: 14, fontWeight: "700" },
-  shiftTime: { fontSize: 11 },
-  shiftCheck: { position: "absolute", top: 10, right: 10, width: 18, height: 18, borderRadius: 9, justifyContent: "center", alignItems: "center" },
-  shiftSummary: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#eff6ff", borderWidth: 1, borderColor: "#bfdbfe", padding: 12, borderRadius: 12, marginBottom: 12 },
-  shiftSummaryText: { color: "#1d4ed8", fontSize: 13, flex: 1 },
+  pickersRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 16, backgroundColor: "#f8fafc", borderRadius: 16, padding: 16 },
+  pickerDivider: { width: 1, backgroundColor: "#e5e7eb", marginHorizontal: 12, alignSelf: "stretch" },
 
-  // Block modal specific
-  blockModalHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 4 },
+  slotPreview: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#eff6ff", borderWidth: 1, borderColor: "#bfdbfe", padding: 12, borderRadius: 12, marginBottom: 12 },
+  slotPreviewText: { color: "#1d4ed8", fontSize: 13, flex: 1 },
+
+  existingSlots: { backgroundColor: "#f8fafc", borderRadius: 12, padding: 12, marginBottom: 12, gap: 6 },
+  existingSlotsLabel: { fontSize: 11, fontWeight: "700", color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 },
+  existingSlotRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  existingSlotText: { fontSize: 13, color: "#374151", fontWeight: "500" },
+
+  blockModalHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 },
   blockModalIconBox: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#fee2e2", justifyContent: "center", alignItems: "center" },
   blockDayRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#f9fafb", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: "#e5e7eb", marginBottom: 12 },
   blockDayRowActive: { backgroundColor: "#fff1f2", borderColor: "#fecaca" },
@@ -769,27 +719,12 @@ const styles = StyleSheet.create({
   blockDayLabel: { fontSize: 14, fontWeight: "700", color: "#374151" },
   blockDaySubLabel: { fontSize: 11, color: "#9ca3af", marginTop: 1 },
 
-  blockShiftsDivider: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
-  blockShiftsDividerLine: { flex: 1, height: 1, backgroundColor: "#f1f5f9" },
-  blockShiftsDividerText: { fontSize: 9, fontWeight: "700", color: "#9ca3af", letterSpacing: 0.8, textTransform: "uppercase" },
-
-  blockShiftsList: { gap: 8, marginBottom: 12 },
-  blockShiftRow: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#f9fafb", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#e5e7eb" },
-  blockShiftRowActive: { backgroundColor: "#fff1f2", borderColor: "#fecaca" },
-  blockShiftIcon: { width: 34, height: 34, borderRadius: 10, justifyContent: "center", alignItems: "center" },
-  blockShiftName: { fontSize: 13, fontWeight: "700", color: "#374151" },
-  blockShiftRange: { fontSize: 11, color: "#9ca3af", marginTop: 1 },
-  blockShiftBadge: { flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: "#fee2e2" },
-  blockShiftBadgeText: { fontSize: 10, fontWeight: "700", color: "#ef4444" },
-  blockShiftCheckbox: { width: 22, alignItems: "center" },
-  blockShiftActiveIcon: { position: "absolute", right: 12 },
-
   blockSummary: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff1f2", borderWidth: 1, borderColor: "#fecaca", padding: 12, borderRadius: 12, marginBottom: 12 },
   blockSummaryText: { color: "#dc2626", fontSize: 13, flex: 1 },
 
   modalActions: { flexDirection: "row", gap: 10 },
   clearBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, borderWidth: 1.5, borderColor: "#ef4444" },
   clearBtnText: { color: "#ef4444", fontSize: 14, fontWeight: "700" },
-  saveBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 14, borderRadius: 14 },
+  saveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 14, borderRadius: 14 },
   saveBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
 });
