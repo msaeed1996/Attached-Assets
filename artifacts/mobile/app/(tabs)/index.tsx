@@ -18,6 +18,36 @@ import * as Haptics from "expo-haptics";
 import NotificationsSheet from "@/components/NotificationsSheet";
 import { UPCOMING_SHIFTS } from "@/data/upcomingShifts";
 
+const SAMPLE_INVITATIONS = [
+  {
+    id: "inv-1",
+    jobTitle: "Warehouse Supervisor",
+    company: "Amazon Logistics",
+    companyRating: 4.2,
+    location: "Austin, TX",
+    pay: 28,
+    payType: "hourly",
+    startDate: "Tomorrow",
+    duration: "1 week",
+    sentAt: "30 min ago",
+    urgent: true,
+    jobId: "1",
+  },
+  {
+    id: "inv-2",
+    jobTitle: "Event Coordinator",
+    company: "Prestige Events Co.",
+    companyRating: 4.7,
+    location: "Houston, TX",
+    pay: 280,
+    payType: "daily",
+    startDate: "Saturday",
+    duration: "2 days",
+    sentAt: "2 hours ago",
+    urgent: false,
+    jobId: "2",
+  },
+];
 
 const QUICK_ACTIONS_EMPLOYER = [
   { icon: "plus-circle", label: "Post Job", route: "/post-job", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
@@ -285,42 +315,91 @@ export default function HomeScreen() {
         );
       })()}
 
-      {/* ── PUBLIC JOBS ── */}
+      {/* ── JOB INVITATIONS ── */}
       {!isEmployer && (
         <View style={styles.section}>
           <View style={styles.sectionRow}>
-            <Text style={[styles.sectionLabel, { color: "#374151" }]}>Public Jobs</Text>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/jobs")}>
-              <Text style={[styles.seeAllText, { color: "#2563EB" }]}>Browse all</Text>
+            <View style={styles.urgentTitleRow}>
+              <Feather name="mail" size={15} color="#7c3aed" />
+              <Text style={[styles.sectionLabel, { color: "#374151" }]}>Job Invitations</Text>
+              <View style={styles.inviteBadgeCount}>
+                <Text style={styles.inviteBadgeCountText}>2</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/invitations")}>
+              <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
             </TouchableOpacity>
           </View>
-          {jobs.slice(0, 3).map((job) => (
-            <TouchableOpacity
-              key={job.id}
-              style={styles.upcomingJobRow}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push(`/job/${job.id}`);
-              }}
-              activeOpacity={0.85}
-            >
-              <View style={[styles.upcomingJobIcon, { backgroundColor: job.urgency === "urgent" ? "#fef2f2" : "#eff6ff" }]}>
-                <Feather name="briefcase" size={17} color={job.urgency === "urgent" ? "#ef4444" : "#2563EB"} />
+
+          {SAMPLE_INVITATIONS.slice(0, 2).map((inv) => (
+            <View key={inv.id} style={[styles.inviteCard, inv.urgent && styles.inviteCardUrgent]}>
+              {/* Urgent ribbon */}
+              {inv.urgent && (
+                <View style={styles.inviteUrgentRibbon}>
+                  <Feather name="zap" size={9} color="#fff" />
+                  <Text style={styles.inviteUrgentRibbonText}>URGENT</Text>
+                </View>
+              )}
+
+              {/* Top row */}
+              <View style={styles.inviteTop}>
+                <View style={[styles.inviteIconWrap, { backgroundColor: inv.urgent ? "#fef2f2" : "#ede9fe" }]}>
+                  <Feather name="briefcase" size={16} color={inv.urgent ? "#ef4444" : "#7c3aed"} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inviteTitle} numberOfLines={1}>{inv.jobTitle}</Text>
+                  <Text style={styles.inviteCompany}>{inv.company} · ⭐ {inv.companyRating}</Text>
+                </View>
+                <View style={styles.invitePayBox}>
+                  <Text style={styles.invitePayValue}>
+                    ${inv.pay}
+                  </Text>
+                  <Text style={styles.invitePayType}>/{inv.payType}</Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.upcomingJobTitle, { color: "#111827" }]} numberOfLines={1}>{job.title}</Text>
-                <Text style={[styles.upcomingJobMeta, { color: "#6b7280" }]}>{job.company} · {job.startDate}</Text>
+
+              {/* Meta row */}
+              <View style={styles.inviteMeta}>
+                <View style={styles.inviteMetaItem}>
+                  <Feather name="map-pin" size={11} color="#6b7280" />
+                  <Text style={styles.inviteMetaText}>{inv.location}</Text>
+                </View>
+                <View style={styles.inviteMetaDot} />
+                <View style={styles.inviteMetaItem}>
+                  <Feather name="calendar" size={11} color="#6b7280" />
+                  <Text style={styles.inviteMetaText}>{inv.startDate}</Text>
+                </View>
+                <View style={styles.inviteMetaDot} />
+                <View style={styles.inviteMetaItem}>
+                  <Feather name="clock" size={11} color="#6b7280" />
+                  <Text style={styles.inviteMetaText}>{inv.duration}</Text>
+                </View>
               </View>
-              <View style={styles.upcomingJobRight}>
-                <Text style={[styles.upcomingJobPay, { color: "#2563EB" }]}>${job.pay}<Text style={[styles.upcomingJobPayType, { color: "#9ca3af" }]}>/{job.payType}</Text></Text>
-                {job.urgency === "urgent" && (
-                  <View style={styles.upcomingUrgentTag}>
-                    <Text style={styles.upcomingUrgentText}>Urgent</Text>
-                  </View>
-                )}
+
+              {/* Actions */}
+              <View style={styles.inviteActions}>
+                <TouchableOpacity
+                  style={styles.inviteDeclineBtn}
+                  onPress={() => Haptics.selectionAsync()}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.inviteDeclineBtnText}>Decline</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.inviteAcceptBtn}
+                  onPress={() => {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    router.push("/(tabs)/invitations");
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="check" size={13} color="#fff" />
+                  <Text style={styles.inviteAcceptBtnText}>Accept</Text>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
+            </View>
           ))}
+
         </View>
       )}
 
@@ -833,6 +912,161 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
     color: "#ef4444",
+  },
+
+  // ── JOB INVITATIONS ──
+  inviteBadgeCount: {
+    backgroundColor: "#7c3aed",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 5,
+  },
+  inviteBadgeCountText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#fff",
+  },
+  inviteCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    gap: 10,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: { shadowColor: "#7c3aed", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8 },
+      android: { elevation: 2 },
+    }),
+  },
+  inviteCardUrgent: {
+    borderColor: "#fecaca",
+    borderLeftWidth: 3,
+    borderLeftColor: "#ef4444",
+  },
+  inviteUrgentRibbon: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#ef4444",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 10,
+  },
+  inviteUrgentRibbonText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#fff",
+    letterSpacing: 0.5,
+  },
+  inviteTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  inviteIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  inviteTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.1,
+  },
+  inviteCompany: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "500",
+    marginTop: 1,
+  },
+  invitePayBox: {
+    alignItems: "flex-end",
+  },
+  invitePayValue: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.3,
+  },
+  invitePayType: {
+    fontSize: 11,
+    color: "#9ca3af",
+    fontWeight: "500",
+  },
+  inviteMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#f3f4f6",
+  },
+  inviteMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  inviteMetaText: {
+    fontSize: 12,
+    color: "#4b5563",
+    fontWeight: "500",
+  },
+  inviteMetaDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "#d1d5db",
+  },
+  inviteActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  inviteDeclineBtn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 9,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#f9fafb",
+  },
+  inviteDeclineBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#6b7280",
+  },
+  inviteAcceptBtn: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: "#2563eb",
+    ...Platform.select({
+      ios: { shadowColor: "#2563eb", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 5 },
+      android: { elevation: 3 },
+    }),
+  },
+  inviteAcceptBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#fff",
   },
 
   // ── UPCOMING SCHEDULE CARD ──
