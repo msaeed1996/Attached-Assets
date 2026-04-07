@@ -157,7 +157,7 @@ export default function HomeScreen() {
             <>
               <StatTile icon="award" value={String(userProfile?.completedJobs || 0)} label="Jobs Completed" accent="#60a5fa" />
               <StatTile icon="star" value={String(userProfile?.rating || "—")} label="Rating" accent="#fbbf24" />
-              <StatTile icon="dollar-sign" value={`$${userProfile?.hourlyRate || 0}`} label="Per Hour" accent="#34d399" />
+              <StatTile icon="clock" value="455" label="Job Hours" accent="#34d399" />
             </>
           )}
         </View>
