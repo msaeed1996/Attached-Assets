@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -158,6 +158,8 @@ export default function JobBoardScreen() {
   const insets = useSafeAreaInsets();
   const [invitations, setInvitations] = useState<Invitation[]>(SAMPLE_INVITATIONS);
   const [filter, setFilter] = useState<FilterTab>("All");
+  const tabScrollRef = useRef<ScrollView>(null);
+  const [tabScrollEnd, setTabScrollEnd] = useState(false);
 
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
 
