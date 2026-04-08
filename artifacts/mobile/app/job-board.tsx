@@ -203,44 +203,51 @@ export default function JobBoardScreen() {
         )}
       </View>
 
-      {/* Filter tabs — compact fixed row */}
+      {/* Filter tabs — 2-row pill grid */}
       <View style={[styles.tabBarWrap, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {FILTER_TABS.map((tab) => {
-          const active = filter === tab;
-          const tabCfg = TAB_CONFIG[tab];
-          const tabStatus = STATUS_MAP[tab];
-          const count = tabStatus === null
-            ? invitations.length
-            : invitations.filter((i) => i.status === tabStatus).length;
-          return (
-            <TouchableOpacity
-              key={tab}
-              style={[
-                styles.tab,
-                active && { borderBottomColor: tabCfg.color, borderBottomWidth: 2, backgroundColor: tabCfg.bg },
-              ]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setFilter(tab);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[styles.tabLabel, { color: active ? tabCfg.color : colors.mutedForeground }]}
-                numberOfLines={1}
+        <View style={styles.tabGrid}>
+          {FILTER_TABS.map((tab) => {
+            const active = filter === tab;
+            const tabCfg = TAB_CONFIG[tab];
+            const tabStatus = STATUS_MAP[tab];
+            const count = tabStatus === null
+              ? invitations.length
+              : invitations.filter((i) => i.status === tabStatus).length;
+            return (
+              <TouchableOpacity
+                key={tab}
+                style={[
+                  styles.tab,
+                  active
+                    ? { backgroundColor: tabCfg.color }
+                    : { backgroundColor: colors.muted },
+                ]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setFilter(tab);
+                }}
+                activeOpacity={0.75}
               >
-                {tabCfg.short}
-              </Text>
-              {count > 0 && (
-                <View style={[styles.tabBadge, { backgroundColor: active ? tabCfg.color : colors.muted }]}>
-                  <Text style={[styles.tabBadgeText, { color: active ? "#fff" : colors.mutedForeground }]}>
-                    {count}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+                <Text
+                  style={[styles.tabLabel, { color: active ? "#fff" : colors.mutedForeground }]}
+                  numberOfLines={1}
+                >
+                  {tabCfg.short}
+                </Text>
+                {count > 0 && (
+                  <View style={[
+                    styles.tabBadge,
+                    { backgroundColor: active ? "rgba(255,255,255,0.25)" : colors.border },
+                  ]}>
+                    <Text style={[styles.tabBadgeText, { color: active ? "#fff" : colors.mutedForeground }]}>
+                      {count}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
       <ScrollView
@@ -434,33 +441,37 @@ const styles = StyleSheet.create({
   },
 
   tabBarWrap: {
-    flexDirection: "row",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  tabGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 7,
+  },
   tab: {
-    flex: 1,
-    paddingVertical: 9,
-    paddingHorizontal: 2,
+    flexDirection: "row",
     alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
-    gap: 3,
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: "700",
-    textAlign: "center",
   },
   tabBadge: {
-    borderRadius: 6,
-    minWidth: 15,
-    height: 15,
+    borderRadius: 8,
+    minWidth: 18,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
   },
   tabBadgeText: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "700",
   },
 
