@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Modal,
   Platform,
-  Animated,
   Switch,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -134,22 +133,6 @@ export default function AvailabilityTab() {
   const [dayBlocks,    setDayBlocks]    = useState<Record<string, BlockEntry>>({});
   const [selectedKey,  setSelectedKey]  = useState(todayKey);
   const [showFullCal,  setShowFullCal]  = useState(false);
-
-  // global online/offline
-  const [isOnline, setIsOnline] = useState(true);
-  const [showTip,  setShowTip]  = useState(true);
-  const tipAnim = useRef(new Animated.Value(1)).current;
-
-  function dismissTip() {
-    Animated.timing(tipAnim, { toValue: 0, duration: 280, useNativeDriver: true })
-      .start(() => setShowTip(false));
-  }
-  function toggleOnline() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsOnline(v => !v);
-    setShowTip(true);
-    tipAnim.setValue(1);
-  }
 
   // ── Add-time modal ──
   const [addVisible,  setAddVisible]  = useState(false);
@@ -305,40 +288,24 @@ export default function AvailabilityTab() {
             <Text style={styles.headerSub}>{markedCount} day{markedCount !== 1 ? "s" : ""} marked this month</Text>
           )}
         </View>
-        <TouchableOpacity
-          style={[styles.onlineToggle, { backgroundColor: isOnline ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.12)" }]}
-          onPress={toggleOnline}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.onlineDot, { backgroundColor: isOnline ? "#4ade80" : "#9ca3af" }]} />
-          <Text style={[styles.onlineToggleText, { color: isOnline ? "#4ade80" : "rgba(255,255,255,0.5)" }]}>
-            {isOnline ? "Online" : "Offline"}
-          </Text>
-          <Feather name="chevron-down" size={12} color={isOnline ? "#4ade80" : "rgba(255,255,255,0.4)"} />
-        </TouchableOpacity>
+        <View style={styles.availableStatusPill}>
+          <View style={styles.availableStatusDot} />
+          <Text style={styles.availableStatusText}>Available</Text>
+        </View>
       </View>
 
-      {/* ── TIP BANNER ── */}
-      {showTip && (
-        <Animated.View style={[styles.tipBanner, { opacity: tipAnim, backgroundColor: isOnline ? "#f0fdf4" : "#fff7ed", borderColor: isOnline ? "#bbf7d0" : "#fed7aa" }]}>
-          <View style={[styles.tipIcon, { backgroundColor: isOnline ? "#dcfce7" : "#ffedd5" }]}>
-            <Feather name={isOnline ? "wifi" : "wifi-off"} size={16} color={isOnline ? "#16a34a" : "#f97316"} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.tipTitle, { color: isOnline ? "#15803d" : "#c2410c" }]}>
-              {isOnline ? "You're visible to employers" : "You're hidden from employers"}
-            </Text>
-            <Text style={[styles.tipBody, { color: isOnline ? "#166534" : "#9a3412" }]}>
-              {isOnline
-                ? "Tap any day, then add a time slot to mark your availability."
-                : "You won't receive new job invitations. Tap \"Online\" to resume."}
-            </Text>
-          </View>
-          <TouchableOpacity onPress={dismissTip} style={styles.tipClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Feather name="x" size={14} color={isOnline ? "#16a34a" : "#f97316"} />
-          </TouchableOpacity>
-        </Animated.View>
-      )}
+      {/* ── STATUS BANNER ── */}
+      <View style={styles.tipBanner}>
+        <View style={styles.tipIcon}>
+          <Feather name="check-circle" size={16} color="#16a34a" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.tipTitle, { color: "#15803d" }]}>You're available for jobs</Text>
+          <Text style={[styles.tipBody, { color: "#166534" }]}>
+            Employers can see your profile. Tap any day to add or update your availability.
+          </Text>
+        </View>
+      </View>
 
       {/* ── CALENDAR ── */}
       <View style={styles.calCard}>
@@ -607,15 +574,14 @@ const styles = StyleSheet.create({
   header: { backgroundColor: "#0759af", paddingHorizontal: 20, paddingBottom: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   headerTitle: { fontSize: 24, fontWeight: "800", color: "#fff", letterSpacing: -0.5 },
   headerSub: { fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 2, fontWeight: "500" },
-  onlineToggle: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.15)" },
-  onlineDot: { width: 8, height: 8, borderRadius: 4 },
-  onlineToggleText: { fontSize: 13, fontWeight: "700" },
+  availableStatusPill: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: "rgba(34,197,94,0.18)", borderWidth: 1, borderColor: "rgba(74,222,128,0.4)" },
+  availableStatusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#4ade80" },
+  availableStatusText: { fontSize: 13, fontWeight: "700", color: "#4ade80" },
 
-  tipBanner: { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1 },
-  tipIcon: { width: 32, height: 32, borderRadius: 16, justifyContent: "center", alignItems: "center", flexShrink: 0, marginTop: 1 },
+  tipBanner: { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, backgroundColor: "#f0fdf4", borderBottomColor: "#bbf7d0" },
+  tipIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#dcfce7", justifyContent: "center", alignItems: "center", flexShrink: 0, marginTop: 1 },
   tipTitle: { fontSize: 13, fontWeight: "800", marginBottom: 2 },
   tipBody: { fontSize: 12, lineHeight: 18 },
-  tipClose: { padding: 4, marginTop: 2 },
 
   calCard: { backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e5e7eb", ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 }, android: { elevation: 3 } }) },
   monthNav: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10 },
