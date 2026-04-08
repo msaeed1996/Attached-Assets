@@ -131,22 +131,21 @@ export default function InvitationsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPadding, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      {/* Blue hero header */}
+      <View style={[styles.hero, { paddingTop: topPadding + 16 }]}>
         <View style={styles.headerTop}>
-          <View>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Job Invitations</Text>
-            <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>Job Invitations</Text>
+            <Text style={styles.headerSub}>
               {pendingCount > 0 ? `${pendingCount} pending response${pendingCount > 1 ? "s" : ""}` : "All caught up!"}
             </Text>
           </View>
           {pendingCount > 0 && (
-            <View style={[styles.pendingBadge, { backgroundColor: colors.primary }]}>
+            <View style={styles.pendingBadge}>
               <Text style={styles.pendingBadgeText}>{pendingCount}</Text>
             </View>
           )}
         </View>
-
       </View>
 
       <ScrollView
@@ -303,24 +302,29 @@ function DetailItem({ icon, label, colors }: { icon: string; label: string; colo
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  hero: {
+    backgroundColor: "#0759af",
     paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    marginBottom: 8,
   },
   headerTop: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 14,
   },
   headerTitle: {
     fontSize: 26,
     fontWeight: "800",
     letterSpacing: -0.5,
+    color: "#fff",
   },
   headerSub: {
     fontSize: 13,
     marginTop: 2,
+    color: "rgba(255,255,255,0.6)",
   },
   pendingBadge: {
     width: 30,
@@ -328,6 +332,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.22)",
   },
   pendingBadgeText: {
     color: "#fff",

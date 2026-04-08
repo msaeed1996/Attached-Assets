@@ -48,26 +48,26 @@ export default function JobsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPadding + 16, backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Available Jobs</Text>
-        <View style={[styles.searchRow, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <Feather name="search" size={18} color={colors.mutedForeground} />
+      {/* Blue hero header */}
+      <View style={[styles.hero, { paddingTop: topPadding + 16 }]}>
+        <Text style={styles.title}>Available Jobs</Text>
+        <View style={styles.searchRow}>
+          <Feather name="search" size={18} color="rgba(255,255,255,0.6)" />
           <TextInput
-            style={[styles.searchInput, { color: colors.foreground }]}
+            style={styles.searchInput}
             placeholder="Search jobs..."
-            placeholderTextColor={colors.mutedForeground}
+            placeholderTextColor="rgba(255,255,255,0.5)"
             value={search}
             onChangeText={setSearch}
           />
           <TouchableOpacity
-            style={[styles.filterToggle, { backgroundColor: showFilters ? colors.primary : colors.muted }]}
+            style={[styles.filterToggle, { backgroundColor: showFilters ? "#fff" : "rgba(255,255,255,0.15)" }]}
             onPress={() => {
               Haptics.selectionAsync();
               setShowFilters(!showFilters);
             }}
           >
-            <Feather name="sliders" size={15} color={showFilters ? "#fff" : colors.mutedForeground} />
+            <Feather name="sliders" size={15} color={showFilters ? "#0759af" : "#fff"} />
           </TouchableOpacity>
         </View>
 
@@ -78,14 +78,14 @@ export default function JobsScreen() {
               key={opt}
               style={[
                 styles.sortChip,
-                { backgroundColor: sortBy === opt ? colors.navy : colors.card, borderColor: colors.border },
+                { backgroundColor: sortBy === opt ? "#fff" : "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.2)" },
               ]}
               onPress={() => {
                 Haptics.selectionAsync();
                 setSortBy(opt);
               }}
             >
-              <Text style={[styles.sortChipText, { color: sortBy === opt ? "#fff" : colors.foreground }]}>
+              <Text style={[styles.sortChipText, { color: sortBy === opt ? "#0759af" : "#fff" }]}>
                 {opt}
               </Text>
             </TouchableOpacity>
@@ -169,15 +169,20 @@ export default function JobsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+  hero: {
+    backgroundColor: "#0759af",
     paddingHorizontal: 20,
-    paddingBottom: 12,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    marginBottom: 8,
   },
   title: {
     fontSize: 28,
     fontWeight: "800",
     letterSpacing: -0.5,
     marginBottom: 14,
+    color: "#fff",
   },
   searchRow: {
     flexDirection: "row",
@@ -187,9 +192,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 14,
     borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "rgba(255,255,255,0.12)",
     gap: 10,
   },
-  searchInput: { flex: 1, fontSize: 15 },
+  searchInput: { flex: 1, fontSize: 15, color: "#fff" },
   filterToggle: {
     width: 32,
     height: 32,

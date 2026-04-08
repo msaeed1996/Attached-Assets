@@ -61,10 +61,10 @@ export default function MessagesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: topPadding + 16 }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Messages</Text>
+      <View style={[styles.hero, { paddingTop: topPadding + 16 }]}>
+        <Text style={styles.title}>Messages</Text>
         {totalUnread > 0 && (
-          <View style={[styles.totalUnread, { backgroundColor: colors.primary }]}>
+          <View style={styles.totalUnread}>
             <Text style={styles.totalUnreadText}>{totalUnread} new</Text>
           </View>
         )}
@@ -93,22 +93,29 @@ export default function MessagesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+  hero: {
+    backgroundColor: "#0759af",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    marginBottom: 4,
     gap: 12,
   },
   title: {
     fontSize: 28,
     fontWeight: "800",
     letterSpacing: -0.5,
+    color: "#fff",
+    flex: 1,
   },
   totalUnread: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.22)",
   },
   totalUnreadText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   convItem: {

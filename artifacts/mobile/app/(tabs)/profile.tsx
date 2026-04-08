@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
 
   // Header band
   headerBand: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "#0759af",
     paddingHorizontal: 20,
     paddingBottom: 68,
   },
