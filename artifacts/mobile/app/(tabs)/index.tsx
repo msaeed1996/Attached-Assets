@@ -171,7 +171,7 @@ export default function HomeScreen() {
         if (!activeJob) return null;
         return (
           <View style={styles.activeJobSection}>
-            <View style={styles.activeJobCard}>
+            <View style={[styles.activeJobCard, { borderColor: isClockedIn ? "#10b981" : "#2563EB" }]}>
               {/* Left: info */}
               <View style={styles.activeJobLeft}>
                 <View style={styles.activeJobHeader}>
@@ -631,8 +631,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: "#dbeafe",
+    borderWidth: 1.5,
+    borderColor: "#2563EB",
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
