@@ -11,7 +11,6 @@ import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 
 type FilterPeriod = "week" | "month" | "all";
 
@@ -162,12 +161,7 @@ export default function TimesheetScreen() {
   return (
     <View style={styles.root}>
       {/* ── HEADER ── */}
-      <LinearGradient
-        colors={["#1248c9", "#1e63d0"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: topPadding + 14 }]}
-      >
+      <View style={[styles.header, { paddingTop: topPadding + 14 }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <Feather name="arrow-left" size={20} color="#fff" />
@@ -193,7 +187,7 @@ export default function TimesheetScreen() {
             <Text style={styles.summaryLabel}>Shifts</Text>
           </View>
         </View>
-      </LinearGradient>
+      </View>
 
       {/* ── PERIOD FILTER ── */}
       <View style={styles.filterBar}>
@@ -306,8 +300,12 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
+    backgroundColor: "#0759af",
     paddingHorizontal: 20,
     paddingBottom: 24,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    marginBottom: 8,
   },
   headerRow: {
     flexDirection: "row",
