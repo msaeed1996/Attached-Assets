@@ -25,12 +25,15 @@ export default function AvailabilityScreen() {
   const insets = useSafeAreaInsets();
   const [isAvailable, setIsAvailable] = useState(true);
   const [activeDays, setActiveDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+  const [unavailableDays, setUnavailableDays] = useState<string[]>([]);
   const [activeShifts, setActiveShifts] = useState<string[]>(["Morning", "Afternoon"]);
   const [maxHours, setMaxHours] = useState(40);
+  const [timeSlots, setTimeSlots] = useState<Record<string, string[]>>({});
 
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
 
   function toggleDay(d: string) {
+    if (unavailableDays.includes(d)) return;
     Haptics.selectionAsync();
     setActiveDays((prev) =>
       prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
@@ -42,6 +45,30 @@ export default function AvailabilityScreen() {
     setActiveShifts((prev) =>
       prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
     );
+  }
+
+  function addTimeSlot(day: string) {
+    Haptics.selectionAsync();
+    const slots = timeSlots[day] ?? [];
+    const defaults = ["9:00 AM – 1:00 PM", "2:00 PM – 6:00 PM", "7:00 AM – 3:00 PM"];
+    const next = defaults[slots.length % defaults.length];
+    setTimeSlots((prev) => ({ ...prev, [day]: [...slots, next] }));
+    if (!activeDays.includes(day)) {
+      setActiveDays((prev) => [...prev, day]);
+    }
+  }
+
+  function markUnavailable(day: string) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setUnavailableDays((prev) =>
+      prev.includes(day) ? prev.filter((x) => x !== day) : [...prev, day]
+    );
+    setActiveDays((prev) => prev.filter((x) => x !== day));
+    setTimeSlots((prev) => {
+      const next = { ...prev };
+      delete next[day];
+      return next;
+    });
   }
 
   return (
@@ -89,20 +116,73 @@ export default function AvailabilityScreen() {
         {/* Days */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Available Days</Text>
-          <View style={styles.daysRow}>
+          <View style={styles.daysContainer}>
             {DAYS.map((d) => {
               const active = activeDays.includes(d);
+              const unavailable = unavailableDays.includes(d);
+              const slots = timeSlots[d] ?? [];
               return (
-                <TouchableOpacity
+                <View
                   key={d}
-                  style={[styles.dayChip, active && styles.dayChipActive]}
-                  onPress={() => toggleDay(d)}
-                  activeOpacity={0.8}
+                  style={[
+                    styles.dayRow,
+                    unavailable && styles.dayRowUnavailable,
+                    active && !unavailable && styles.dayRowActive,
+                  ]}
                 >
-                  <Text style={[styles.dayChipText, active && styles.dayChipTextActive]}>
-                    {d}
-                  </Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dayLabelArea}
+                    onPress={() => toggleDay(d)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[
+                      styles.dayDot,
+                      unavailable ? styles.dayDotUnavailable : active ? styles.dayDotActive : styles.dayDotInactive,
+                    ]} />
+                    <View>
+                      <Text style={[
+                        styles.dayName,
+                        unavailable && styles.dayNameUnavailable,
+                        active && !unavailable && styles.dayNameActive,
+                      ]}>
+                        {d}
+                      </Text>
+                      {slots.length > 0 && !unavailable && (
+                        <Text style={styles.slotPreview}>{slots[0]}{slots.length > 1 ? ` +${slots.length - 1}` : ""}</Text>
+                      )}
+                      {unavailable && (
+                        <Text style={styles.unavailableLabel}>Unavailable</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+
+                  <View style={styles.dayActions}>
+                    {!unavailable && (
+                      <TouchableOpacity
+                        style={styles.actionBtnSlot}
+                        onPress={() => addTimeSlot(d)}
+                        activeOpacity={0.75}
+                      >
+                        <Feather name="plus" size={11} color="#2563EB" />
+                        <Text style={styles.actionBtnSlotText}>Time Slot</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                      style={[styles.actionBtnUnavail, unavailable && styles.actionBtnUnavailActive]}
+                      onPress={() => markUnavailable(d)}
+                      activeOpacity={0.75}
+                    >
+                      <Feather
+                        name={unavailable ? "refresh-ccw" : "x"}
+                        size={11}
+                        color={unavailable ? "#6b7280" : "#ef4444"}
+                      />
+                      <Text style={[styles.actionBtnUnavailText, unavailable && styles.actionBtnUnavailTextActive]}>
+                        {unavailable ? "Undo" : "Unavail."}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               );
             })}
           </View>
@@ -260,30 +340,114 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  daysRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  dayChip: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: "center",
+  daysContainer: {
     backgroundColor: "#fff",
-    borderWidth: 1.5,
+    borderRadius: 14,
+    borderWidth: 1,
     borderColor: "#e5e7eb",
+    overflow: "hidden",
   },
-  dayChipActive: {
+  dayRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#f3f4f6",
+  },
+  dayRowActive: {
+    backgroundColor: "#f0f7ff",
+  },
+  dayRowUnavailable: {
+    backgroundColor: "#fef2f2",
+  },
+  dayLabelArea: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  dayDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  dayDotActive: {
     backgroundColor: "#2563EB",
-    borderColor: "#2563EB",
   },
-  dayChipText: {
-    fontSize: 12,
+  dayDotInactive: {
+    backgroundColor: "#d1d5db",
+  },
+  dayDotUnavailable: {
+    backgroundColor: "#ef4444",
+  },
+  dayName: {
+    fontSize: 14,
     fontWeight: "600",
     color: "#6b7280",
   },
-  dayChipTextActive: {
-    color: "#fff",
+  dayNameActive: {
+    color: "#1d4ed8",
+  },
+  dayNameUnavailable: {
+    color: "#ef4444",
+    textDecorationLine: "line-through",
+  },
+  slotPreview: {
+    fontSize: 11,
+    color: "#3b82f6",
+    marginTop: 1,
+  },
+  unavailableLabel: {
+    fontSize: 11,
+    color: "#ef4444",
+    marginTop: 1,
+  },
+
+  dayActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  actionBtnSlot: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: "#eff6ff",
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+  },
+  actionBtnSlotText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#2563EB",
+  },
+  actionBtnUnavail: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: "#fff1f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+  },
+  actionBtnUnavailActive: {
+    backgroundColor: "#f3f4f6",
+    borderColor: "#e5e7eb",
+  },
+  actionBtnUnavailText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#ef4444",
+  },
+  actionBtnUnavailTextActive: {
+    color: "#6b7280",
   },
 
   shiftsGrid: {
