@@ -143,13 +143,13 @@ const STATUS_MAP: Record<FilterTab, InvitationStatus | null> = {
   "Job History": "history",
 };
 
-const TAB_CONFIG: Record<FilterTab, { color: string; bg: string; icon: string }> = {
-  All: { color: "#6b7280", bg: "#f3f4f6", icon: "list" },
-  Pending: { color: "#f59e0b", bg: "#fffbeb", icon: "clock" },
-  Accepted: { color: "#10b981", bg: "#ecfdf5", icon: "check-circle" },
-  "No Show Shift": { color: "#f97316", bg: "#fff7ed", icon: "alert-circle" },
-  Rejected: { color: "#ef4444", bg: "#fef2f2", icon: "x-circle" },
-  "Job History": { color: "#2563EB", bg: "#eff6ff", icon: "archive" },
+const TAB_CONFIG: Record<FilterTab, { color: string; bg: string; icon: string; short: string }> = {
+  All:            { color: "#6b7280", bg: "#f3f4f6", icon: "list",         short: "All" },
+  Pending:        { color: "#f59e0b", bg: "#fffbeb", icon: "clock",        short: "Pending" },
+  Accepted:       { color: "#10b981", bg: "#ecfdf5", icon: "check-circle", short: "Accepted" },
+  "No Show Shift":{ color: "#f97316", bg: "#fff7ed", icon: "alert-circle", short: "No Show" },
+  Rejected:       { color: "#ef4444", bg: "#fef2f2", icon: "x-circle",     short: "Rejected" },
+  "Job History":  { color: "#2563EB", bg: "#eff6ff", icon: "archive",      short: "History" },
 };
 
 export default function JobBoardScreen() {
@@ -203,51 +203,44 @@ export default function JobBoardScreen() {
         )}
       </View>
 
-      {/* Filter tabs — scrollable */}
+      {/* Filter tabs — compact fixed row */}
       <View style={[styles.tabBarWrap, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabBarContent}
-        >
-          {FILTER_TABS.map((tab) => {
-            const active = filter === tab;
-            const tabCfg = TAB_CONFIG[tab];
-            const tabStatus = STATUS_MAP[tab];
-            const count = tabStatus === null
-              ? invitations.length
-              : invitations.filter((i) => i.status === tabStatus).length;
-            return (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.tab, active && { borderBottomColor: tabCfg.color, borderBottomWidth: 2 }]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setFilter(tab);
-                }}
-                activeOpacity={0.7}
+        {FILTER_TABS.map((tab) => {
+          const active = filter === tab;
+          const tabCfg = TAB_CONFIG[tab];
+          const tabStatus = STATUS_MAP[tab];
+          const count = tabStatus === null
+            ? invitations.length
+            : invitations.filter((i) => i.status === tabStatus).length;
+          return (
+            <TouchableOpacity
+              key={tab}
+              style={[
+                styles.tab,
+                active && { borderBottomColor: tabCfg.color, borderBottomWidth: 2, backgroundColor: tabCfg.bg },
+              ]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setFilter(tab);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[styles.tabLabel, { color: active ? tabCfg.color : colors.mutedForeground }]}
+                numberOfLines={1}
               >
-                <View style={styles.tabInner}>
-                  <Feather
-                    name={tabCfg.icon as any}
-                    size={12}
-                    color={active ? tabCfg.color : colors.mutedForeground}
-                  />
-                  <Text style={[styles.tabLabel, { color: active ? tabCfg.color : colors.mutedForeground }]}>
-                    {tab}
+                {tabCfg.short}
+              </Text>
+              {count > 0 && (
+                <View style={[styles.tabBadge, { backgroundColor: active ? tabCfg.color : colors.muted }]}>
+                  <Text style={[styles.tabBadgeText, { color: active ? "#fff" : colors.mutedForeground }]}>
+                    {count}
                   </Text>
-                  {count > 0 && (
-                    <View style={[styles.tabBadge, { backgroundColor: active ? tabCfg.color : colors.muted }]}>
-                      <Text style={[styles.tabBadgeText, { color: active ? "#fff" : colors.mutedForeground }]}>
-                        {count}
-                      </Text>
-                    </View>
-                  )}
                 </View>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <ScrollView
@@ -441,38 +434,33 @@ const styles = StyleSheet.create({
   },
 
   tabBarWrap: {
+    flexDirection: "row",
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  tabBarContent: {
-    paddingHorizontal: 12,
-    gap: 4,
-  },
   tab: {
-    paddingVertical: 11,
-    paddingHorizontal: 10,
+    flex: 1,
+    paddingVertical: 9,
+    paddingHorizontal: 2,
     alignItems: "center",
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
-  },
-  tabInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
+    gap: 3,
   },
   tabLabel: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 10,
+    fontWeight: "700",
+    textAlign: "center",
   },
   tabBadge: {
-    borderRadius: 8,
-    minWidth: 18,
-    height: 18,
+    borderRadius: 6,
+    minWidth: 15,
+    height: 15,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 5,
+    paddingHorizontal: 3,
   },
   tabBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "700",
   },
 
