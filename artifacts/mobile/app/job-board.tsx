@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import * as Haptics from "expo-haptics";
 
-type InvitationStatus = "pending" | "accepted" | "declined";
+type InvitationStatus = "pending" | "accepted" | "no_show" | "rejected" | "history";
 
 interface Invitation {
   id: string;
@@ -82,42 +82,87 @@ const SAMPLE_INVITATIONS: Invitation[] = [
     jobId: "5",
   },
   {
-    id: "inv-4",
+    id: "inv-5",
+    jobTitle: "Forklift Operator",
+    company: "DHL Supply Chain",
+    companyRating: 3.9,
+    location: "San Antonio, TX",
+    pay: 22,
+    payType: "hourly",
+    startDate: "Mar 28",
+    duration: "3 days",
+    message: "We need experienced forklift operators for an urgent project.",
+    sentAt: "3 days ago",
+    status: "no_show",
+    urgent: false,
+    jobId: "6",
+  },
+  {
+    id: "inv-6",
+    jobTitle: "Security Guard",
+    company: "SecureForce Inc.",
+    companyRating: 4.1,
+    location: "Dallas, TX",
+    pay: 17,
+    payType: "hourly",
+    startDate: "Apr 1",
+    duration: "1 week",
+    message: "Looking for a dependable security officer for our client site.",
+    sentAt: "4 days ago",
+    status: "rejected",
+    urgent: false,
+    jobId: "7",
+  },
+  {
+    id: "inv-7",
     jobTitle: "Office Admin Assistant",
     company: "MetaLaw LLP",
     companyRating: 4.5,
     location: "Austin, TX",
     pay: 18,
     payType: "hourly",
-    startDate: "Next Week",
+    startDate: "Mar 10",
     duration: "2 weeks",
     message: "We came across your profile and believe your admin skills match our requirements perfectly.",
-    sentAt: "2 days ago",
-    status: "declined",
+    sentAt: "3 weeks ago",
+    status: "history",
     urgent: false,
     jobId: "3",
   },
 ];
 
-const FILTER_TABS = ["Pending", "Accepted", "Declined"] as const;
+const FILTER_TABS = ["All", "Pending", "Accepted", "No Show Shift", "Rejected", "Job History"] as const;
 type FilterTab = typeof FILTER_TABS[number];
 
+const STATUS_MAP: Record<FilterTab, InvitationStatus | null> = {
+  All: null,
+  Pending: "pending",
+  Accepted: "accepted",
+  "No Show Shift": "no_show",
+  Rejected: "rejected",
+  "Job History": "history",
+};
+
 const TAB_CONFIG: Record<FilterTab, { color: string; bg: string; icon: string }> = {
+  All: { color: "#6b7280", bg: "#f3f4f6", icon: "list" },
   Pending: { color: "#f59e0b", bg: "#fffbeb", icon: "clock" },
   Accepted: { color: "#10b981", bg: "#ecfdf5", icon: "check-circle" },
-  Declined: { color: "#ef4444", bg: "#fef2f2", icon: "x-circle" },
+  "No Show Shift": { color: "#f97316", bg: "#fff7ed", icon: "alert-circle" },
+  Rejected: { color: "#ef4444", bg: "#fef2f2", icon: "x-circle" },
+  "Job History": { color: "#2563EB", bg: "#eff6ff", icon: "archive" },
 };
 
 export default function JobBoardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [invitations, setInvitations] = useState<Invitation[]>(SAMPLE_INVITATIONS);
-  const [filter, setFilter] = useState<FilterTab>("Pending");
+  const [filter, setFilter] = useState<FilterTab>("All");
 
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
 
   const pendingCount = invitations.filter((i) => i.status === "pending").length;
-  const filtered = invitations.filter((i) => i.status === filter.toLowerCase() as InvitationStatus);
+  const statusKey = STATUS_MAP[filter];
+  const filtered = statusKey === null ? invitations : invitations.filter((i) => i.status === statusKey);
 
   function handleAccept(id: string) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -129,11 +174,14 @@ export default function JobBoardScreen() {
   function handleDecline(id: string) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setInvitations((prev) =>
-      prev.map((inv) => inv.id === id ? { ...inv, status: "declined" } : inv)
+      prev.map((inv) => inv.id === id ? { ...inv, status: "rejected" } : inv)
     );
   }
 
   const cfg = TAB_CONFIG[filter];
+  const cfgColor = cfg.color;
+  const cfgBg = cfg.bg;
+  const cfgIcon = cfg.icon;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background, paddingTop: topPadding }]}>
@@ -155,42 +203,51 @@ export default function JobBoardScreen() {
         )}
       </View>
 
-      {/* Filter tabs */}
-      <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {FILTER_TABS.map((tab) => {
-          const active = filter === tab;
-          const tabCfg = TAB_CONFIG[tab];
-          const count = invitations.filter((i) => i.status === tab.toLowerCase()).length;
-          return (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, active && { borderBottomColor: tabCfg.color, borderBottomWidth: 2 }]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setFilter(tab);
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.tabInner}>
-                <Feather
-                  name={tabCfg.icon as any}
-                  size={13}
-                  color={active ? tabCfg.color : colors.mutedForeground}
-                />
-                <Text style={[styles.tabLabel, { color: active ? tabCfg.color : colors.mutedForeground }]}>
-                  {tab}
-                </Text>
-                {count > 0 && (
-                  <View style={[styles.tabBadge, { backgroundColor: active ? tabCfg.color : colors.muted }]}>
-                    <Text style={[styles.tabBadgeText, { color: active ? "#fff" : colors.mutedForeground }]}>
-                      {count}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+      {/* Filter tabs — scrollable */}
+      <View style={[styles.tabBarWrap, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabBarContent}
+        >
+          {FILTER_TABS.map((tab) => {
+            const active = filter === tab;
+            const tabCfg = TAB_CONFIG[tab];
+            const tabStatus = STATUS_MAP[tab];
+            const count = tabStatus === null
+              ? invitations.length
+              : invitations.filter((i) => i.status === tabStatus).length;
+            return (
+              <TouchableOpacity
+                key={tab}
+                style={[styles.tab, active && { borderBottomColor: tabCfg.color, borderBottomWidth: 2 }]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setFilter(tab);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.tabInner}>
+                  <Feather
+                    name={tabCfg.icon as any}
+                    size={12}
+                    color={active ? tabCfg.color : colors.mutedForeground}
+                  />
+                  <Text style={[styles.tabLabel, { color: active ? tabCfg.color : colors.mutedForeground }]}>
+                    {tab}
+                  </Text>
+                  {count > 0 && (
+                    <View style={[styles.tabBadge, { backgroundColor: active ? tabCfg.color : colors.muted }]}>
+                      <Text style={[styles.tabBadgeText, { color: active ? "#fff" : colors.mutedForeground }]}>
+                        {count}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       <ScrollView
@@ -199,16 +256,16 @@ export default function JobBoardScreen() {
       >
         {filtered.length === 0 ? (
           <View style={styles.emptyState}>
-            <View style={[styles.emptyIcon, { backgroundColor: cfg.bg }]}>
-              <Feather name={cfg.icon as any} size={32} color={cfg.color} />
+            <View style={[styles.emptyIcon, { backgroundColor: cfgBg }]}>
+              <Feather name={cfgIcon as any} size={32} color={cfgColor} />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-              No {filter.toLowerCase()} invitations
+              No {filter === "All" ? "invitations" : filter.toLowerCase()}
             </Text>
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
               {filter === "Pending"
                 ? "No pending invitations. Set your availability to get discovered."
-                : `No ${filter.toLowerCase()} invitations yet.`}
+                : `No ${filter.toLowerCase()} records yet.`}
             </Text>
           </View>
         ) : (
@@ -381,13 +438,16 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  tabBar: {
-    flexDirection: "row",
+  tabBarWrap: {
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  tabBarContent: {
+    paddingHorizontal: 12,
+    gap: 4,
+  },
   tab: {
-    flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 10,
     alignItems: "center",
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
