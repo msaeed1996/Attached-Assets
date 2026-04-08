@@ -139,21 +139,16 @@ export default function AvailabilityScreen() {
                       styles.dayDot,
                       unavailable ? styles.dayDotUnavailable : active ? styles.dayDotActive : styles.dayDotInactive,
                     ]} />
-                    <View>
-                      <Text style={[
-                        styles.dayName,
-                        unavailable && styles.dayNameUnavailable,
-                        active && !unavailable && styles.dayNameActive,
-                      ]}>
-                        {d}
-                      </Text>
-                      {slots.length > 0 && !unavailable && (
-                        <Text style={styles.slotPreview}>{slots[0]}{slots.length > 1 ? ` +${slots.length - 1}` : ""}</Text>
-                      )}
-                      {unavailable && (
-                        <Text style={styles.unavailableLabel}>Unavailable</Text>
-                      )}
-                    </View>
+                    <Text style={[
+                      styles.dayName,
+                      unavailable && styles.dayNameUnavailable,
+                      active && !unavailable && styles.dayNameActive,
+                    ]}>
+                      {d}
+                    </Text>
+                    {slots.length > 0 && !unavailable && (
+                      <Text style={styles.slotPreview} numberOfLines={1}>{slots[0]}{slots.length > 1 ? ` +${slots.length - 1}` : ""}</Text>
+                    )}
                   </TouchableOpacity>
 
                   <View style={styles.dayActions}>
@@ -348,8 +343,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#f3f4f6",
   },
@@ -362,8 +357,9 @@ const styles = StyleSheet.create({
   dayLabelArea: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     flex: 1,
+    marginRight: 8,
   },
   dayDot: {
     width: 8,
@@ -392,14 +388,9 @@ const styles = StyleSheet.create({
     textDecorationLine: "line-through",
   },
   slotPreview: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#3b82f6",
-    marginTop: 1,
-  },
-  unavailableLabel: {
-    fontSize: 11,
-    color: "#ef4444",
-    marginTop: 1,
+    flex: 1,
   },
 
   dayActions: {
