@@ -277,8 +277,9 @@ export default function AvailabilityTab() {
     return e > s;
   })();
 
-  // Status: unavailable if any day has been blocked
-  const isUnavailable = Object.values(dayBlocks).some(b => b.dayBlocked || b.blockedSlots.length > 0);
+  // Status: unavailable only if the selected day is blocked
+  const selectedBlock = dayBlocks[selectedKey];
+  const isUnavailable = !!(selectedBlock?.dayBlocked || (selectedBlock?.blockedSlots?.length ?? 0) > 0);
 
   return (
     <View style={[styles.root, { backgroundColor: "#f1f5f9" }]}>
