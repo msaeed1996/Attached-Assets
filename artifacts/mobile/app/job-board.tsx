@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import * as Haptics from "expo-haptics";
@@ -203,51 +204,66 @@ export default function JobBoardScreen() {
         )}
       </View>
 
-      {/* Filter tabs — 2-row pill grid */}
+      {/* Filter tabs — scrollable pill row */}
       <View style={[styles.tabBarWrap, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabGrid}>
-          {FILTER_TABS.map((tab) => {
-            const active = filter === tab;
-            const tabCfg = TAB_CONFIG[tab];
-            const tabStatus = STATUS_MAP[tab];
-            const count = tabStatus === null
-              ? invitations.length
-              : invitations.filter((i) => i.status === tabStatus).length;
-            return (
-              <TouchableOpacity
-                key={tab}
-                style={[
-                  styles.tab,
-                  active
-                    ? { backgroundColor: tabCfg.color }
-                    : { backgroundColor: colors.muted },
-                ]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setFilter(tab);
-                }}
-                activeOpacity={0.75}
-              >
-                <Text
-                  style={[styles.tabLabel, { color: active ? "#fff" : colors.mutedForeground }]}
-                  numberOfLines={1}
+        <View style={styles.tabBarInner}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabGrid}>
+            {FILTER_TABS.map((tab) => {
+              const active = filter === tab;
+              const tabCfg = TAB_CONFIG[tab];
+              const tabStatus = STATUS_MAP[tab];
+              const count = tabStatus === null
+                ? invitations.length
+                : invitations.filter((i) => i.status === tabStatus).length;
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  style={[
+                    styles.tab,
+                    active
+                      ? { backgroundColor: tabCfg.color }
+                      : { backgroundColor: colors.muted },
+                  ]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setFilter(tab);
+                  }}
+                  activeOpacity={0.75}
                 >
-                  {tabCfg.short}
-                </Text>
-                {count > 0 && (
-                  <View style={[
-                    styles.tabBadge,
-                    { backgroundColor: active ? "rgba(255,255,255,0.25)" : colors.border },
-                  ]}>
-                    <Text style={[styles.tabBadgeText, { color: active ? "#fff" : colors.mutedForeground }]}>
-                      {count}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+                  <Text
+                    style={[styles.tabLabel, { color: active ? "#fff" : colors.mutedForeground }]}
+                    numberOfLines={1}
+                  >
+                    {tabCfg.short}
+                  </Text>
+                  {count > 0 && (
+                    <View style={[
+                      styles.tabBadge,
+                      { backgroundColor: active ? "rgba(255,255,255,0.25)" : colors.border },
+                    ]}>
+                      <Text style={[styles.tabBadgeText, { color: active ? "#fff" : colors.mutedForeground }]}>
+                        {count}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {/* Fade + arrow hint on right edge */}
+          <View style={styles.tabFadeWrap} pointerEvents="none">
+            <LinearGradient
+              colors={[`${colors.card}00`, colors.card]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.tabFade}
+            />
+            <View style={[styles.tabArrow, { backgroundColor: colors.card }]}>
+              <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
+            </View>
+          </View>
+        </View>
       </View>
 
       <ScrollView
@@ -441,13 +457,36 @@ const styles = StyleSheet.create({
   },
 
   tabBarWrap: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingLeft: 14,
+    paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  tabBarInner: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   tabGrid: {
     flexDirection: "row",
     gap: 7,
+    alignItems: "center",
+    paddingRight: 40,
+  },
+  tabFadeWrap: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    bottom: 0,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  tabFade: {
+    width: 28,
+    height: "100%",
+  },
+  tabArrow: {
+    width: 28,
+    height: "100%",
+    justifyContent: "center",
     alignItems: "center",
   },
   tab: {
