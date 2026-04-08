@@ -299,10 +299,12 @@ function InvitationCard({
   onView: () => void;
 }) {
   const statusConfig = {
-    pending: { color: "#f59e0b", bg: "#fffbeb", label: "Pending", icon: "clock" },
-    accepted: { color: "#10b981", bg: "#ecfdf5", label: "Accepted", icon: "check-circle" },
-    declined: { color: "#ef4444", bg: "#fef2f2", label: "Declined", icon: "x-circle" },
-  }[inv.status];
+    pending:  { color: "#f59e0b", bg: "#fffbeb", label: "Pending",       icon: "clock" },
+    accepted: { color: "#10b981", bg: "#ecfdf5", label: "Accepted",      icon: "check-circle" },
+    no_show:  { color: "#f97316", bg: "#fff7ed", label: "No Show Shift", icon: "alert-circle" },
+    rejected: { color: "#ef4444", bg: "#fef2f2", label: "Rejected",      icon: "x-circle" },
+    history:  { color: "#2563EB", bg: "#eff6ff", label: "Job History",   icon: "archive" },
+  }[inv.status]!;
 
   return (
     <View style={[
