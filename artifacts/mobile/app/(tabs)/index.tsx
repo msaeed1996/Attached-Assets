@@ -236,7 +236,46 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
-      {/* ── UPCOMING SCHEDULE ── */}
+      {/* ── JOB INVITATIONS ── */}
+      {!isEmployer && (
+        <View style={styles.section}>
+          <View style={styles.sectionRow}>
+            <Text style={[styles.sectionLabel, { color: "#374151" }]}>Job Invitations</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/invitations")}>
+              <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
+            </TouchableOpacity>
+          </View>
+
+          {SAMPLE_INVITATIONS.slice(0, 2).map((inv) => (
+            <TouchableOpacity
+              key={inv.id}
+              style={styles.upcomingJobRow}
+              activeOpacity={0.85}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/(tabs)/invitations");
+              }}
+            >
+              <View style={[styles.upcomingJobIcon, { backgroundColor: inv.urgent ? "#fef2f2" : "#ede9fe" }]}>
+                <Feather name="mail" size={17} color={inv.urgent ? "#ef4444" : "#7c3aed"} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.upcomingJobTitle, { color: "#111827" }]} numberOfLines={1}>{inv.jobTitle}</Text>
+                <Text style={[styles.upcomingJobMeta, { color: "#6b7280" }]}>{inv.company} · {inv.startDate}</Text>
+              </View>
+              <View style={styles.upcomingJobRight}>
+                <Text style={[styles.upcomingJobPay, { color: "#2563EB" }]}>${inv.pay}<Text style={[styles.upcomingJobPayType, { color: "#9ca3af" }]}>/{inv.payType}</Text></Text>
+                {inv.urgent && (
+                  <View style={styles.upcomingUrgentTag}>
+                    <Text style={styles.upcomingUrgentText}>Urgent</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       {!isEmployer && UPCOMING_SHIFTS.length > 0 && (() => {
         const next = UPCOMING_SHIFTS[0];
         return (
@@ -279,46 +318,6 @@ export default function HomeScreen() {
           </View>
         );
       })()}
-
-      {/* ── JOB INVITATIONS ── */}
-      {!isEmployer && (
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <Text style={[styles.sectionLabel, { color: "#374151" }]}>Job Invitations</Text>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/invitations")}>
-              <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
-            </TouchableOpacity>
-          </View>
-
-          {SAMPLE_INVITATIONS.slice(0, 2).map((inv) => (
-            <TouchableOpacity
-              key={inv.id}
-              style={styles.upcomingJobRow}
-              activeOpacity={0.85}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push("/(tabs)/invitations");
-              }}
-            >
-              <View style={[styles.upcomingJobIcon, { backgroundColor: inv.urgent ? "#fef2f2" : "#ede9fe" }]}>
-                <Feather name="mail" size={17} color={inv.urgent ? "#ef4444" : "#7c3aed"} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.upcomingJobTitle, { color: "#111827" }]} numberOfLines={1}>{inv.jobTitle}</Text>
-                <Text style={[styles.upcomingJobMeta, { color: "#6b7280" }]}>{inv.company} · {inv.startDate}</Text>
-              </View>
-              <View style={styles.upcomingJobRight}>
-                <Text style={[styles.upcomingJobPay, { color: "#2563EB" }]}>${inv.pay}<Text style={[styles.upcomingJobPayType, { color: "#9ca3af" }]}>/{inv.payType}</Text></Text>
-                {inv.urgent && (
-                  <View style={styles.upcomingUrgentTag}>
-                    <Text style={styles.upcomingUrgentText}>Urgent</Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
 
       {/* ── EMPLOYER: My job posts ── */}
       {isEmployer && (
