@@ -81,6 +81,7 @@ export default function HomeScreen() {
   const workerQuickActions = [
     { icon: "briefcase", label: "Available Jobs", route: "/(tabs)/jobs", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
     { icon: "mail", label: "Job Invitation", route: "/(tabs)/invitations", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length > 0 ? myApplications.length : null, isAvailability: false },
+    { icon: "layers", label: "Job Board", route: "/job-board", color: "#059669", bg: "#d1fae5", badge: null, isAvailability: false },
     { icon: "clock", label: "Time Sheet", route: "/timesheet", color: "#0891b2", bg: "#cffafe", badge: null, isAvailability: false },
   ];
 

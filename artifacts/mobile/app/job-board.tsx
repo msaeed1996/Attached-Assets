@@ -25,7 +25,6 @@ interface Invitation {
   payType: "hourly" | "daily" | "fixed";
   startDate: string;
   duration: string;
-  type: string;
   message: string;
   sentAt: string;
   status: InvitationStatus;
@@ -44,7 +43,6 @@ const SAMPLE_INVITATIONS: Invitation[] = [
     payType: "hourly",
     startDate: "Tomorrow",
     duration: "1 week",
-    type: "full-day",
     message: "We reviewed your profile and think you'd be a great fit for this role. Your previous warehouse experience stands out!",
     sentAt: "30 min ago",
     status: "pending",
@@ -61,7 +59,6 @@ const SAMPLE_INVITATIONS: Invitation[] = [
     payType: "daily",
     startDate: "Saturday",
     duration: "2 days",
-    type: "weekend",
     message: "Hi! We're looking for reliable staff for an upcoming gala. Your hospitality background is exactly what we need.",
     sentAt: "2 hours ago",
     status: "pending",
@@ -78,7 +75,6 @@ const SAMPLE_INVITATIONS: Invitation[] = [
     payType: "hourly",
     startDate: "Monday",
     duration: "3 days",
-    type: "part-time",
     message: "Your retail experience makes you an ideal candidate. We'd love to have you on the team for our upcoming sale event.",
     sentAt: "Yesterday",
     status: "accepted",
@@ -95,7 +91,6 @@ const SAMPLE_INVITATIONS: Invitation[] = [
     payType: "hourly",
     startDate: "Next Week",
     duration: "2 weeks",
-    type: "contract",
     message: "We came across your profile and believe your admin skills match our requirements perfectly.",
     sentAt: "2 days ago",
     status: "declined",
@@ -104,16 +99,25 @@ const SAMPLE_INVITATIONS: Invitation[] = [
   },
 ];
 
-export default function InvitationsScreen() {
+const FILTER_TABS = ["Pending", "Accepted", "Declined"] as const;
+type FilterTab = typeof FILTER_TABS[number];
+
+const TAB_CONFIG: Record<FilterTab, { color: string; bg: string; icon: string }> = {
+  Pending: { color: "#f59e0b", bg: "#fffbeb", icon: "clock" },
+  Accepted: { color: "#10b981", bg: "#ecfdf5", icon: "check-circle" },
+  Declined: { color: "#ef4444", bg: "#fef2f2", icon: "x-circle" },
+};
+
+export default function JobBoardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [invitations, setInvitations] = useState<Invitation[]>(SAMPLE_INVITATIONS);
+  const [filter, setFilter] = useState<FilterTab>("Pending");
 
-  const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top + 16;
+  const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
 
   const pendingCount = invitations.filter((i) => i.status === "pending").length;
-
-  const filtered = invitations;
+  const filtered = invitations.filter((i) => i.status === filter.toLowerCase() as InvitationStatus);
 
   function handleAccept(id: string) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -129,24 +133,64 @@ export default function InvitationsScreen() {
     );
   }
 
-  return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPadding, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <View style={styles.headerTop}>
-          <View>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Job Invitations</Text>
-            <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
-              {pendingCount > 0 ? `${pendingCount} pending response${pendingCount > 1 ? "s" : ""}` : "All caught up!"}
-            </Text>
-          </View>
-          {pendingCount > 0 && (
-            <View style={[styles.pendingBadge, { backgroundColor: colors.primary }]}>
-              <Text style={styles.pendingBadgeText}>{pendingCount}</Text>
-            </View>
-          )}
-        </View>
+  const cfg = TAB_CONFIG[filter];
 
+  return (
+    <View style={[styles.root, { backgroundColor: colors.background, paddingTop: topPadding }]}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Feather name="arrow-left" size={22} color="#111827" />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Job Board</Text>
+          <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
+            {pendingCount > 0 ? `${pendingCount} pending response${pendingCount > 1 ? "s" : ""}` : "All caught up!"}
+          </Text>
+        </View>
+        {pendingCount > 0 && (
+          <View style={[styles.pendingBadge, { backgroundColor: colors.primary }]}>
+            <Text style={styles.pendingBadgeText}>{pendingCount}</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Filter tabs */}
+      <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        {FILTER_TABS.map((tab) => {
+          const active = filter === tab;
+          const tabCfg = TAB_CONFIG[tab];
+          const count = invitations.filter((i) => i.status === tab.toLowerCase()).length;
+          return (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.tab, active && { borderBottomColor: tabCfg.color, borderBottomWidth: 2 }]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setFilter(tab);
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.tabInner}>
+                <Feather
+                  name={tabCfg.icon as any}
+                  size={13}
+                  color={active ? tabCfg.color : colors.mutedForeground}
+                />
+                <Text style={[styles.tabLabel, { color: active ? tabCfg.color : colors.mutedForeground }]}>
+                  {tab}
+                </Text>
+                {count > 0 && (
+                  <View style={[styles.tabBadge, { backgroundColor: active ? tabCfg.color : colors.muted }]}>
+                    <Text style={[styles.tabBadgeText, { color: active ? "#fff" : colors.mutedForeground }]}>
+                      {count}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <ScrollView
@@ -155,12 +199,16 @@ export default function InvitationsScreen() {
       >
         {filtered.length === 0 ? (
           <View style={styles.emptyState}>
-            <View style={[styles.emptyIcon, { backgroundColor: colors.muted }]}>
-              <Feather name="mail" size={32} color={colors.mutedForeground} />
+            <View style={[styles.emptyIcon, { backgroundColor: cfg.bg }]}>
+              <Feather name={cfg.icon as any} size={32} color={cfg.color} />
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No invitations here</Text>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+              No {filter.toLowerCase()} invitations
+            </Text>
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              No invitations yet. Set your availability to get discovered.
+              {filter === "Pending"
+                ? "No pending invitations. Set your availability to get discovered."
+                : `No ${filter.toLowerCase()} invitations yet.`}
             </Text>
           </View>
         ) : (
@@ -208,7 +256,6 @@ function InvitationCard({
         borderWidth: inv.status === "pending" && inv.urgent ? 1.5 : 1,
       }
     ]}>
-      {/* Urgent badge */}
       {inv.urgent && inv.status === "pending" && (
         <View style={styles.urgentBanner}>
           <Feather name="zap" size={11} color="#fff" />
@@ -216,7 +263,6 @@ function InvitationCard({
         </View>
       )}
 
-      {/* Card header */}
       <View style={styles.cardHeader}>
         <View style={[styles.companyAvatar, { backgroundColor: "#dbeafe" }]}>
           <Feather name="briefcase" size={18} color={colors.primary} />
@@ -239,7 +285,6 @@ function InvitationCard({
         </View>
       </View>
 
-      {/* Job details */}
       <View style={[styles.detailsRow, { borderColor: colors.border }]}>
         <DetailItem icon="map-pin" label={inv.location} colors={colors} />
         <DetailItem icon="dollar-sign" label={`$${inv.pay}/${inv.payType}`} colors={colors} />
@@ -247,7 +292,6 @@ function InvitationCard({
         <DetailItem icon="clock" label={inv.duration} colors={colors} />
       </View>
 
-      {/* Message */}
       <View style={[styles.messageBox, { backgroundColor: colors.muted, borderColor: colors.border }]}>
         <Feather name="message-square" size={12} color={colors.mutedForeground} />
         <Text style={[styles.messageText, { color: colors.foreground }]} numberOfLines={2}>
@@ -255,17 +299,13 @@ function InvitationCard({
         </Text>
       </View>
 
-      {/* Footer */}
       <View style={styles.cardFooter}>
-        <Text style={[styles.sentAt, { color: colors.mutedForeground }]}>
-          Sent {inv.sentAt}
-        </Text>
+        <Text style={[styles.sentAt, { color: colors.mutedForeground }]}>Sent {inv.sentAt}</Text>
         <TouchableOpacity onPress={onView}>
           <Text style={[styles.viewJobText, { color: colors.primary }]}>View job</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Action buttons (only for pending) */}
       {inv.status === "pending" && (
         <View style={styles.actionRow}>
           <TouchableOpacity
@@ -304,28 +344,34 @@ function DetailItem({ icon, label, colors }: { icon: string; label: string; colo
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 20,
-  },
-  headerTop: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#f3f4f6",
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 18,
     fontWeight: "800",
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   headerSub: {
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: 12,
+    marginTop: 1,
   },
   pendingBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -334,33 +380,40 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
   },
-  filterChip: {
+
+  tabBar: {
+    flexDirection: "row",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+  tabInner: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
     gap: 5,
   },
-  filterChipText: {
+  tabLabel: {
     fontSize: 13,
     fontWeight: "600",
   },
-  filterBadge: {
-    backgroundColor: "#ef4444",
+  tabBadge: {
     borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    minWidth: 18,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 4,
+    paddingHorizontal: 5,
   },
-  filterBadgeText: {
-    color: "#fff",
+  tabBadgeText: {
     fontSize: 10,
     fontWeight: "700",
   },
+
   emptyState: {
     alignItems: "center",
     paddingVertical: 60,
@@ -383,6 +436,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     paddingHorizontal: 20,
   },
+
   card: {
     borderRadius: 16,
     marginBottom: 14,
@@ -430,9 +484,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  cardCompany: {
-    fontSize: 12,
-  },
+  cardCompany: { fontSize: 12 },
   ratingRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -494,9 +546,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  sentAt: {
-    fontSize: 11,
-  },
+  sentAt: { fontSize: 11 },
   viewJobText: {
     fontSize: 12,
     fontWeight: "600",
