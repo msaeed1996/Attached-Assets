@@ -277,6 +277,9 @@ export default function AvailabilityTab() {
     return e > s;
   })();
 
+  // Status: unavailable if any day has been blocked
+  const isUnavailable = Object.values(dayBlocks).some(b => b.dayBlocked || b.blockedSlots.length > 0);
+
   return (
     <View style={[styles.root, { backgroundColor: "#f1f5f9" }]}>
 
@@ -288,21 +291,27 @@ export default function AvailabilityTab() {
             <Text style={styles.headerSub}>{markedCount} day{markedCount !== 1 ? "s" : ""} marked this month</Text>
           )}
         </View>
-        <View style={styles.availableStatusPill}>
-          <View style={styles.availableStatusDot} />
-          <Text style={styles.availableStatusText}>Available</Text>
+        <View style={[styles.availableStatusPill, isUnavailable && styles.unavailableStatusPill]}>
+          <View style={[styles.availableStatusDot, isUnavailable && styles.unavailableStatusDot]} />
+          <Text style={[styles.availableStatusText, isUnavailable && styles.unavailableStatusText]}>
+            {isUnavailable ? "Unavailable" : "Available"}
+          </Text>
         </View>
       </View>
 
       {/* ── STATUS BANNER ── */}
-      <View style={styles.tipBanner}>
-        <View style={styles.tipIcon}>
-          <Feather name="check-circle" size={16} color="#16a34a" />
+      <View style={[styles.tipBanner, isUnavailable && styles.tipBannerUnavailable]}>
+        <View style={[styles.tipIcon, isUnavailable && styles.tipIconUnavailable]}>
+          <Feather name={isUnavailable ? "x-circle" : "check-circle"} size={16} color={isUnavailable ? "#dc2626" : "#16a34a"} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.tipTitle, { color: "#15803d" }]}>You're available for jobs</Text>
-          <Text style={[styles.tipBody, { color: "#166534" }]}>
-            Employers can see your profile. Tap any day to add or update your availability.
+          <Text style={[styles.tipTitle, { color: isUnavailable ? "#b91c1c" : "#15803d" }]}>
+            {isUnavailable ? "You have unavailable days" : "You're available for jobs"}
+          </Text>
+          <Text style={[styles.tipBody, { color: isUnavailable ? "#991b1b" : "#166534" }]}>
+            {isUnavailable
+              ? "Some days are blocked. Employers won't be able to book you on those days."
+              : "Employers can see your profile. Tap any day to add or update your availability."}
           </Text>
         </View>
       </View>
@@ -577,9 +586,14 @@ const styles = StyleSheet.create({
   availableStatusPill: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: "rgba(34,197,94,0.18)", borderWidth: 1, borderColor: "rgba(74,222,128,0.4)" },
   availableStatusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#4ade80" },
   availableStatusText: { fontSize: 13, fontWeight: "700", color: "#4ade80" },
+  unavailableStatusPill: { backgroundColor: "rgba(239,68,68,0.18)", borderColor: "rgba(239,68,68,0.4)" },
+  unavailableStatusDot: { backgroundColor: "#f87171" },
+  unavailableStatusText: { color: "#f87171" },
 
   tipBanner: { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, backgroundColor: "#f0fdf4", borderBottomColor: "#bbf7d0" },
+  tipBannerUnavailable: { backgroundColor: "#fef2f2", borderBottomColor: "#fecaca" },
   tipIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#dcfce7", justifyContent: "center", alignItems: "center", flexShrink: 0, marginTop: 1 },
+  tipIconUnavailable: { backgroundColor: "#fee2e2" },
   tipTitle: { fontSize: 13, fontWeight: "800", marginBottom: 2 },
   tipBody: { fontSize: 12, lineHeight: 18 },
 
