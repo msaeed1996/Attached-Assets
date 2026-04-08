@@ -221,18 +221,18 @@ export default function JobBoardScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background, paddingTop: topPadding }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={22} color="#111827" />
+          <Feather name="arrow-left" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Job Board</Text>
-          <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
+          <Text style={styles.headerTitle}>Job Board</Text>
+          <Text style={styles.headerSub}>
             {pendingCount > 0 ? `${pendingCount} pending response${pendingCount > 1 ? "s" : ""}` : "All caught up!"}
           </Text>
         </View>
         {pendingCount > 0 && (
-          <View style={[styles.pendingBadge, { backgroundColor: colors.primary }]}>
+          <View style={styles.pendingBadge}>
             <Text style={styles.pendingBadgeText}>{pendingCount}</Text>
           </View>
         )}
@@ -505,18 +505,21 @@ function DetailItem({ icon, label, colors }: { icon: string; label: string; colo
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: {
+    backgroundColor: "#0759af",
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 18,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    marginBottom: 8,
   },
   backBtn: {
     width: 38,
     height: 38,
     borderRadius: 10,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "rgba(255,255,255,0.15)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -524,10 +527,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
     letterSpacing: -0.3,
+    color: "#fff",
   },
   headerSub: {
     fontSize: 12,
     marginTop: 1,
+    color: "rgba(255,255,255,0.6)",
   },
   pendingBadge: {
     width: 28,
@@ -535,6 +540,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.22)",
   },
   pendingBadgeText: {
     color: "#fff",
