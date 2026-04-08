@@ -163,8 +163,8 @@ export default function AvailabilityScreen() {
                         onPress={() => addTimeSlot(d)}
                         activeOpacity={0.75}
                       >
-                        <Feather name="plus" size={11} color="#2563EB" />
-                        <Text style={styles.actionBtnSlotText}>Time Slot</Text>
+                        <Feather name="plus" size={10} color="#2563EB" />
+                        <Text style={styles.actionBtnSlotText}>Slot</Text>
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity
@@ -173,13 +173,10 @@ export default function AvailabilityScreen() {
                       activeOpacity={0.75}
                     >
                       <Feather
-                        name={unavailable ? "refresh-ccw" : "x"}
-                        size={11}
+                        name={unavailable ? "rotate-ccw" : "slash"}
+                        size={10}
                         color={unavailable ? "#6b7280" : "#ef4444"}
                       />
-                      <Text style={[styles.actionBtnUnavailText, unavailable && styles.actionBtnUnavailTextActive]}>
-                        {unavailable ? "Undo" : "Unavail."}
-                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -408,31 +405,30 @@ const styles = StyleSheet.create({
   dayActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
   actionBtnSlot: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 5,
     backgroundColor: "#eff6ff",
     borderWidth: 1,
     borderColor: "#bfdbfe",
   },
   actionBtnSlotText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "600",
     color: "#2563EB",
   },
   actionBtnUnavail: {
-    flexDirection: "row",
+    width: 24,
+    height: 24,
+    borderRadius: 5,
+    justifyContent: "center",
     alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
     backgroundColor: "#fff1f2",
     borderWidth: 1,
     borderColor: "#fecaca",
@@ -442,7 +438,7 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
   },
   actionBtnUnavailText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "600",
     color: "#ef4444",
   },
