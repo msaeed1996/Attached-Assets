@@ -401,18 +401,6 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* ── BROWSE JOBS CTA (worker only) ── */}
-      {!isEmployer && (
-        <View style={[styles.section]}>
-          <TouchableOpacity
-            style={styles.browseBtn}
-            onPress={() => router.push("/(tabs)/jobs")}
-            activeOpacity={0.88}
-          >
-            <Text style={styles.browseBtnText}>Browse All Jobs</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </ScrollView>
 
     <NotificationsSheet visible={notifVisible} onClose={() => setNotifVisible(false)} />
@@ -1350,20 +1338,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // ── BROWSE BTN ──
-  browseBtn: {
-    backgroundColor: "#2563EB",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 17,
-    borderRadius: 16,
-    gap: 10,
-  },
-  browseBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-  },
 });
