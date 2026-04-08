@@ -23,14 +23,13 @@ export default function JobDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { getJobById, applyToJob, savedJobs, saveJob, unsaveJob, applications } = useJobs();
+  const { getJobById, applyToJob, applications } = useJobs();
   const { userRole } = useApp();
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [coverNote, setCoverNote] = useState("");
   const [applied, setApplied] = useState(false);
 
   const job = getJobById(id);
-  const isSaved = savedJobs.includes(id);
   const hasApplied = applied || applications.some((a) => a.jobId === id && a.workerId === "me");
   const isWorker = userRole !== "employer";
 
@@ -63,7 +62,7 @@ export default function JobDetailScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Back & Save header */}
+        {/* Back header */}
         <View style={[styles.topBar, { paddingTop: (Platform.OS === "web" ? insets.top + 67 : insets.top) + 12 }]}>
           <TouchableOpacity
             style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -71,22 +70,10 @@ export default function JobDetailScreen() {
           >
             <Feather name="arrow-left" size={20} color={colors.foreground} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: isSaved ? colors.accent : colors.card, borderColor: colors.border }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              isSaved ? unsaveJob(id) : saveJob(id);
-            }}
-          >
-            <Feather name="bookmark" size={20} color={isSaved ? colors.primary : colors.foreground} />
-          </TouchableOpacity>
         </View>
 
         {/* Job header */}
         <View style={[styles.jobHeader, { paddingHorizontal: 20 }]}>
-          <View style={[styles.companyLogo, { backgroundColor: colors.accent }]}>
-            <Feather name="briefcase" size={28} color={colors.primary} />
-          </View>
           <Text style={[styles.jobTitle, { color: colors.foreground }]}>{job.title}</Text>
           <View style={styles.companyRow}>
             <Text style={[styles.companyName, { color: colors.mutedForeground }]}>{job.company}</Text>
@@ -111,7 +98,7 @@ export default function JobDetailScreen() {
           ))}
         </View>
 
-        {/* Urgency / applicants */}
+        {/* Urgency / posted */}
         <View style={[styles.urgencyRow, { paddingHorizontal: 20 }]}>
           {job.urgency === "urgent" && (
             <View style={[styles.urgentTag, { backgroundColor: "#fef2f2" }]}>
@@ -119,12 +106,6 @@ export default function JobDetailScreen() {
               <Text style={[styles.urgentTagText, { color: "#ef4444" }]}>Urgent Hire</Text>
             </View>
           )}
-          <View style={[styles.applicantsTag, { backgroundColor: colors.muted }]}>
-            <Feather name="users" size={13} color={colors.mutedForeground} />
-            <Text style={[styles.applicantsTagText, { color: colors.mutedForeground }]}>
-              {job.applicantsCount} people applied
-            </Text>
-          </View>
           <Text style={[styles.postedAt, { color: colors.mutedForeground }]}>Posted {job.postedAt}</Text>
         </View>
 
@@ -246,8 +227,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
   },
-  jobHeader: { alignItems: "center", marginBottom: 20 },
-  companyLogo: { width: 72, height: 72, borderRadius: 18, justifyContent: "center", alignItems: "center", marginBottom: 14 },
+  jobHeader: { alignItems: "center", marginBottom: 16, marginTop: 4 },
   jobTitle: { fontSize: 24, fontWeight: "800", textAlign: "center", marginBottom: 6, letterSpacing: -0.3 },
   companyRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   companyName: { fontSize: 15, fontWeight: "500" },
