@@ -112,10 +112,13 @@ export default function ProfileScreen() {
     >
       {/* ── BLUE HEADER BAND ── */}
       <View style={[styles.headerBand, { paddingTop: topPadding + 16 }]}>
-        <Text style={styles.headerTitle}>My Profile</Text>
-        <TouchableOpacity style={styles.settingsBtn} activeOpacity={0.75}>
-          <Feather name="settings" size={20} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerRow}>
+          <View style={{ width: 36 }} />
+          <Text style={styles.headerTitle}>My Profile</Text>
+          <TouchableOpacity style={styles.settingsBtn} activeOpacity={0.75}>
+            <Feather name="settings" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ── PROFILE CARD (overlaps header) ── */}
@@ -242,22 +245,23 @@ const styles = StyleSheet.create({
   headerBand: {
     backgroundColor: "#2563eb",
     paddingHorizontal: 20,
-    paddingBottom: 60,
+    paddingBottom: 68,
+  },
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
   },
-  headerTitle: { fontSize: 18, fontWeight: "800", color: "#fff", letterSpacing: -0.2 },
-  settingsBtn: { position: "absolute", right: 20, top: Platform.OS === "web" ? 83 : 16 },
+  headerTitle: { flex: 1, textAlign: "center", fontSize: 18, fontWeight: "800", color: "#fff", letterSpacing: -0.2 },
+  settingsBtn: { width: 36, alignItems: "flex-end" },
 
   // Profile card
   profileCard: {
     backgroundColor: "#fff",
     marginHorizontal: 16,
-    marginTop: -44,
+    marginTop: -24,
     borderRadius: 20,
     alignItems: "center",
-    paddingTop: 0,
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderWidth: 1,
@@ -267,7 +271,7 @@ const styles = StyleSheet.create({
       android: { elevation: 4 },
     }),
   },
-  avatarWrap: { marginTop: -36, marginBottom: 12, position: "relative" },
+  avatarWrap: { marginTop: -38, marginBottom: 10, position: "relative" },
   avatar: {
     width: 76,
     height: 76,
