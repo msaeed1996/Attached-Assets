@@ -205,7 +205,7 @@ export default function JobBoardScreen() {
 
       {/* Filter tabs — 2-row pill grid */}
       <View style={[styles.tabBarWrap, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <View style={styles.tabGrid}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabGrid}>
           {FILTER_TABS.map((tab) => {
             const active = filter === tab;
             const tabCfg = TAB_CONFIG[tab];
@@ -247,7 +247,7 @@ export default function JobBoardScreen() {
               </TouchableOpacity>
             );
           })}
-        </View>
+        </ScrollView>
       </View>
 
       <ScrollView
@@ -447,8 +447,8 @@ const styles = StyleSheet.create({
   },
   tabGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: 7,
+    alignItems: "center",
   },
   tab: {
     flexDirection: "row",
