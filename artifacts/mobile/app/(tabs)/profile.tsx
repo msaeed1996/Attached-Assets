@@ -10,31 +10,54 @@ import {
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors } from "@/hooks/useColors";
 import { useApp } from "@/context/AppContext";
-import { TrustBadge } from "@/components/TrustBadge";
 import * as Haptics from "expo-haptics";
 
-const WORKER_REVIEWS = [
-  { id: "1", author: "Sarah M.", company: "Amazon Logistics", text: "Excellent worker — arrived on time, worked hard all day. Would hire again without hesitation.", rating: 5, date: "2 weeks ago" },
-  { id: "2", author: "James R.", company: "Prestige Events", text: "Professional and friendly. Great with customers and kept the event running smoothly.", rating: 5, date: "1 month ago" },
-  { id: "3", author: "Linda T.", company: "FreshFoods", text: "Solid work ethic. Certified forklift operator — got right to it without any issues.", rating: 4, date: "2 months ago" },
-];
+function MenuItem({
+  icon,
+  label,
+  accent = "#2563EB",
+  bg = "#eff6ff",
+  onPress,
+  last = false,
+}: {
+  icon: string;
+  label: string;
+  accent?: string;
+  bg?: string;
+  onPress?: () => void;
+  last?: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.menuItem, !last && styles.menuItemBorder]}
+      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress?.(); }}
+      activeOpacity={0.75}
+    >
+      <View style={[styles.menuIcon, { backgroundColor: bg }]}>
+        <Feather name={icon as any} size={15} color={accent} />
+      </View>
+      <Text style={styles.menuLabel}>{label}</Text>
+      <Feather name="chevron-right" size={15} color="#d1d5db" />
+    </TouchableOpacity>
+  );
+}
 
-const EMPLOYER_REVIEWS = [
-  { id: "1", author: "Michael D.", role: "Warehouse Associate", text: "Very organized hiring process. Clear instructions, good pay, and paid on time. Highly recommend.", rating: 5, date: "3 weeks ago" },
-  { id: "2", author: "Keisha W.", role: "Event Staff", text: "Great company to work for as a temp. Respectful management and a fun environment.", rating: 5, date: "1 month ago" },
-  { id: "3", author: "Carlos M.", role: "Office Admin", text: "Smooth onboarding and clear expectations. Would work for them again.", rating: 4, date: "2 months ago" },
-];
+function MenuSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.menuSection}>
+      <Text style={styles.menuSectionTitle}>{title}</Text>
+      <View style={styles.menuCard}>{children}</View>
+    </View>
+  );
+}
 
 export default function ProfileScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { userProfile, userRole, setUserRole, setUserProfile, setIsOnboarded } = useApp();
 
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const isEmployer = userRole === "employer";
-  const reviews = isEmployer ? EMPLOYER_REVIEWS : WORKER_REVIEWS;
 
   function handleSwitch() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -77,198 +100,278 @@ export default function ProfileScreen() {
     router.replace("/onboarding");
   }
 
+  const initial = (userProfile?.name || "U").charAt(0).toUpperCase();
+  const rating = userProfile?.rating ?? 0;
+  const completedJobs = (userProfile as any)?.completedJobs ?? 0;
+
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+      style={styles.root}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Hero */}
-      <View style={[styles.hero, { backgroundColor: colors.navy, paddingTop: topPadding + 24 }]}>
-        <View style={[styles.heroAvatar, { backgroundColor: colors.primary }]}>
-          <Text style={styles.heroAvatarText}>{(userProfile?.name || "U").charAt(0)}</Text>
-        </View>
-        <Text style={styles.heroName}>{userProfile?.name || "User"}</Text>
-        <Text style={styles.heroRole}>
-          {isEmployer ? `Employer · ${userProfile?.company || ""}` : "Gig Worker"}
-        </Text>
+      {/* ── BLUE HEADER BAND ── */}
+      <View style={[styles.headerBand, { paddingTop: topPadding + 16 }]}>
+        <Text style={styles.headerTitle}>My Profile</Text>
+        <TouchableOpacity style={styles.settingsBtn} activeOpacity={0.75}>
+          <Feather name="settings" size={20} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
-        {userProfile && (
-          <View style={{ marginTop: 8 }}>
-            <TrustBadge
-              rating={userProfile.rating || 0}
-              reviewCount={userProfile.reviewCount}
-              verified={userProfile.verified}
-              size="md"
-            />
+      {/* ── PROFILE CARD (overlaps header) ── */}
+      <View style={styles.profileCard}>
+        {/* Avatar */}
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initial}</Text>
           </View>
-        )}
+          {userProfile?.verified && (
+            <View style={styles.verifiedBadge}>
+              <Feather name="check" size={9} color="#fff" />
+            </View>
+          )}
+        </View>
 
-        {!isEmployer && userProfile?.skills && (
+        <Text style={styles.profileName}>{userProfile?.name || "User"}</Text>
+        <View style={styles.roleRow}>
+          <Feather name={isEmployer ? "briefcase" : "user"} size={12} color="#6b7280" />
+          <Text style={styles.roleText}>
+            {isEmployer ? `Employer · ${userProfile?.company || ""}` : "Verified Gig Worker"}
+          </Text>
+        </View>
+
+        {/* Skills chips — worker only */}
+        {!isEmployer && (userProfile as any)?.skills && (
           <View style={styles.skillsRow}>
-            {userProfile.skills.map((s) => (
-              <View key={s} style={[styles.skillChip, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+            {((userProfile as any).skills as string[]).map((s: string) => (
+              <View key={s} style={styles.skillChip}>
                 <Text style={styles.skillText}>{s}</Text>
               </View>
             ))}
           </View>
         )}
-      </View>
 
-      {/* Info cards */}
-      <View style={styles.infoGrid}>
-        {[
-          { icon: "map-pin", label: userProfile?.location || "Location" },
-          isEmployer
-            ? { icon: "briefcase", label: userProfile?.company || "Company" }
-            : { icon: "dollar-sign", label: `$${userProfile?.hourlyRate || 0}/hr` },
-          !isEmployer
-            ? { icon: "award", label: `${userProfile?.completedJobs || 0} jobs completed` }
-            : { icon: "users", label: "38 hires made" },
-        ].map((item, i) => (
-          <View key={i} style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name={item.icon as any} size={18} color={colors.primary} />
-            <Text style={[styles.infoText, { color: colors.foreground }]}>{item.label}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Bio / description */}
-      {(userProfile?.bio || isEmployer) && (
-        <View style={[styles.bioCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.bioLabel, { color: colors.foreground }]}>About</Text>
-          <Text style={[styles.bioText, { color: colors.mutedForeground }]}>
-            {isEmployer
-              ? "Acme Corp is a leading logistics and fulfillment company based in Austin, TX. We regularly hire reliable temporary workers for our warehouses, events, and administrative offices."
-              : userProfile?.bio}
-          </Text>
-        </View>
-      )}
-
-      {/* Reviews */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-          Reviews ({reviews.length})
-        </Text>
-        {reviews.map((r) => (
-          <View key={r.id} style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.reviewHeader}>
-              <View style={[styles.reviewAvatar, { backgroundColor: colors.muted }]}>
-                <Text style={[styles.reviewAvatarText, { color: colors.foreground }]}>
-                  {r.author.charAt(0)}
-                </Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.reviewAuthor, { color: colors.foreground }]}>{r.author}</Text>
-                <Text style={[styles.reviewContext, { color: colors.mutedForeground }]}>
-                  {isEmployer ? (r as any).role : (r as any).company}
-                </Text>
-              </View>
-              <View style={styles.reviewStars}>
-                {Array.from({ length: r.rating }).map((_, i) => (
-                  <Feather key={i} name="star" size={12} color="#f59e0b" />
-                ))}
-              </View>
+        {/* Stats row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCol}>
+            <Text style={styles.statValue}>{rating.toFixed(1)}</Text>
+            <View style={styles.statLabelRow}>
+              <Feather name="star" size={10} color="#f59e0b" />
+              <Text style={styles.statLabel}>Rating</Text>
             </View>
-            <Text style={[styles.reviewText, { color: colors.mutedForeground }]}>{r.text}</Text>
-            <Text style={[styles.reviewDate, { color: colors.mutedForeground }]}>{r.date}</Text>
           </View>
-        ))}
+          <View style={styles.statDivider} />
+          {isEmployer ? (
+            <>
+              <View style={styles.statCol}>
+                <Text style={[styles.statValue, { color: "#2563eb" }]}>38</Text>
+                <Text style={styles.statLabel}>Total Hired</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statCol}>
+                <Text style={[styles.statValue, { color: "#10b981" }]}>98%</Text>
+                <Text style={styles.statLabel}>Fill Rate</Text>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.statCol}>
+                <Text style={[styles.statValue, { color: "#10b981" }]}>$780</Text>
+                <Text style={styles.statLabel}>This Month</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statCol}>
+                <Text style={styles.statValue}>{completedJobs}</Text>
+                <Text style={styles.statLabel}>Gigs Done</Text>
+              </View>
+            </>
+          )}
+        </View>
       </View>
 
-      {/* Actions */}
-      <View style={[styles.actionsSection, { paddingHorizontal: 20 }]}>
-        <TouchableOpacity
-          style={[styles.switchBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-          onPress={handleSwitch}
-        >
-          <Feather name="repeat" size={18} color={colors.primary} />
-          <Text style={[styles.switchText, { color: colors.primary }]}>
-            Switch to {isEmployer ? "Worker" : "Employer"} View
-          </Text>
+      {/* ── MENU SECTIONS ── */}
+      <View style={styles.sectionsWrap}>
+
+        <MenuSection title="Account">
+          <MenuItem icon="user" label="Personal Information" />
+          <MenuItem icon="shield" label="Security & Password" last />
+        </MenuSection>
+
+        {!isEmployer && (
+          <MenuSection title="Work">
+            <MenuItem icon="tool" label="My Skills & Certifications" bg="#ede9fe" accent="#7c3aed" />
+            <MenuItem icon="clock" label="Work History" bg="#ede9fe" accent="#7c3aed" />
+            <MenuItem icon="award" label="Badges & Achievements" bg="#ede9fe" accent="#7c3aed" last />
+          </MenuSection>
+        )}
+
+        <MenuSection title="Financials">
+          <MenuItem icon="credit-card" label="Paycards & Direct Deposit" bg="#f0fdf4" accent="#16a34a" />
+          <MenuItem icon="trending-up" label="Earnings & Payouts" bg="#f0fdf4" accent="#16a34a" />
+          <MenuItem icon="file-text" label="Tax Documents" bg="#f0fdf4" accent="#16a34a" last />
+        </MenuSection>
+
+        <MenuSection title="App">
+          <MenuItem icon="bell" label="Notifications" bg="#fff7ed" accent="#ea580c" />
+          <MenuItem icon="help-circle" label="Help & Support" bg="#f8fafc" accent="#64748b" />
+          <MenuItem icon="info" label="About TrueGigs" bg="#f8fafc" accent="#64748b" last />
+        </MenuSection>
+
+        {/* Switch role */}
+        <TouchableOpacity style={styles.switchBtn} onPress={handleSwitch} activeOpacity={0.85}>
+          <Feather name="repeat" size={16} color="#2563eb" />
+          <Text style={styles.switchText}>Switch to {isEmployer ? "Worker" : "Employer"} View</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.logoutBtn, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}
-          onPress={handleLogout}
-        >
-          <Feather name="log-out" size={18} color={colors.destructive} />
-          <Text style={[styles.logoutText, { color: colors.destructive }]}>Sign Out</Text>
+        {/* Log out */}
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
+          <Feather name="log-out" size={16} color="#dc2626" />
+          <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
+
+        <Text style={styles.version}>TrueGigs v1.0.0</Text>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  hero: {
-    alignItems: "center",
+  root: { flex: 1, backgroundColor: "#f1f5f9" },
+
+  // Header band
+  headerBand: {
+    backgroundColor: "#2563eb",
     paddingHorizontal: 20,
-    paddingBottom: 32,
-  },
-  heroAvatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-    borderWidth: 3,
-    borderColor: "rgba(255,255,255,0.2)",
-  },
-  heroAvatarText: { color: "#fff", fontSize: 36, fontWeight: "700" },
-  heroName: { color: "#fff", fontSize: 24, fontWeight: "800", marginBottom: 4 },
-  heroRole: { color: "rgba(255,255,255,0.7)", fontSize: 14, marginBottom: 8 },
-  skillsRow: { flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap", justifyContent: "center" },
-  skillChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  skillText: { color: "#fff", fontSize: 12, fontWeight: "600" },
-  infoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, padding: 20, paddingBottom: 0 },
-  infoCard: {
+    paddingBottom: 60,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    flex: 1,
-    minWidth: "45%",
+    justifyContent: "center",
   },
-  infoText: { fontSize: 13, fontWeight: "500", flex: 1 },
-  bioCard: { margin: 20, padding: 16, borderRadius: 14, borderWidth: 1 },
-  bioLabel: { fontSize: 15, fontWeight: "700", marginBottom: 8 },
-  bioText: { fontSize: 13, lineHeight: 20 },
-  section: { paddingHorizontal: 20, marginBottom: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 14 },
-  reviewCard: { padding: 16, borderRadius: 14, borderWidth: 1, marginBottom: 12 },
-  reviewHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
-  reviewAvatar: { width: 38, height: 38, borderRadius: 19, justifyContent: "center", alignItems: "center" },
-  reviewAvatarText: { fontSize: 16, fontWeight: "700" },
-  reviewAuthor: { fontSize: 14, fontWeight: "700" },
-  reviewContext: { fontSize: 12, marginTop: 1 },
-  reviewStars: { flexDirection: "row", gap: 2 },
-  reviewText: { fontSize: 13, lineHeight: 20, marginBottom: 8 },
-  reviewDate: { fontSize: 11 },
-  actionsSection: { gap: 12, marginBottom: 20 },
+  headerTitle: { fontSize: 18, fontWeight: "800", color: "#fff", letterSpacing: -0.2 },
+  settingsBtn: { position: "absolute", right: 20, top: Platform.OS === "web" ? 83 : 16 },
+
+  // Profile card
+  profileCard: {
+    backgroundColor: "#fff",
+    marginHorizontal: 16,
+    marginTop: -44,
+    borderRadius: 20,
+    alignItems: "center",
+    paddingTop: 0,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12 },
+      android: { elevation: 4 },
+    }),
+  },
+  avatarWrap: { marginTop: -36, marginBottom: 12, position: "relative" },
+  avatar: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: "#2563eb",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 4,
+    borderColor: "#fff",
+    ...Platform.select({
+      ios: { shadowColor: "#2563eb", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 8 },
+      android: { elevation: 5 },
+    }),
+  },
+  avatarText: { color: "#fff", fontSize: 30, fontWeight: "800" },
+  verifiedBadge: {
+    position: "absolute",
+    bottom: 2,
+    right: 2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#2563eb",
+    borderWidth: 2,
+    borderColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  profileName: { fontSize: 20, fontWeight: "800", color: "#111827", letterSpacing: -0.3 },
+  roleRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 },
+  roleText: { fontSize: 13, color: "#6b7280", fontWeight: "500" },
+  skillsRow: { flexDirection: "row", gap: 6, marginTop: 10, flexWrap: "wrap", justifyContent: "center" },
+  skillChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, backgroundColor: "#eff6ff", borderWidth: 1, borderColor: "#dbeafe" },
+  skillText: { fontSize: 11, fontWeight: "700", color: "#2563eb" },
+
+  // Stats
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    width: "100%",
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+  },
+  statCol: { alignItems: "center", flex: 1 },
+  statValue: { fontSize: 20, fontWeight: "900", color: "#111827", letterSpacing: -0.5 },
+  statLabelRow: { flexDirection: "row", alignItems: "center", gap: 3, marginTop: 3 },
+  statLabel: { fontSize: 10, fontWeight: "700", color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.3, marginTop: 3 },
+  statDivider: { width: 1, height: 36, backgroundColor: "#f3f4f6" },
+
+  // Menu
+  sectionsWrap: { paddingHorizontal: 16, paddingTop: 20, gap: 0 },
+  menuSection: { marginBottom: 20 },
+  menuSectionTitle: { fontSize: 11, fontWeight: "800", color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6, marginLeft: 4 },
+  menuCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    overflow: "hidden",
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4 },
+      android: { elevation: 1 },
+    }),
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  menuItemBorder: { borderBottomWidth: 1, borderBottomColor: "#f3f4f6" },
+  menuIcon: { width: 34, height: 34, borderRadius: 10, justifyContent: "center", alignItems: "center" },
+  menuLabel: { flex: 1, fontSize: 14, fontWeight: "600", color: "#1f2937" },
+
+  // Actions
   switchBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
+    gap: 8,
+    paddingVertical: 14,
     borderRadius: 14,
-    gap: 10,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderColor: "#dbeafe",
+    backgroundColor: "#eff6ff",
+    marginBottom: 10,
   },
-  switchText: { fontSize: 15, fontWeight: "600" },
+  switchText: { fontSize: 14, fontWeight: "700", color: "#2563eb" },
   logoutBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
+    gap: 8,
+    paddingVertical: 14,
     borderRadius: 14,
-    gap: 10,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderColor: "#fecaca",
+    backgroundColor: "#fef2f2",
+    marginBottom: 16,
   },
-  logoutText: { fontSize: 15, fontWeight: "600" },
+  logoutText: { fontSize: 14, fontWeight: "700", color: "#dc2626" },
+  version: { textAlign: "center", fontSize: 11, color: "#d1d5db", fontWeight: "500" },
 });

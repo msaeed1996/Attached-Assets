@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueGigs Profile & Settings Redesign</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200 flex justify-center h-screen font-sans pb-10 pt-10">
+
+    <div class="w-full max-w-md bg-gray-50 h-full flex flex-col shadow-2xl rounded-3xl overflow-hidden border border-gray-300 relative">
+        
+        <div class="bg-blue-600 pt-6 pb-20 px-6 rounded-b-[2.5rem] shrink-0 relative z-0">
+            <h1 class="text-center text-xl font-bold tracking-wide text-white mb-2">My Profile</h1>
+            <button class="absolute top-6 right-6 text-white hover:text-blue-200 transition">
+                <i class="fas fa-cog text-xl"></i>
+            </button>
+        </div>
+
+        <main class="flex-1 overflow-y-auto px-4 -mt-16 z-10 relative pb-6">
+            
+            <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-5 flex flex-col items-center mb-6">
+                <div class="w-20 h-20 bg-gray-200 rounded-full border-4 border-white shadow-sm -mt-12 mb-3 flex items-center justify-center overflow-hidden">
+                    <img src="https://ui-avatars.com/api/?name=Sarah+Miller&background=EBF4FF&color=2563EB&size=100" alt="User Avatar" class="w-full h-full object-cover">
+                </div>
+                
+                <h2 class="text-xl font-bold text-gray-900">Sarah J. Miller</h2>
+                <p class="text-sm text-gray-500 font-medium mt-0.5">Verified Professional <i class="fas fa-check-circle text-blue-500 ml-1"></i></p>
+                
+                <div class="flex w-full justify-around mt-5 pt-5 border-t border-gray-100">
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl font-black text-gray-900">4.9</span>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center mt-1"><i class="fas fa-star text-yellow-400 mr-1"></i> Rating</span>
+                    </div>
+                    <div class="w-px bg-gray-200"></div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl font-black text-green-600">$780</span>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mt-1">This Month</span>
+                    </div>
+                    <div class="w-px bg-gray-200"></div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl font-black text-gray-900">24</span>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mt-1">Gigs Done</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 ml-2">Account</h3>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <div class="flex items-center justify-between p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                            <i class="far fa-user text-sm"></i>
+                        </div>
+                        <span class="font-bold text-gray-800 text-sm">Personal Information</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-blue-500 transition"></i>
+                </div>
+                <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                            <i class="fas fa-shield-alt text-sm"></i>
+                        </div>
+                        <span class="font-bold text-gray-800 text-sm">Security & Password</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-blue-500 transition"></i>
+                </div>
+            </div>
+
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 ml-2">Financials</h3>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <div class="flex items-center justify-between p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                            <i class="far fa-credit-card text-sm"></i>
+                        </div>
+                        <span class="font-bold text-gray-800 text-sm">Paycards & Direct Deposit</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-blue-500 transition"></i>
+                </div>
+                <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                            <i class="fas fa-file-invoice-dollar text-sm"></i>
+                        </div>
+                        <span class="font-bold text-gray-800 text-sm">Tax Documents</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-blue-500 transition"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <div class="flex items-center justify-between p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+                            <i class="far fa-question-circle text-sm"></i>
+                        </div>
+                        <span class="font-bold text-gray-800 text-sm">Help & Support</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-blue-500 transition"></i>
+                </div>
+            </div>
+
+            <button class="w-full bg-white border border-red-200 text-red-600 font-bold py-3.5 rounded-xl hover:bg-red-50 transition shadow-sm flex items-center justify-center space-x-2">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+            </button>
+
+        </main>
+
+        <footer class="bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+            <div class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition cursor-pointer">
+                <i class="fas fa-home text-lg mb-1"></i>
+                <span class="text-[10px] font-bold">Home</span>
+            </div>
+            <div class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition cursor-pointer">
+                <i class="fas fa-search text-lg mb-1"></i>
+                <span class="text-[10px] font-bold">Jobs</span>
+            </div>
+            <div class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition cursor-pointer">
+                <i class="far fa-calendar-alt text-lg mb-1"></i>
+                <span class="text-[10px] font-bold">Schedule</span>
+            </div>
+            <div class="flex flex-col items-center text-blue-600 cursor-pointer">
+                <i class="fas fa-user text-lg mb-1"></i>
+                <span class="text-[10px] font-bold">Profile</span>
+            </div>
+        </footer>
+
+    </div>
+
+</body>
+</html>
