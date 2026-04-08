@@ -63,15 +63,6 @@ export function JobCard({ job, onPress, onSave, isSaved, compact }: Props) {
               <Text style={[styles.urgentText, { color: "#ef4444" }]}>Urgent</Text>
             </View>
           )}
-          {onSave && (
-            <TouchableOpacity onPress={onSave} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Feather
-                name={isSaved ? "bookmark" : "bookmark"}
-                size={20}
-                color={isSaved ? colors.primary : colors.mutedForeground}
-              />
-            </TouchableOpacity>
-          )}
         </View>
       </View>
 
@@ -104,12 +95,13 @@ export function JobCard({ job, onPress, onSave, isSaved, compact }: Props) {
             </Text>
             <Text style={[styles.payType, { color: colors.mutedForeground }]}>/{job.payType}</Text>
           </View>
-          <View style={styles.applicantsRow}>
-            <Feather name="users" size={12} color={colors.mutedForeground} />
-            <Text style={[styles.applicantsText, { color: colors.mutedForeground }]}>
-              {job.applicantsCount} applied
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={[styles.applyBtn, { backgroundColor: colors.primary }]}
+            onPress={onPress}
+            activeOpacity={0.82}
+          >
+            <Text style={styles.applyBtnText}>Apply Now</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -214,13 +206,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginLeft: 2,
   },
-  applicantsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+  applyBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
   },
-  applicantsText: {
-    fontSize: 12,
+  applyBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
   },
   payCompact: {
     fontSize: 15,

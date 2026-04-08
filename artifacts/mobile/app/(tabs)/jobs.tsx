@@ -22,7 +22,7 @@ const SORT_OPTIONS = ["Newest", "Pay: High-Low", "Urgency"];
 export default function JobsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { jobs, savedJobs, saveJob, unsaveJob } = useJobs();
+  const { jobs } = useJobs();
   const [search, setSearch] = useState("");
   const [selectedType, setSelectedType] = useState("All Types");
   const [sortBy, setSortBy] = useState("Newest");
@@ -159,11 +159,6 @@ export default function JobsScreen() {
               key={job.id}
               job={job}
               onPress={() => router.push(`/job/${job.id}`)}
-              onSave={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                savedJobs.includes(job.id) ? unsaveJob(job.id) : saveJob(job.id);
-              }}
-              isSaved={savedJobs.includes(job.id)}
             />
           ))
         )}
