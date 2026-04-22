@@ -216,48 +216,6 @@ export default function SignupScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Role toggle */}
-          <View style={[styles.roleToggle, { backgroundColor: colors.muted }]}>
-            {(["worker", "employer"] as const).map((r) => {
-              const selected = role === r;
-              return (
-                <TouchableOpacity
-                  key={r}
-                  style={[
-                    styles.roleToggleBtn,
-                    selected && {
-                      backgroundColor: colors.card,
-                      shadowColor: "#000",
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.08,
-                      shadowRadius: 6,
-                      elevation: 2,
-                    },
-                  ]}
-                  onPress={() => {
-                    setRole(r);
-                    Haptics.selectionAsync();
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Feather
-                    name={r === "worker" ? "user" : "briefcase"}
-                    size={15}
-                    color={selected ? colors.primary : colors.mutedForeground}
-                  />
-                  <Text
-                    style={[
-                      styles.roleToggleText,
-                      { color: selected ? colors.foreground : colors.mutedForeground },
-                    ]}
-                  >
-                    {r === "worker" ? "Find Work" : "Hire Workers"}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
           {/* Section: Account */}
           <Text style={[styles.section, { color: colors.mutedForeground }]}>Account</Text>
           {renderField({
