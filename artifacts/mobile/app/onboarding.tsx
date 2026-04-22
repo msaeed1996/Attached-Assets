@@ -91,7 +91,7 @@ export default function OnboardingScreen() {
             style={[styles.getStartedBtn, { backgroundColor: colors.primary }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setStep(1);
+              router.push("/signup");
             }}
             activeOpacity={0.85}
           >
@@ -101,7 +101,7 @@ export default function OnboardingScreen() {
 
           <Text style={styles.loginHint}>
             Already have an account?{" "}
-            <Text style={{ color: colors.primary }} onPress={() => setStep(1)}>
+            <Text style={{ color: colors.primary }} onPress={() => router.push("/login")}>
               Sign in
             </Text>
           </Text>
