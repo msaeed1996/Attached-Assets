@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Modal,
+  Pressable,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -72,6 +74,8 @@ export default function HomeScreen() {
   const isEmployer = userRole === "employer";
   const [isClockedIn, setIsClockedIn] = React.useState(false);
   const [notifVisible, setNotifVisible] = React.useState(false);
+  const [clockInModalVisible, setClockInModalVisible] = React.useState(false);
+  const [activeJobForModal, setActiveJobForModal] = React.useState<any>(null);
 
   const myApplications = applications.filter((a) => a.workerId === "me");
   const myJobs = jobs.filter((j) => j.employerId === "emp-me");
@@ -190,7 +194,12 @@ export default function HomeScreen() {
                   style={[styles.clockInBtn, { backgroundColor: isClockedIn ? "#10b981" : "#2563EB" }]}
                   onPress={() => {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    setIsClockedIn((v) => !v);
+                    if (isClockedIn) {
+                      setIsClockedIn(false);
+                    } else {
+                      setActiveJobForModal(activeJob);
+                      setClockInModalVisible(true);
+                    }
                   }}
                   activeOpacity={0.85}
                 >
@@ -403,9 +412,172 @@ export default function HomeScreen() {
     </ScrollView>
 
     <NotificationsSheet visible={notifVisible} onClose={() => setNotifVisible(false)} />
+
+    <Modal
+      visible={clockInModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setClockInModalVisible(false)}
+    >
+      <Pressable style={modalStyles.backdrop} onPress={() => setClockInModalVisible(false)}>
+        <Pressable style={modalStyles.card} onPress={(e) => e.stopPropagation()}>
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>Ready to Clock In?</Text>
+            <TouchableOpacity
+              style={modalStyles.closeBtn}
+              onPress={() => setClockInModalVisible(false)}
+              hitSlop={8}
+            >
+              <Feather name="x" size={18} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={modalStyles.body}>
+            <View style={modalStyles.infoCard}>
+              <ModalInfoRow icon="briefcase" label="EVENT" value={activeJobForModal?.title || "Lunch Service"} />
+              <ModalInfoRow icon="clock" label="SHIFT TIME" value="12:03 PM - 8:00 PM" />
+              <ModalInfoRow icon="map-pin" label="LOCATION" value={activeJobForModal?.location || "Manhattan"} />
+            </View>
+
+            <View style={modalStyles.totalRow}>
+              <Text style={modalStyles.totalLabel}>Total Time Logged:</Text>
+              <View style={modalStyles.totalPill}>
+                <Text style={modalStyles.totalPillText}>0.0 hours</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={modalStyles.confirmBtn}
+              activeOpacity={0.9}
+              onPress={() => {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                setIsClockedIn(true);
+                setClockInModalVisible(false);
+              }}
+            >
+              <Feather name="clock" size={20} color="#fff" />
+              <Text style={modalStyles.confirmBtnText}>Clock In Now</Text>
+            </TouchableOpacity>
+
+            <View style={modalStyles.verifiedRow}>
+              <Feather name="navigation" size={11} color="#9ca3af" />
+              <Text style={modalStyles.verifiedText}>Location verified</Text>
+            </View>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
     </View>
   );
 }
+
+function ModalInfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <View style={modalStyles.infoRow}>
+      <View style={modalStyles.infoIcon}>
+        <Feather name={icon as any} size={16} color="#2563EB" />
+      </View>
+      <View style={{ flex: 1, marginLeft: 4 }}>
+        <Text style={modalStyles.infoLabel}>{label}</Text>
+        <Text style={modalStyles.infoValue}>{value}</Text>
+      </View>
+    </View>
+  );
+}
+
+const modalStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(17,24,39,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+    backgroundColor: "#f9fafb",
+  },
+  title: { fontSize: 17, fontWeight: "700", color: "#111827" },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  body: { padding: 20, gap: 16 },
+  infoCard: {
+    backgroundColor: "#eff6ff",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#dbeafe",
+    gap: 12,
+  },
+  infoRow: { flexDirection: "row", alignItems: "center" },
+  infoIcon: { width: 32, alignItems: "center" },
+  infoLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#6b7280",
+    letterSpacing: 0.5,
+  },
+  infoValue: { fontSize: 14, fontWeight: "700", color: "#111827", marginTop: 2 },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  totalLabel: { fontSize: 13, color: "#4b5563", fontWeight: "500" },
+  totalPill: {
+    backgroundColor: "#f3f4f6",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  totalPillText: { fontSize: 13, fontWeight: "700", color: "#111827" },
+  confirmBtn: {
+    backgroundColor: "#2563EB",
+    paddingVertical: 16,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: "#2563EB",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  confirmBtnText: { color: "#fff", fontSize: 17, fontWeight: "700" },
+  verifiedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  verifiedText: { fontSize: 11, color: "#9ca3af" },
+});
 
 function StatTile({ icon, value, label, accent }: { icon: string; value: string; label: string; accent: string }) {
   return (
