@@ -11,6 +11,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { SignupHeader } from "@/components/SignupHeader";
@@ -38,20 +39,55 @@ export default function SignupProfileScreen() {
     }
   }, [params.paymentAdded]);
 
-  async function pickImage(key: "picture") {
+  async function takePhoto() {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert("Camera permission needed", "Please allow camera access to take a photo.");
+        return;
+      }
+      const res = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        cameraType: ImagePicker.CameraType.front,
+      });
+      if (!res.canceled) {
+        setDone((d) => ({ ...d, picture: true }));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "Could not open camera.");
+    }
+  }
+
+  async function chooseFromLibrary() {
+    try {
       const res = await DocumentPicker.getDocumentAsync({
         type: ["image/*"],
         copyToCacheDirectory: true,
       });
       if (!res.canceled) {
-        setDone((d) => ({ ...d, [key]: true }));
+        setDone((d) => ({ ...d, picture: true }));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "Could not open file picker.");
     }
+  }
+
+  function pickImage() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Alert.alert(
+      "Profile Picture",
+      "Choose how you'd like to add your profile picture.",
+      [
+        { text: "Take Photo", onPress: takePhoto },
+        { text: "Choose from Library", onPress: chooseFromLibrary },
+        { text: "Cancel", style: "cancel" },
+      ],
+    );
   }
 
   function captureSignature() {
@@ -99,7 +135,7 @@ export default function SignupProfileScreen() {
         <RequirementButton
           label="Profile Picture"
           done={done.picture}
-          onPress={() => pickImage("picture")}
+          onPress={pickImage}
         />
 
         <View style={{ height: 40 }} />
