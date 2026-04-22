@@ -204,7 +204,7 @@ export default function ProfileScreen() {
       <View style={styles.sectionsWrap}>
 
         <MenuSection title="Account">
-          <MenuItem icon="user" label="Personal Information" />
+          <MenuItem icon="user" label="Personal Information" onPress={() => router.push("/personal-information")} />
           <MenuItem icon="shield" label="Security & Password" last />
         </MenuSection>
 
