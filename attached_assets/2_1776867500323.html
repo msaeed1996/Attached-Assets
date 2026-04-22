@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueGigs Add Skill Redesign</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200 flex justify-center h-screen font-sans pb-10 pt-10">
+
+    <div class="w-full max-w-md bg-gray-50 h-full flex flex-col shadow-2xl rounded-3xl overflow-hidden border border-gray-300 relative">
+        
+        <header class="bg-[#006dd2] text-white p-4 flex items-center justify-between shadow-md z-0 shrink-0">
+            <button class="hover:bg-blue-700 p-2 rounded-full transition w-10 h-10 flex items-center justify-center">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="text-lg font-bold">Skills & Experience</h1>
+            <button class="hover:bg-blue-700 p-2 rounded-full transition w-10 h-10 flex items-center justify-center">
+                <i class="fas fa-plus text-lg"></i>
+            </button>
+        </header>
+
+        <div class="p-5 space-y-4 relative z-0">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">What Jobs Are You Interested In?</h2>
+                <p class="text-sm text-gray-600 mt-1">The more skills you add, the more work you get!</p>
+            </div>
+            
+            <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm font-bold p-3 rounded-xl flex items-center shadow-sm">
+                <i class="fas fa-exclamation-triangle text-yellow-600 mr-2 text-lg"></i>
+                At least one skill is required.
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center shadow-sm">
+                <div>
+                    <h3 class="font-bold text-gray-900 text-base">Banquet</h3>
+                    <p class="text-sm text-gray-500 font-medium mt-0.5">Experience: 3.0 Years</p>
+                </div>
+                <button class="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-[2px] flex flex-col justify-end z-50">
+            
+            <div class="w-full bg-white rounded-t-3xl shadow-2xl overflow-hidden transform transition-transform translate-y-0">
+                
+                <div class="flex flex-col items-center pt-3 pb-2 border-b border-gray-100 relative">
+                    <div class="w-12 h-1.5 bg-gray-300 rounded-full mb-3"></div>
+                    <h2 class="text-lg font-bold text-gray-900">Add New Skill</h2>
+                    
+                    <button class="absolute right-4 top-4 text-gray-400 hover:text-gray-700 hover:bg-gray-100 w-8 h-8 rounded-full flex items-center justify-center transition">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-5">
+                    
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Industry</label>
+                        <div class="relative">
+                            <select class="w-full appearance-none bg-gray-50 border border-gray-300 text-gray-900 py-3.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006dd2] focus:border-[#006dd2] focus:bg-white transition shadow-sm font-medium cursor-pointer text-sm">
+                                <option value="hotel">Hotel / Restaurant</option>
+                                <option value="retail">Retail</option>
+                                <option value="events">Events & Catering</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                <i class="fas fa-chevron-down text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Specific Skill</label>
+                        <div class="relative">
+                            <select class="w-full appearance-none bg-gray-50 border border-gray-300 text-gray-900 py-3.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006dd2] focus:border-[#006dd2] focus:bg-white transition shadow-sm font-medium cursor-pointer text-sm">
+                                <option value="bartender">Bartender - Tipped</option>
+                                <option value="server">Server</option>
+                                <option value="cook">Line Cook</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                <i class="fas fa-chevron-down text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Years of Experience</label>
+                        <div class="relative">
+                            <select class="w-full appearance-none bg-gray-50 border border-gray-300 text-gray-900 py-3.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006dd2] focus:border-[#006dd2] focus:bg-white transition shadow-sm font-medium cursor-pointer text-sm">
+                                <option value="1">One Year</option>
+                                <option value="2">Two Years</option>
+                                <option value="3" selected>Three Years</option>
+                                <option value="4+">4+ Years</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                <i class="fas fa-chevron-down text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="p-6 pt-2 pb-8 flex space-x-3 bg-white">
+                    <button class="flex-1 bg-gray-100 text-gray-600 font-bold py-3.5 rounded-xl hover:bg-gray-200 transition text-sm">
+                        Cancel
+                    </button>
+                    <button class="flex-[2] bg-[#006dd2] text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-600/30 flex items-center justify-center space-x-2 text-sm">
+                        <i class="fas fa-save"></i>
+                        <span>Save Skill</span>
+                    </button>
+                </div>
+
+            </div>
+            
+        </div>
+        </div>
+
+</body>
+</html>
