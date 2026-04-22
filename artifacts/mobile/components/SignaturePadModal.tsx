@@ -23,6 +23,7 @@ export default function SignaturePadModal({ visible, onClose, onSave }: Props) {
   const [paths, setPaths] = useState<string[]>([]);
   const currentPath = useRef<string>("");
   const padOffset = useRef({ x: 0, y: 0 });
+  const padRef = useRef<View>(null);
 
   const responder = useRef(
     PanResponder.create({
@@ -52,10 +53,16 @@ export default function SignaturePadModal({ visible, onClose, onSave }: Props) {
     }),
   ).current;
 
-  function handleLayout(e: LayoutChangeEvent) {
-    e.target.measure((_x, _y, _w, _h, pageX, pageY) => {
-      padOffset.current = { x: pageX, y: pageY };
-    });
+  function handleLayout(_e: LayoutChangeEvent) {
+    if (padRef.current && typeof padRef.current.measure === "function") {
+      padRef.current.measure((_x, _y, _w, _h, pageX, pageY) => {
+        padOffset.current = { x: pageX, y: pageY };
+      });
+    } else if (padRef.current && typeof (padRef.current as any).measureInWindow === "function") {
+      (padRef.current as any).measureInWindow((x: number, y: number) => {
+        padOffset.current = { x, y };
+      });
+    }
   }
 
   function clear() {
@@ -85,6 +92,7 @@ export default function SignaturePadModal({ visible, onClose, onSave }: Props) {
           <Text style={styles.subtitle}>Use your finger to sign in the box.</Text>
 
           <View
+            ref={padRef}
             style={styles.pad}
             onLayout={handleLayout}
             {...responder.panHandlers}
