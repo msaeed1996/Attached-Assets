@@ -32,7 +32,7 @@ export function SignupHeader({
       colors={[colors.primary, "#1d4ed8", colors.navy]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={[styles.wrap, { paddingTop: insets.top + 12 }]}
+      style={[styles.wrap, { paddingTop: insets.top + 8 }]}
     >
       <View style={styles.decorTop} />
       <View style={styles.row}>
@@ -43,9 +43,6 @@ export function SignupHeader({
         >
           <Feather name="arrow-left" size={20} color="#fff" />
         </TouchableOpacity>
-        <View style={{ flex: 1, alignItems: "center" }}>
-          <Text style={styles.title}>{title}</Text>
-        </View>
         {rightSlot ?? (
           <View style={styles.stepBadge}>
             <Text style={styles.stepBadgeText}>
@@ -54,6 +51,8 @@ export function SignupHeader({
           </View>
         )}
       </View>
+
+      <Text style={styles.title}>{title}</Text>
 
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: progress }]} />
@@ -96,9 +95,10 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#fff",
-    fontSize: 17,
-    fontWeight: "700",
-    letterSpacing: -0.2,
+    fontSize: 22,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+    marginTop: 16,
   },
   stepBadge: {
     paddingHorizontal: 12,
