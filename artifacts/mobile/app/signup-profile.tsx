@@ -7,6 +7,8 @@ import {
   ScrollView,
   Alert,
   Image,
+  Modal,
+  Pressable,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -33,6 +35,7 @@ export default function SignupProfileScreen() {
   });
   const [signatureVisible, setSignatureVisible] = useState(false);
   const [pictureUri, setPictureUri] = useState<string | null>(null);
+  const [photoSheetVisible, setPhotoSheetVisible] = useState(false);
   const params = useLocalSearchParams<{ paymentAdded?: string }>();
 
   React.useEffect(() => {
@@ -42,10 +45,14 @@ export default function SignupProfileScreen() {
   }, [params.paymentAdded]);
 
   async function takePhoto() {
+    setPhotoSheetVisible(false);
     try {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert("Camera permission needed", "Please allow camera access to take a photo.");
+        Alert.alert(
+          "Camera permission needed",
+          "Please allow camera access in your device settings to take a photo.",
+        );
         return;
       }
       const res = await ImagePicker.launchCameraAsync({
@@ -61,11 +68,36 @@ export default function SignupProfileScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "Could not open camera.");
+      Alert.alert("Camera error", e?.message ?? "Could not open camera.");
     }
   }
 
   async function chooseFromLibrary() {
+    setPhotoSheetVisible(false);
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert(
+          "Gallery permission needed",
+          "Please allow photo library access to choose a picture.",
+        );
+        return;
+      }
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      if (!res.canceled && res.assets?.[0]?.uri) {
+        setPictureUri(res.assets[0].uri);
+        setDone((d) => ({ ...d, picture: true }));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        return;
+      }
+    } catch {
+      // fall through to document picker
+    }
     try {
       const res = await DocumentPicker.getDocumentAsync({
         type: ["image/*"],
@@ -81,32 +113,16 @@ export default function SignupProfileScreen() {
     }
   }
 
-  function showPicker() {
-    Alert.alert(
-      "Profile Picture",
-      "Choose how you'd like to add your profile picture.",
-      [
-        { text: "Take Photo", onPress: takePhoto },
-        { text: "Choose from Library", onPress: chooseFromLibrary },
-        { text: "Cancel", style: "cancel" },
-      ],
-    );
+  function removePhoto() {
+    setPhotoSheetVisible(false);
+    setPictureUri(null);
+    setDone((d) => ({ ...d, picture: false }));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
   function pickImage() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (pictureUri) {
-      Alert.alert(
-        "Replace photo?",
-        "This will replace your current profile picture.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Replace", style: "destructive", onPress: showPicker },
-        ],
-      );
-    } else {
-      showPicker();
-    }
+    setPhotoSheetVisible(true);
   }
 
   function captureSignature() {
@@ -210,6 +226,63 @@ export default function SignupProfileScreen() {
           onClose={() => setSignatureVisible(false)}
           onSave={() => setDone((d) => ({ ...d, signature: true }))}
         />
+
+        <Modal
+          visible={photoSheetVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPhotoSheetVisible(false)}
+        >
+          <Pressable style={styles.sheetBackdrop} onPress={() => setPhotoSheetVisible(false)}>
+            <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+              <View style={styles.sheetHandle} />
+              <Text style={styles.sheetTitle}>Profile Picture</Text>
+              <Text style={styles.sheetSubtitle}>Choose how to add your photo</Text>
+
+              <TouchableOpacity style={styles.sheetOption} onPress={takePhoto} activeOpacity={0.7}>
+                <View style={[styles.sheetIcon, { backgroundColor: "#EFF6FF" }]}>
+                  <Feather name="camera" size={20} color="#2563EB" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sheetOptionTitle}>Take Photo</Text>
+                  <Text style={styles.sheetOptionDesc}>Use your camera now</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color="#9CA3AF" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.sheetOption} onPress={chooseFromLibrary} activeOpacity={0.7}>
+                <View style={[styles.sheetIcon, { backgroundColor: "#F3E8FF" }]}>
+                  <Feather name="image" size={20} color="#7C3AED" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sheetOptionTitle}>Choose from Gallery</Text>
+                  <Text style={styles.sheetOptionDesc}>Pick an existing photo</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color="#9CA3AF" />
+              </TouchableOpacity>
+
+              {pictureUri && (
+                <TouchableOpacity style={styles.sheetOption} onPress={removePhoto} activeOpacity={0.7}>
+                  <View style={[styles.sheetIcon, { backgroundColor: "#FEE2E2" }]}>
+                    <Feather name="trash-2" size={20} color="#DC2626" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.sheetOptionTitle, { color: "#DC2626" }]}>Remove Photo</Text>
+                    <Text style={styles.sheetOptionDesc}>Delete current picture</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                style={styles.sheetCancel}
+                onPress={() => setPhotoSheetVisible(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.sheetCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
 
         <TouchableOpacity
           onPress={finish}
@@ -441,4 +514,65 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
   },
+
+  sheetBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(17,24,39,0.55)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 28,
+    gap: 8,
+  },
+  sheetHandle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#E5E7EB",
+    marginBottom: 8,
+  },
+  sheetTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#111827",
+    textAlign: "center",
+  },
+  sheetSubtitle: {
+    fontSize: 13,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  sheetOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: "#F9FAFB",
+  },
+  sheetIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetOptionTitle: { fontSize: 15, fontWeight: "600", color: "#111827" },
+  sheetOptionDesc: { fontSize: 12, color: "#6B7280", marginTop: 2 },
+  sheetCancel: {
+    marginTop: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+  },
+  sheetCancelText: { fontSize: 15, fontWeight: "600", color: "#374151" },
 });
