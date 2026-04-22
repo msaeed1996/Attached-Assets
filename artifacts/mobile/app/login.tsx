@@ -248,34 +248,6 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.divider}>
-              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-              <Text style={[styles.dividerText, { color: colors.mutedForeground }]}>or continue with</Text>
-              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            </View>
-
-            <View style={styles.socialRow}>
-              <TouchableOpacity
-                style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.muted }]}
-                activeOpacity={0.85}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push("/signup");
-                }}
-              >
-                <Feather name="mail" size={18} color={colors.foreground} />
-                <Text style={[styles.socialText, { color: colors.foreground }]}>Email</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.socialBtn, { borderColor: "#000", backgroundColor: "#000" }]}
-                activeOpacity={0.85}
-                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-              >
-                <FontAwesome name="apple" size={18} color="#fff" />
-                <Text style={[styles.socialText, { color: "#fff" }]}>Apple</Text>
-              </TouchableOpacity>
-            </View>
           </View>
 
           <View style={styles.signupRow}>
