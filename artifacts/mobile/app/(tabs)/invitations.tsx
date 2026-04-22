@@ -12,97 +12,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import * as Haptics from "expo-haptics";
-
-type InvitationStatus = "pending" | "accepted" | "declined";
-
-interface Invitation {
-  id: string;
-  jobTitle: string;
-  company: string;
-  companyRating: number;
-  location: string;
-  pay: number;
-  payType: "hourly" | "daily" | "fixed";
-  startDate: string;
-  duration: string;
-  type: string;
-  message: string;
-  sentAt: string;
-  status: InvitationStatus;
-  urgent: boolean;
-  jobId: string;
-}
-
-const SAMPLE_INVITATIONS: Invitation[] = [
-  {
-    id: "inv-1",
-    jobTitle: "Warehouse Supervisor",
-    company: "Amazon Logistics",
-    companyRating: 4.2,
-    location: "Austin, TX",
-    pay: 28,
-    payType: "hourly",
-    startDate: "Tomorrow",
-    duration: "1 week",
-    type: "full-day",
-    message: "We reviewed your profile and think you'd be a great fit for this role. Your previous warehouse experience stands out!",
-    sentAt: "30 min ago",
-    status: "pending",
-    urgent: true,
-    jobId: "1",
-  },
-  {
-    id: "inv-2",
-    jobTitle: "Event Coordinator",
-    company: "Prestige Events Co.",
-    companyRating: 4.7,
-    location: "Houston, TX",
-    pay: 280,
-    payType: "daily",
-    startDate: "Saturday",
-    duration: "2 days",
-    type: "weekend",
-    message: "Hi! We're looking for reliable staff for an upcoming gala. Your hospitality background is exactly what we need.",
-    sentAt: "2 hours ago",
-    status: "pending",
-    urgent: false,
-    jobId: "2",
-  },
-  {
-    id: "inv-3",
-    jobTitle: "Retail Floor Lead",
-    company: "Nordstrom Rack",
-    companyRating: 4.4,
-    location: "Dallas, TX",
-    pay: 19,
-    payType: "hourly",
-    startDate: "Monday",
-    duration: "3 days",
-    type: "part-time",
-    message: "Your retail experience makes you an ideal candidate. We'd love to have you on the team for our upcoming sale event.",
-    sentAt: "Yesterday",
-    status: "accepted",
-    urgent: false,
-    jobId: "5",
-  },
-  {
-    id: "inv-4",
-    jobTitle: "Office Admin Assistant",
-    company: "MetaLaw LLP",
-    companyRating: 4.5,
-    location: "Austin, TX",
-    pay: 18,
-    payType: "hourly",
-    startDate: "Next Week",
-    duration: "2 weeks",
-    type: "contract",
-    message: "We came across your profile and believe your admin skills match our requirements perfectly.",
-    sentAt: "2 days ago",
-    status: "declined",
-    urgent: false,
-    jobId: "3",
-  },
-];
+import { SAMPLE_INVITATIONS, Invitation } from "@/data/invitations";
 
 export default function InvitationsScreen() {
   const colors = useColors();
@@ -170,7 +80,7 @@ export default function InvitationsScreen() {
               colors={colors}
               onAccept={() => handleAccept(inv.id)}
               onDecline={() => handleDecline(inv.id)}
-              onView={() => router.push(`/job/${inv.jobId}` as any)}
+              onView={() => router.push(`/invitation/${inv.id}` as any)}
             />
           ))
         )}
