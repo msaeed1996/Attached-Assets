@@ -217,24 +217,6 @@ export default function HomeScreen() {
                   </Text>
                 </TouchableOpacity>
                 <Text style={styles.activeJobPayBelow}>${activeJob.pay}/{activeJob.payType}</Text>
-                {(clockInTime || clockOutTime) && (
-                  <View style={styles.timeStampWrap}>
-                    {clockInTime && (
-                      <View style={styles.timeStampRow}>
-                        <Feather name="log-in" size={10} color="#10b981" />
-                        <Text style={styles.timeStampLabel}>In</Text>
-                        <Text style={styles.timeStampValue}>{formatTime(clockInTime)}</Text>
-                      </View>
-                    )}
-                    {clockOutTime && (
-                      <View style={styles.timeStampRow}>
-                        <Feather name="log-out" size={10} color="#ef4444" />
-                        <Text style={styles.timeStampLabel}>Out</Text>
-                        <Text style={styles.timeStampValue}>{formatTime(clockOutTime)}</Text>
-                      </View>
-                    )}
-                  </View>
-                )}
               </View>
             </View>
           </View>
@@ -465,6 +447,25 @@ export default function HomeScreen() {
               <ModalInfoRow icon="map-pin" label="LOCATION" value={activeJobForModal?.location || "Manhattan"} />
             </View>
 
+            {(clockInTime || clockOutTime) && (
+              <View style={modalStyles.timeStampWrap}>
+                {clockInTime && (
+                  <View style={modalStyles.timeStampRow}>
+                    <Feather name="log-in" size={12} color="#10b981" />
+                    <Text style={modalStyles.timeStampLabel}>IN</Text>
+                    <Text style={modalStyles.timeStampValue}>{formatTime(clockInTime)}</Text>
+                  </View>
+                )}
+                {clockOutTime && (
+                  <View style={modalStyles.timeStampRow}>
+                    <Feather name="log-out" size={12} color="#ef4444" />
+                    <Text style={modalStyles.timeStampLabel}>OUT</Text>
+                    <Text style={modalStyles.timeStampValue}>{formatTime(clockOutTime)}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
             <View style={modalStyles.totalRow}>
               <Text style={modalStyles.totalLabel}>Total Time Logged:</Text>
               <View style={modalStyles.totalPill}>
@@ -583,6 +584,33 @@ const modalStyles = StyleSheet.create({
     borderRadius: 8,
   },
   totalPillText: { fontSize: 13, fontWeight: "700", color: "#111827" },
+  timeStampWrap: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+    backgroundColor: "#f9fafb",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#f3f4f6",
+  },
+  timeStampRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  timeStampLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#6b7280",
+    letterSpacing: 0.5,
+  },
+  timeStampValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#111827",
+  },
   confirmBtn: {
     backgroundColor: "#2563EB",
     paddingVertical: 16,
@@ -841,27 +869,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#6b7280",
     textAlign: "center",
-  },
-  timeStampWrap: {
-    marginTop: 4,
-    gap: 2,
-    alignItems: "flex-end",
-  },
-  timeStampRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  timeStampLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#6b7280",
-    textTransform: "uppercase",
-  },
-  timeStampValue: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#111827",
   },
   activeJobHeader: {
     flexDirection: "row",
