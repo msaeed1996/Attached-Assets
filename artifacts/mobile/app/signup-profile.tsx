@@ -81,8 +81,7 @@ export default function SignupProfileScreen() {
     }
   }
 
-  function pickImage() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  function showPicker() {
     Alert.alert(
       "Profile Picture",
       "Choose how you'd like to add your profile picture.",
@@ -92,6 +91,22 @@ export default function SignupProfileScreen() {
         { text: "Cancel", style: "cancel" },
       ],
     );
+  }
+
+  function pickImage() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (pictureUri) {
+      Alert.alert(
+        "Replace photo?",
+        "This will replace your current profile picture.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Replace", style: "destructive", onPress: showPicker },
+        ],
+      );
+    } else {
+      showPicker();
+    }
   }
 
   function captureSignature() {
