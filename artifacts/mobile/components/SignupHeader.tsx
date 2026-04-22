@@ -65,8 +65,8 @@ export function SignupHeader({
 
 const styles = StyleSheet.create({
   wrap: {
-    paddingHorizontal: 18,
-    paddingBottom: 18,
+    paddingHorizontal: 22,
+    paddingBottom: 20,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     overflow: "hidden",
