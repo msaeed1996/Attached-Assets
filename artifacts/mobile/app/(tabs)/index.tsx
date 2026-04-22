@@ -75,6 +75,7 @@ export default function HomeScreen() {
   const [isClockedIn, setIsClockedIn] = React.useState(false);
   const [notifVisible, setNotifVisible] = React.useState(false);
   const [clockInModalVisible, setClockInModalVisible] = React.useState(false);
+  const [clockModalMode, setClockModalMode] = React.useState<"in" | "out">("in");
   const [activeJobForModal, setActiveJobForModal] = React.useState<any>(null);
   const [clockInTime, setClockInTime] = React.useState<Date | null>(null);
   const [clockOutTime, setClockOutTime] = React.useState<Date | null>(null);
@@ -201,13 +202,9 @@ export default function HomeScreen() {
                   style={[styles.clockInBtn, { backgroundColor: isClockedIn ? "#10b981" : "#2563EB" }]}
                   onPress={() => {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    if (isClockedIn) {
-                      setClockOutTime(new Date());
-                      setIsClockedIn(false);
-                    } else {
-                      setActiveJobForModal(activeJob);
-                      setClockInModalVisible(true);
-                    }
+                    setActiveJobForModal(activeJob);
+                    setClockModalMode(isClockedIn ? "out" : "in");
+                    setClockInModalVisible(true);
                   }}
                   activeOpacity={0.85}
                 >
@@ -430,7 +427,9 @@ export default function HomeScreen() {
       <Pressable style={modalStyles.backdrop} onPress={() => setClockInModalVisible(false)}>
         <Pressable style={modalStyles.card} onPress={(e) => e.stopPropagation()}>
           <View style={modalStyles.header}>
-            <Text style={modalStyles.title}>Ready to Clock In?</Text>
+            <Text style={modalStyles.title}>
+              {clockModalMode === "out" ? "Ready to Clock Out?" : "Ready to Clock In?"}
+            </Text>
             <TouchableOpacity
               style={modalStyles.closeBtn}
               onPress={() => setClockInModalVisible(false)}
@@ -474,18 +473,28 @@ export default function HomeScreen() {
             </View>
 
             <TouchableOpacity
-              style={modalStyles.confirmBtn}
+              style={[
+                modalStyles.confirmBtn,
+                clockModalMode === "out" && { backgroundColor: "#ef4444", shadowColor: "#ef4444" },
+              ]}
               activeOpacity={0.9}
               onPress={() => {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                setClockInTime(new Date());
-                setClockOutTime(null);
-                setIsClockedIn(true);
+                if (clockModalMode === "out") {
+                  setClockOutTime(new Date());
+                  setIsClockedIn(false);
+                } else {
+                  setClockInTime(new Date());
+                  setClockOutTime(null);
+                  setIsClockedIn(true);
+                }
                 setClockInModalVisible(false);
               }}
             >
-              <Feather name="clock" size={20} color="#fff" />
-              <Text style={modalStyles.confirmBtnText}>Clock In Now</Text>
+              <Feather name={clockModalMode === "out" ? "log-out" : "clock"} size={20} color="#fff" />
+              <Text style={modalStyles.confirmBtnText}>
+                {clockModalMode === "out" ? "Clock Out Now" : "Clock In Now"}
+              </Text>
             </TouchableOpacity>
 
             <View style={modalStyles.verifiedRow}>
