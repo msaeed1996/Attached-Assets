@@ -106,7 +106,10 @@ export default function UpcomingScheduleScreen() {
               key={shift.id}
               style={styles.card}
               activeOpacity={0.92}
-              onPress={() => Haptics.selectionAsync()}
+              onPress={() => {
+                Haptics.selectionAsync();
+                router.push(`/shift/${shift.id}`);
+              }}
             >
               {/* Countdown ribbon */}
               {(isToday || isTomorrow) && (

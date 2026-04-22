@@ -297,7 +297,7 @@ export default function HomeScreen() {
               activeOpacity={0.85}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push("/upcoming-schedule");
+                router.push(`/shift/${next.id}`);
               }}
             >
               <View style={[styles.upcomingJobIcon, { backgroundColor: "#dbeafe" }]}>
