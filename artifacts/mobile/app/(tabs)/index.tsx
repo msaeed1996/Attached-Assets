@@ -76,6 +76,13 @@ export default function HomeScreen() {
   const [notifVisible, setNotifVisible] = React.useState(false);
   const [clockInModalVisible, setClockInModalVisible] = React.useState(false);
   const [activeJobForModal, setActiveJobForModal] = React.useState<any>(null);
+  const [clockInTime, setClockInTime] = React.useState<Date | null>(null);
+  const [clockOutTime, setClockOutTime] = React.useState<Date | null>(null);
+
+  const formatTime = (d: Date | null) =>
+    d
+      ? d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })
+      : "--:--";
 
   const myApplications = applications.filter((a) => a.workerId === "me");
   const myJobs = jobs.filter((j) => j.employerId === "emp-me");
@@ -195,6 +202,7 @@ export default function HomeScreen() {
                   onPress={() => {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                     if (isClockedIn) {
+                      setClockOutTime(new Date());
                       setIsClockedIn(false);
                     } else {
                       setActiveJobForModal(activeJob);
@@ -209,6 +217,24 @@ export default function HomeScreen() {
                   </Text>
                 </TouchableOpacity>
                 <Text style={styles.activeJobPayBelow}>${activeJob.pay}/{activeJob.payType}</Text>
+                {(clockInTime || clockOutTime) && (
+                  <View style={styles.timeStampWrap}>
+                    {clockInTime && (
+                      <View style={styles.timeStampRow}>
+                        <Feather name="log-in" size={10} color="#10b981" />
+                        <Text style={styles.timeStampLabel}>In</Text>
+                        <Text style={styles.timeStampValue}>{formatTime(clockInTime)}</Text>
+                      </View>
+                    )}
+                    {clockOutTime && (
+                      <View style={styles.timeStampRow}>
+                        <Feather name="log-out" size={10} color="#ef4444" />
+                        <Text style={styles.timeStampLabel}>Out</Text>
+                        <Text style={styles.timeStampValue}>{formatTime(clockOutTime)}</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -451,6 +477,8 @@ export default function HomeScreen() {
               activeOpacity={0.9}
               onPress={() => {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                setClockInTime(new Date());
+                setClockOutTime(null);
                 setIsClockedIn(true);
                 setClockInModalVisible(false);
               }}
@@ -813,6 +841,27 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#6b7280",
     textAlign: "center",
+  },
+  timeStampWrap: {
+    marginTop: 4,
+    gap: 2,
+    alignItems: "flex-end",
+  },
+  timeStampRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  timeStampLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#6b7280",
+    textTransform: "uppercase",
+  },
+  timeStampValue: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#111827",
   },
   activeJobHeader: {
     flexDirection: "row",
