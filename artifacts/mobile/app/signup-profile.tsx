@@ -7,7 +7,7 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as DocumentPicker from "expo-document-picker";
@@ -30,6 +30,13 @@ export default function SignupProfileScreen() {
     payment: false,
   });
   const [signatureVisible, setSignatureVisible] = useState(false);
+  const params = useLocalSearchParams<{ paymentAdded?: string }>();
+
+  React.useEffect(() => {
+    if (params.paymentAdded === "1") {
+      setDone((d) => ({ ...d, payment: true }));
+    }
+  }, [params.paymentAdded]);
 
   async function pickImage(key: "picture") {
     try {
@@ -54,20 +61,7 @@ export default function SignupProfileScreen() {
 
   function addPayment() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Alert.alert(
-      "Add Payment Method",
-      "Connect your bank or debit card to receive payouts.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Add (demo)",
-          onPress: () => {
-            setDone((d) => ({ ...d, payment: true }));
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          },
-        },
-      ],
-    );
+    router.push({ pathname: "/payment-method", params: { returnTo: "/signup-profile" } });
   }
 
   const allDone = done.signature && done.picture && done.payment;
