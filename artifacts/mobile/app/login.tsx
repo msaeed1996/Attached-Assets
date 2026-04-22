@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -255,20 +255,26 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.socialRow}>
-              {[
-                { icon: "github" as const, label: "GitHub" },
-                { icon: "twitter" as const, label: "X" },
-                { icon: "smartphone" as const, label: "SSO" },
-              ].map((s) => (
-                <TouchableOpacity
-                  key={s.label}
-                  style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.muted }]}
-                  activeOpacity={0.85}
-                >
-                  <Feather name={s.icon} size={18} color={colors.foreground} />
-                  <Text style={[styles.socialText, { color: colors.foreground }]}>{s.label}</Text>
-                </TouchableOpacity>
-              ))}
+              <TouchableOpacity
+                style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.muted }]}
+                activeOpacity={0.85}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push("/signup");
+                }}
+              >
+                <Feather name="mail" size={18} color={colors.foreground} />
+                <Text style={[styles.socialText, { color: colors.foreground }]}>Email</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.socialBtn, { borderColor: "#000", backgroundColor: "#000" }]}
+                activeOpacity={0.85}
+                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+              >
+                <FontAwesome name="apple" size={18} color="#fff" />
+                <Text style={[styles.socialText, { color: "#fff" }]}>Apple</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
