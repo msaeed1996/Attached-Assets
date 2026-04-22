@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Image,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -31,6 +32,7 @@ export default function SignupProfileScreen() {
     payment: false,
   });
   const [signatureVisible, setSignatureVisible] = useState(false);
+  const [pictureUri, setPictureUri] = useState<string | null>(null);
   const params = useLocalSearchParams<{ paymentAdded?: string }>();
 
   React.useEffect(() => {
@@ -53,7 +55,8 @@ export default function SignupProfileScreen() {
         quality: 0.8,
         cameraType: ImagePicker.CameraType.front,
       });
-      if (!res.canceled) {
+      if (!res.canceled && res.assets?.[0]?.uri) {
+        setPictureUri(res.assets[0].uri);
         setDone((d) => ({ ...d, picture: true }));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -68,7 +71,8 @@ export default function SignupProfileScreen() {
         type: ["image/*"],
         copyToCacheDirectory: true,
       });
-      if (!res.canceled) {
+      if (!res.canceled && res.assets?.[0]?.uri) {
+        setPictureUri(res.assets[0].uri);
         setDone((d) => ({ ...d, picture: true }));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -136,6 +140,7 @@ export default function SignupProfileScreen() {
           label="Profile Picture"
           done={done.picture}
           onPress={pickImage}
+          thumbnailUri={pictureUri}
         />
 
         <View style={{ height: 40 }} />
@@ -174,10 +179,12 @@ function RequirementButton({
   label,
   done,
   onPress,
+  thumbnailUri,
 }: {
   label: string;
   done: boolean;
   onPress: () => void;
+  thumbnailUri?: string | null;
 }) {
   return (
     <TouchableOpacity
@@ -185,6 +192,9 @@ function RequirementButton({
       activeOpacity={0.9}
       style={[styles.reqBtn, done && styles.reqBtnDone]}
     >
+      {thumbnailUri && (
+        <Image source={{ uri: thumbnailUri }} style={styles.thumb} />
+      )}
       <Text style={styles.reqBtnText}>{label}</Text>
       {done && (
         <View style={styles.checkBadge}>
@@ -229,6 +239,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: 0.2,
+  },
+  thumb: {
+    position: "absolute",
+    left: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.6)",
+    backgroundColor: "#fff",
   },
   checkBadge: {
     position: "absolute",
