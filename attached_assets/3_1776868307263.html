@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueGigs Identification Redesign</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200 flex justify-center h-screen font-sans pb-10 pt-10">
+
+    <div class="w-full max-w-md bg-gray-50 h-full flex flex-col shadow-2xl rounded-3xl overflow-hidden border border-gray-300 relative">
+        
+        <header class="bg-[#006dd2] text-white pt-5 pb-4 px-4 flex flex-col shadow-md z-10 shrink-0">
+            <div class="flex items-center justify-between mb-2">
+                <button class="hover:bg-blue-700 p-2 rounded-full transition w-10 h-10 flex items-center justify-center">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-lg font-bold tracking-wide">User Identification</h1>
+                <span class="text-sm font-bold bg-blue-800/50 px-3 py-1 rounded-full">4 / 5</span>
+            </div>
+            
+            <div class="w-full bg-blue-800/40 rounded-full h-1.5 mt-2 overflow-hidden">
+                <div class="bg-white h-1.5 rounded-full w-4/5 shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-5 space-y-6">
+            
+            <div class="space-y-4">
+                <div class="relative">
+                    <label class="absolute -top-2 left-3 bg-gray-50 px-1 text-xs font-bold text-gray-500 uppercase tracking-wide z-10">Date of Birth</label>
+                    <input type="date" value="2000-01-01" class="w-full bg-transparent border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-0 focus:border-[#006dd2] transition block p-3.5 relative z-0 appearance-none font-medium">
+                </div>
+
+                <div>
+                    <div class="relative">
+                        <label class="absolute -top-2 left-3 bg-gray-50 px-1 text-xs font-bold text-gray-500 uppercase tracking-wide z-10">Social Security Number</label>
+                        <input type="text" placeholder="XXX-XX-XXXX" value="123-45-6789" class="w-full bg-transparent border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-0 focus:border-[#006dd2] transition block p-3.5 relative z-0 tracking-wider font-medium">
+                    </div>
+                    <div class="flex justify-end mt-1.5">
+                        <button class="text-[11px] font-bold text-purple-600 hover:text-purple-800 transition flex items-center">
+                            <i class="fas fa-lock mr-1"></i> Why is this information required?
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <div class="space-y-4">
+                <div class="flex justify-between items-end">
+                    <h2 class="text-sm font-bold text-gray-900">Document Uploads</h2>
+                    <span class="text-[10px] font-bold text-gray-400">Max size: 20MB</span>
+                </div>
+
+                <div class="bg-white border-2 border-dashed border-gray-300 rounded-2xl p-4 transition hover:border-[#006dd2] hover:bg-blue-50/50 cursor-pointer group">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#006dd2] shrink-0">
+                            <i class="far fa-id-card text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-900 text-sm group-hover:text-[#006dd2] transition">Upload Picture ID</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">e.g. Driver's License or State ID</p>
+                            <button class="text-[10px] font-bold text-purple-600 mt-2 hover:underline">View accepted documents</button>
+                        </div>
+                        <div class="bg-gray-100 text-gray-500 w-8 h-8 rounded-full flex items-center justify-center group-hover:bg-[#006dd2] group-hover:text-white transition">
+                            <i class="fas fa-plus text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border-2 border-dashed border-gray-300 rounded-2xl p-4 transition hover:border-[#006dd2] hover:bg-blue-50/50 cursor-pointer group">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#006dd2] shrink-0">
+                            <i class="fas fa-passport text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-900 text-sm group-hover:text-[#006dd2] transition">Upload Secondary ID</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">e.g. SSN Card or Birth Certificate</p>
+                            <button class="text-[10px] font-bold text-purple-600 mt-2 hover:underline">View accepted documents</button>
+                        </div>
+                        <div class="bg-gray-100 text-gray-500 w-8 h-8 rounded-full flex items-center justify-center group-hover:bg-[#006dd2] group-hover:text-white transition">
+                            <i class="fas fa-plus text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border-2 border-dashed border-gray-300 rounded-2xl p-4 transition hover:border-[#006dd2] hover:bg-blue-50/50 cursor-pointer group mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#006dd2] shrink-0">
+                            <i class="far fa-file-alt text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-900 text-sm group-hover:text-[#006dd2] transition">Upload Resume</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">PDF or Word format</p>
+                        </div>
+                        <div class="bg-gray-100 text-gray-500 w-8 h-8 rounded-full flex items-center justify-center group-hover:bg-[#006dd2] group-hover:text-white transition">
+                            <i class="fas fa-plus text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <footer class="bg-white p-4 border-t border-gray-200 shrink-0 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+            <button class="w-full bg-[#006dd2] text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow-md flex items-center justify-center space-x-2">
+                <span>Continue</span>
+                <i class="fas fa-arrow-right text-sm"></i>
+            </button>
+        </footer>
+    </div>
+
+</body>
+</html>

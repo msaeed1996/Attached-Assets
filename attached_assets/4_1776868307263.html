@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueGigs Profile Onboarding Redesign</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200 flex justify-center h-screen font-sans pb-10 pt-10">
+
+    <div class="w-full max-w-md bg-gray-50 h-full flex flex-col shadow-2xl rounded-3xl overflow-hidden border border-gray-300 relative">
+        
+        <header class="bg-[#006dd2] text-white pt-5 pb-4 px-4 flex flex-col shadow-md z-10 shrink-0">
+            <div class="flex items-center justify-between mb-2">
+                <button class="hover:bg-blue-700 p-2 rounded-full transition w-10 h-10 flex items-center justify-center">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-lg font-bold tracking-wide">My Profile</h1>
+                <span class="text-sm font-bold bg-blue-800/50 px-3 py-1 rounded-full">1 / 5</span>
+            </div>
+            
+            <div class="w-full bg-blue-800/40 rounded-full h-1.5 mt-2 overflow-hidden">
+                <div class="bg-white h-1.5 rounded-full w-1/5 shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-5 space-y-6">
+            
+            <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start space-x-3 shadow-sm">
+                <i class="fas fa-info-circle text-blue-500 mt-0.5 text-lg"></i>
+                <p class="text-sm text-gray-700 font-medium leading-relaxed">
+                    Please complete the following requirements to finish your profile setup and start using TrueGigs.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                
+                <button class="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition group focus:outline-none">
+                    <div class="flex items-center space-x-4 text-left">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#006dd2] group-hover:bg-[#006dd2] group-hover:text-white transition">
+                            <i class="fas fa-file-signature"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-sm">Signature</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Provide your digital signature</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-[#006dd2] transition"></i>
+                </button>
+
+                <button class="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition group focus:outline-none">
+                    <div class="flex items-center space-x-4 text-left">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#006dd2] group-hover:bg-[#006dd2] group-hover:text-white transition">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-sm">Profile Picture</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Upload a clear photo of yourself</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-[#006dd2] transition"></i>
+                </button>
+
+                <button class="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition group focus:outline-none">
+                    <div class="flex items-center space-x-4 text-left">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#006dd2] group-hover:bg-[#006dd2] group-hover:text-white transition">
+                            <i class="fas fa-file-invoice-dollar text-sm pl-1"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-sm">Provide Tax Info</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">W-9 or independent contractor forms</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-[#006dd2] transition"></i>
+                </button>
+
+                <button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition group focus:outline-none">
+                    <div class="flex items-center space-x-4 text-left">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#006dd2] group-hover:bg-[#006dd2] group-hover:text-white transition">
+                            <i class="far fa-credit-card"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-sm">Add Payment Method</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Set up direct deposit or Paycard</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-[#006dd2] transition"></i>
+                </button>
+
+            </div>
+
+        </main>
+    </div>
+
+</body>
+</html>

@@ -28,6 +28,8 @@ function RootLayoutNav() {
       <Stack.Screen name="index" />
       <Stack.Screen name="login" />
       <Stack.Screen name="signup" />
+      <Stack.Screen name="signup-skills" />
+      <Stack.Screen name="signup-identification" />
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="job/[id]" options={{ presentation: "card" }} />

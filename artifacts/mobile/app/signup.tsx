@@ -8,48 +8,54 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { SignupHeader } from "@/components/SignupHeader";
 import { useApp, type UserRole } from "@/context/AppContext";
 
 type Role = Exclude<UserRole, null>;
 
+function formatPhone(v: string) {
+  const digits = v.replace(/\D/g, "").slice(0, 10);
+  if (digits.length < 4) return digits;
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 export default function SignupScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { setUserRole, setUserProfile, setIsOnboarded } = useApp();
+  const { setUserRole, setUserProfile } = useApp();
 
-  const [step, setStep] = useState<0 | 1>(0);
   const [role, setRole] = useState<Role>("worker");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [middleInitial, setMiddleInitial] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [zip, setZip] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [agree, setAgree] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [agree, setAgree] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const passwordsMatch = password.length >= 8 && password === confirm;
-
+  const phoneDigits = phone.replace(/\D/g, "");
+  const phoneValid = phoneDigits.length === 10;
+  const zipValid = /^\d{5}$/.test(zip);
   const passwordStrength = useMemo(() => {
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-    return score; // 0-4
+    let s = 0;
+    if (password.length >= 8) s++;
+    if (/[A-Z]/.test(password)) s++;
+    if (/[0-9]/.test(password)) s++;
+    if (/[^A-Za-z0-9]/.test(password)) s++;
+    return s;
   }, [password]);
-
   const strengthLabel = ["Too weak", "Weak", "Okay", "Strong", "Excellent"][passwordStrength];
   const strengthColor = [
     colors.destructive,
@@ -60,583 +66,473 @@ export default function SignupScreen() {
   ][passwordStrength];
 
   const canContinue =
-    firstName.trim().length > 0 &&
-    lastName.trim().length > 0 &&
     emailValid &&
-    passwordsMatch &&
+    firstName.trim() &&
+    lastName.trim() &&
+    phoneValid &&
+    zipValid &&
+    password.length >= 8 &&
     agree;
 
   function handleContinue() {
     if (!canContinue) {
-      if (!firstName.trim() || !lastName.trim()) setError("Please enter your full name.");
-      else if (!emailValid) setError("Please enter a valid email address.");
+      if (!emailValid) setError("Please enter a valid email address.");
+      else if (!firstName.trim() || !lastName.trim()) setError("Please enter your full name.");
+      else if (!phoneValid) setError("Please enter a valid 10-digit phone number.");
+      else if (!zipValid) setError("Please enter a valid 5-digit zip code.");
       else if (password.length < 8) setError("Password must be at least 8 characters.");
-      else if (password !== confirm) setError("Passwords don't match.");
       else if (!agree) setError("Please accept the terms to continue.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
     setError(null);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setStep(1);
-  }
-
-  function handleCreateAccount() {
-    setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    setTimeout(() => {
-      setUserRole(role);
-      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
-      if (role === "employer") {
-        setUserProfile({
-          id: "emp-me",
-          name: fullName || "Alex Johnson",
-          role: "employer",
-          email,
-          company: "Your Company",
-          rating: 0,
-          reviewCount: 0,
-          verified: false,
-          location: "Austin, TX",
-        });
-      } else {
-        setUserProfile({
-          id: "worker-me",
-          name: fullName || "Jordan Lee",
-          role: "worker",
-          email,
-          skills: [],
-          rating: 0,
-          reviewCount: 0,
-          verified: false,
-          hourlyRate: 0,
-          location: "Austin, TX",
-          completedJobs: 0,
-          bio: "",
-        });
-      }
-      setIsOnboarded(true);
-      setLoading(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace("/(tabs)");
-    }, 800);
+    const fullName = `${firstName.trim()}${middleInitial ? ` ${middleInitial.trim()}.` : ""} ${lastName.trim()}`.trim();
+    setUserRole(role);
+    if (role === "employer") {
+      setUserProfile({
+        id: "emp-me",
+        name: fullName,
+        role: "employer",
+        email,
+        company: "Your Company",
+        rating: 0,
+        reviewCount: 0,
+        verified: false,
+        location: zip,
+      });
+      // Employers skip skills, go straight to identification
+      router.push("/signup-identification");
+    } else {
+      setUserProfile({
+        id: "worker-me",
+        name: fullName,
+        role: "worker",
+        email,
+        skills: [],
+        rating: 0,
+        reviewCount: 0,
+        verified: false,
+        hourlyRate: 0,
+        location: zip,
+        completedJobs: 0,
+        bio: "",
+      });
+      router.push("/signup-skills");
+    }
+  }
+
+  function renderField(opts: {
+    name: string;
+    label: string;
+    icon?: keyof typeof Feather.glyphMap;
+    value: string;
+    onChange: (s: string) => void;
+    placeholder?: string;
+    keyboardType?: "default" | "email-address" | "phone-pad" | "number-pad";
+    secure?: boolean;
+    autoCap?: "none" | "words";
+    valid?: boolean;
+    rightSlot?: React.ReactNode;
+    maxLength?: number;
+    flex?: number;
+    width?: number;
+    autoComplete?: any;
+  }) {
+    const isFocused = focused === opts.name;
+    const borderColor = isFocused
+      ? colors.primary
+      : opts.valid
+      ? "#bbf7d0"
+      : colors.border;
+    return (
+      <View style={[{ flex: opts.flex, width: opts.width }]}>
+        <View
+          style={[
+            styles.floatingLabelWrap,
+            { borderColor, backgroundColor: colors.card },
+          ]}
+        >
+          <Text
+            style={[
+              styles.floatingLabel,
+              {
+                color: isFocused ? colors.primary : colors.mutedForeground,
+                backgroundColor: colors.card,
+              },
+            ]}
+          >
+            {opts.label}
+          </Text>
+          <View style={styles.floatingInner}>
+            {opts.icon && (
+              <Feather
+                name={opts.icon}
+                size={17}
+                color={isFocused ? colors.primary : colors.mutedForeground}
+              />
+            )}
+            <TextInput
+              value={opts.value}
+              onChangeText={(t) => {
+                opts.onChange(t);
+                if (error) setError(null);
+              }}
+              onFocus={() => setFocused(opts.name)}
+              onBlur={() => setFocused(null)}
+              placeholder={opts.placeholder}
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType={opts.keyboardType}
+              secureTextEntry={opts.secure}
+              autoCapitalize={opts.autoCap ?? "none"}
+              autoCorrect={false}
+              autoComplete={opts.autoComplete}
+              maxLength={opts.maxLength}
+              style={[styles.floatingInput, { color: colors.foreground }]}
+            />
+            {opts.rightSlot}
+          </View>
+        </View>
+      </View>
+    );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <LinearGradient
-        colors={[colors.primary, "#1d4ed8", colors.navy]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.heroBg]}
-      >
-        <View style={styles.heroDecorTop} />
-      </LinearGradient>
+      <SignupHeader
+        title="Create Account"
+        subtitle="Tell us a bit about yourself to get started."
+        step={1}
+        totalSteps={role === "worker" ? 3 : 2}
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
-          <TouchableOpacity
-            onPress={() => (step === 0 ? router.back() : setStep(0))}
-            style={styles.iconBtn}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Feather name="arrow-left" size={20} color="#fff" />
-          </TouchableOpacity>
-          <View style={styles.stepBadge}>
-            <Text style={styles.stepBadgeText}>{step + 1} / 2</Text>
-          </View>
-        </View>
-
-        <View style={[styles.progressTrack, { marginTop: 8 }]}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: step === 0 ? "50%" : "100%" },
-            ]}
-          />
-        </View>
-
         <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 120 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.headerArea}>
-            <Text style={styles.headerTitle}>
-              {step === 0 ? "Create your account" : "Choose your role"}
-            </Text>
-            <Text style={styles.headerSub}>
-              {step === 0
-                ? "Just a few details to get you started."
-                : "How will you use TrueGigs? You can switch later."}
-            </Text>
-          </View>
-
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                ...(Platform.OS === "ios"
-                  ? { shadowColor: "#0f172a", shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.12, shadowRadius: 24 }
-                  : { elevation: 6 }),
-              },
-            ]}
-          >
-            {step === 0 ? (
-              <>
-                <View style={styles.nameRow}>
-                  <View style={[styles.fieldGroup, { flex: 1 }]}>
-                    <Text style={[styles.label, { color: colors.mutedForeground }]}>First name</Text>
-                    <View
-                      style={[
-                        styles.inputWrap,
-                        {
-                          borderColor: focused === "first" ? colors.primary : colors.border,
-                          backgroundColor: focused === "first" ? colors.card : colors.muted,
-                        },
-                      ]}
-                    >
-                      <TextInput
-                        value={firstName}
-                        onChangeText={(t) => {
-                          setFirstName(t);
-                          if (error) setError(null);
-                        }}
-                        onFocus={() => setFocused("first")}
-                        onBlur={() => setFocused(null)}
-                        placeholder="John"
-                        placeholderTextColor={colors.mutedForeground}
-                        style={[styles.input, { color: colors.foreground }]}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={[styles.fieldGroup, { flex: 1 }]}>
-                    <Text style={[styles.label, { color: colors.mutedForeground }]}>Last name</Text>
-                    <View
-                      style={[
-                        styles.inputWrap,
-                        {
-                          borderColor: focused === "last" ? colors.primary : colors.border,
-                          backgroundColor: focused === "last" ? colors.card : colors.muted,
-                        },
-                      ]}
-                    >
-                      <TextInput
-                        value={lastName}
-                        onChangeText={(t) => {
-                          setLastName(t);
-                          if (error) setError(null);
-                        }}
-                        onFocus={() => setFocused("last")}
-                        onBlur={() => setFocused(null)}
-                        placeholder="Doe"
-                        placeholderTextColor={colors.mutedForeground}
-                        style={[styles.input, { color: colors.foreground }]}
-                      />
-                    </View>
-                  </View>
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={[styles.label, { color: colors.mutedForeground }]}>Email address</Text>
-                  <View
-                    style={[
-                      styles.inputWrap,
-                      {
-                        borderColor: focused === "email" ? colors.primary : colors.border,
-                        backgroundColor: focused === "email" ? colors.card : colors.muted,
-                      },
-                    ]}
-                  >
-                    <Feather
-                      name="mail"
-                      size={18}
-                      color={focused === "email" ? colors.primary : colors.mutedForeground}
-                    />
-                    <TextInput
-                      value={email}
-                      onChangeText={(t) => {
-                        setEmail(t);
-                        if (error) setError(null);
-                      }}
-                      onFocus={() => setFocused("email")}
-                      onBlur={() => setFocused(null)}
-                      placeholder="you@example.com"
-                      placeholderTextColor={colors.mutedForeground}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      autoCorrect={false}
-                      style={[styles.input, { color: colors.foreground }]}
-                    />
-                    {emailValid && (
-                      <Feather name="check-circle" size={18} color={colors.success} />
-                    )}
-                  </View>
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={[styles.label, { color: colors.mutedForeground }]}>Password</Text>
-                  <View
-                    style={[
-                      styles.inputWrap,
-                      {
-                        borderColor: focused === "password" ? colors.primary : colors.border,
-                        backgroundColor: focused === "password" ? colors.card : colors.muted,
-                      },
-                    ]}
-                  >
-                    <Feather
-                      name="lock"
-                      size={18}
-                      color={focused === "password" ? colors.primary : colors.mutedForeground}
-                    />
-                    <TextInput
-                      value={password}
-                      onChangeText={(t) => {
-                        setPassword(t);
-                        if (error) setError(null);
-                      }}
-                      onFocus={() => setFocused("password")}
-                      onBlur={() => setFocused(null)}
-                      placeholder="At least 8 characters"
-                      placeholderTextColor={colors.mutedForeground}
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                      style={[styles.input, { color: colors.foreground }]}
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword((s) => !s)} hitSlop={8}>
-                      <Feather
-                        name={showPassword ? "eye-off" : "eye"}
-                        size={18}
-                        color={colors.mutedForeground}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                  {password.length > 0 && (
-                    <View style={styles.strengthRow}>
-                      <View style={styles.strengthBars}>
-                        {[0, 1, 2, 3].map((i) => (
-                          <View
-                            key={i}
-                            style={[
-                              styles.strengthBar,
-                              {
-                                backgroundColor:
-                                  i < passwordStrength ? strengthColor : colors.border,
-                              },
-                            ]}
-                          />
-                        ))}
-                      </View>
-                      <Text style={[styles.strengthLabel, { color: strengthColor }]}>
-                        {strengthLabel}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={[styles.label, { color: colors.mutedForeground }]}>Confirm password</Text>
-                  <View
-                    style={[
-                      styles.inputWrap,
-                      {
-                        borderColor: focused === "confirm" ? colors.primary : colors.border,
-                        backgroundColor: focused === "confirm" ? colors.card : colors.muted,
-                      },
-                    ]}
-                  >
-                    <Feather
-                      name="shield"
-                      size={18}
-                      color={focused === "confirm" ? colors.primary : colors.mutedForeground}
-                    />
-                    <TextInput
-                      value={confirm}
-                      onChangeText={(t) => {
-                        setConfirm(t);
-                        if (error) setError(null);
-                      }}
-                      onFocus={() => setFocused("confirm")}
-                      onBlur={() => setFocused(null)}
-                      placeholder="Re-enter password"
-                      placeholderTextColor={colors.mutedForeground}
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                      style={[styles.input, { color: colors.foreground }]}
-                    />
-                    {confirm.length > 0 && (
-                      <Feather
-                        name={passwordsMatch ? "check-circle" : "x-circle"}
-                        size={18}
-                        color={passwordsMatch ? colors.success : colors.destructive}
-                      />
-                    )}
-                  </View>
-                </View>
-
+          {/* Role toggle */}
+          <View style={[styles.roleToggle, { backgroundColor: colors.muted }]}>
+            {(["worker", "employer"] as const).map((r) => {
+              const selected = role === r;
+              return (
                 <TouchableOpacity
-                  style={styles.agreeRow}
+                  key={r}
+                  style={[
+                    styles.roleToggleBtn,
+                    selected && {
+                      backgroundColor: colors.card,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.08,
+                      shadowRadius: 6,
+                      elevation: 2,
+                    },
+                  ]}
                   onPress={() => {
-                    setAgree((v) => !v);
-                    if (error) setError(null);
+                    setRole(r);
+                    Haptics.selectionAsync();
                   }}
                   activeOpacity={0.8}
                 >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      {
-                        backgroundColor: agree ? colors.primary : "transparent",
-                        borderColor: agree ? colors.primary : colors.border,
-                      },
-                    ]}
-                  >
-                    {agree && <Feather name="check" size={14} color="#fff" />}
-                  </View>
-                  <Text style={[styles.agreeText, { color: colors.mutedForeground }]}>
-                    I agree to the <Text style={{ color: colors.primary, fontWeight: "700" }}>Terms</Text> and{" "}
-                    <Text style={{ color: colors.primary, fontWeight: "700" }}>Privacy Policy</Text>.
-                  </Text>
-                </TouchableOpacity>
-
-                {error && (
-                  <View style={[styles.errorBanner, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
-                    <Feather name="alert-circle" size={16} color={colors.destructive} />
-                    <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>
-                  </View>
-                )}
-
-                <TouchableOpacity
-                  style={[
-                    styles.submitBtn,
-                    { backgroundColor: canContinue ? colors.primary : colors.muted },
-                  ]}
-                  onPress={handleContinue}
-                  activeOpacity={0.88}
-                >
+                  <Feather
+                    name={r === "worker" ? "user" : "briefcase"}
+                    size={15}
+                    color={selected ? colors.primary : colors.mutedForeground}
+                  />
                   <Text
                     style={[
-                      styles.submitText,
-                      { color: canContinue ? "#fff" : colors.mutedForeground },
+                      styles.roleToggleText,
+                      { color: selected ? colors.foreground : colors.mutedForeground },
                     ]}
                   >
-                    Continue
+                    {r === "worker" ? "Find Work" : "Hire Workers"}
                   </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Section: Account */}
+          <Text style={[styles.section, { color: colors.mutedForeground }]}>Account</Text>
+          {renderField({
+            name: "email",
+            label: "Email Address",
+            icon: "mail",
+            value: email,
+            onChange: setEmail,
+            placeholder: "you@example.com",
+            keyboardType: "email-address",
+            valid: emailValid,
+            autoComplete: "email",
+            rightSlot: emailValid ? (
+              <Feather name="check-circle" size={17} color={colors.success} />
+            ) : null,
+          })}
+
+          <View style={{ marginTop: 12 }}>
+            {renderField({
+              name: "password",
+              label: "Password",
+              icon: "lock",
+              value: password,
+              onChange: setPassword,
+              placeholder: "At least 8 characters",
+              secure: !showPassword,
+              valid: passwordStrength >= 3,
+              rightSlot: (
+                <TouchableOpacity onPress={() => setShowPassword((s) => !s)} hitSlop={8}>
                   <Feather
-                    name="arrow-right"
-                    size={18}
-                    color={canContinue ? "#fff" : colors.mutedForeground}
+                    name={showPassword ? "eye-off" : "eye"}
+                    size={17}
+                    color={colors.mutedForeground}
                   />
                 </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                {([
-                  {
-                    key: "worker",
-                    icon: "user" as const,
-                    title: "I'm looking for work",
-                    desc: "Browse flexible gigs near you and get paid fast.",
-                    tint: "#d1fae5",
-                    iconColor: colors.success,
-                  },
-                  {
-                    key: "employer",
-                    icon: "briefcase" as const,
-                    title: "I'm hiring",
-                    desc: "Post jobs and hire trusted workers in minutes.",
-                    tint: "#dbeafe",
-                    iconColor: colors.primary,
-                  },
-                ] as const).map((opt) => {
-                  const selected = role === opt.key;
-                  return (
-                    <TouchableOpacity
-                      key={opt.key}
+              ),
+            })}
+            {password.length > 0 && (
+              <View style={styles.strengthRow}>
+                <View style={styles.strengthBars}>
+                  {[0, 1, 2, 3].map((i) => (
+                    <View
+                      key={i}
                       style={[
-                        styles.roleOpt,
+                        styles.strengthBar,
                         {
-                          borderColor: selected ? colors.primary : colors.border,
-                          backgroundColor: selected ? "#eff6ff" : colors.card,
-                          borderWidth: selected ? 2 : 1.5,
+                          backgroundColor: i < passwordStrength ? strengthColor : colors.border,
                         },
                       ]}
-                      onPress={() => {
-                        setRole(opt.key);
-                        Haptics.selectionAsync();
-                      }}
-                      activeOpacity={0.88}
-                    >
-                      <View style={[styles.roleIcon, { backgroundColor: opt.tint }]}>
-                        <Feather name={opt.icon} size={26} color={opt.iconColor} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.roleTitle, { color: colors.foreground }]}>{opt.title}</Text>
-                        <Text style={[styles.roleDesc, { color: colors.mutedForeground }]}>{opt.desc}</Text>
-                      </View>
-                      <View
-                        style={[
-                          styles.radio,
-                          {
-                            borderColor: selected ? colors.primary : colors.border,
-                            backgroundColor: selected ? colors.primary : "transparent",
-                          },
-                        ]}
-                      >
-                        {selected && <Feather name="check" size={14} color="#fff" />}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-
-                <TouchableOpacity
-                  style={[styles.submitBtn, { backgroundColor: colors.primary, marginTop: 8 }]}
-                  onPress={handleCreateAccount}
-                  activeOpacity={0.88}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Text style={[styles.submitText, { color: "#fff" }]}>Create account</Text>
-                      <Feather name="check" size={18} color="#fff" />
-                    </>
-                  )}
-                </TouchableOpacity>
-              </>
+                    />
+                  ))}
+                </View>
+                <Text style={[styles.strengthLabel, { color: strengthColor }]}>
+                  {strengthLabel}
+                </Text>
+              </View>
             )}
           </View>
 
-          <View style={styles.signupRow}>
-            <Text style={[styles.signupText, { color: colors.mutedForeground }]}>
+          {/* Section: Name */}
+          <Text style={[styles.section, { color: colors.mutedForeground }]}>Personal Info</Text>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            {renderField({
+              name: "first",
+              label: "First Name",
+              icon: "user",
+              value: firstName,
+              onChange: setFirstName,
+              placeholder: "John",
+              autoCap: "words",
+              flex: 1,
+              valid: firstName.trim().length > 0,
+              autoComplete: "given-name",
+            })}
+            {renderField({
+              name: "mi",
+              label: "MI",
+              value: middleInitial,
+              onChange: (s) => setMiddleInitial(s.slice(0, 1).toUpperCase()),
+              placeholder: "M",
+              autoCap: "words",
+              width: 70,
+              maxLength: 1,
+            })}
+          </View>
+
+          <View style={{ marginTop: 12 }}>
+            {renderField({
+              name: "last",
+              label: "Last Name",
+              value: lastName,
+              onChange: setLastName,
+              placeholder: "Doe",
+              autoCap: "words",
+              valid: lastName.trim().length > 0,
+              autoComplete: "family-name",
+            })}
+          </View>
+
+          <View style={{ marginTop: 12 }}>
+            {renderField({
+              name: "phone",
+              label: "Cell #",
+              icon: "smartphone",
+              value: phone,
+              onChange: (s) => setPhone(formatPhone(s)),
+              placeholder: "(123) 456-7890",
+              keyboardType: "phone-pad",
+              valid: phoneValid,
+              maxLength: 14,
+              autoComplete: "tel",
+            })}
+          </View>
+
+          <View style={{ marginTop: 12 }}>
+            {renderField({
+              name: "zip",
+              label: "Zip Code",
+              icon: "map-pin",
+              value: zip,
+              onChange: (s) => setZip(s.replace(/\D/g, "").slice(0, 5)),
+              placeholder: "12345",
+              keyboardType: "number-pad",
+              valid: zipValid,
+              maxLength: 5,
+              autoComplete: "postal-code",
+            })}
+          </View>
+
+          {/* Terms */}
+          <TouchableOpacity
+            style={styles.agreeRow}
+            onPress={() => {
+              setAgree((v) => !v);
+              if (error) setError(null);
+            }}
+            activeOpacity={0.8}
+          >
+            <View
+              style={[
+                styles.checkbox,
+                {
+                  backgroundColor: agree ? colors.primary : "transparent",
+                  borderColor: agree ? colors.primary : colors.border,
+                },
+              ]}
+            >
+              {agree && <Feather name="check" size={14} color="#fff" />}
+            </View>
+            <Text style={[styles.agreeText, { color: colors.mutedForeground }]}>
+              I agree to the{" "}
+              <Text style={{ color: colors.primary, fontWeight: "700" }}>Terms</Text> and{" "}
+              <Text style={{ color: colors.primary, fontWeight: "700" }}>Privacy Policy</Text>.
+            </Text>
+          </TouchableOpacity>
+
+          {error && (
+            <View
+              style={[
+                styles.errorBanner,
+                { backgroundColor: "#fef2f2", borderColor: "#fecaca" },
+              ]}
+            >
+              <Feather name="alert-circle" size={16} color={colors.destructive} />
+              <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>
+            </View>
+          )}
+
+          <View style={styles.signinRow}>
+            <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>
               Already have an account?
             </Text>
             <TouchableOpacity onPress={() => router.replace("/login")} hitSlop={8}>
-              <Text style={[styles.signupLink, { color: colors.primary }]}>Sign in</Text>
+              <Text style={{ color: colors.primary, fontWeight: "800", fontSize: 14 }}>
+                Sign in
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
+
+        {/* Sticky footer */}
+        <View
+          style={[
+            styles.footer,
+            {
+              backgroundColor: colors.card,
+              borderTopColor: colors.border,
+              paddingBottom: insets.bottom + 12,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={[
+              styles.submitBtn,
+              { backgroundColor: canContinue ? colors.primary : colors.muted },
+            ]}
+            onPress={handleContinue}
+            activeOpacity={0.88}
+          >
+            <Text
+              style={[
+                styles.submitText,
+                { color: canContinue ? "#fff" : colors.mutedForeground },
+              ]}
+            >
+              Continue
+            </Text>
+            <Feather
+              name="arrow-right"
+              size={18}
+              color={canContinue ? "#fff" : colors.mutedForeground}
+            />
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  heroBg: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 240,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: "hidden",
-  },
-  heroDecorTop: {
-    position: "absolute",
-    width: 220,
-    height: 220,
-    borderRadius: 220,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    top: -80,
-    right: -60,
-  },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 18,
-    paddingBottom: 8,
-  },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.18)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  stepBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.22)",
-  },
-  stepBadgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  progressTrack: {
-    height: 4,
-    marginHorizontal: 20,
-    borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#fff",
-    borderRadius: 4,
-  },
   scroll: {
     paddingHorizontal: 20,
-    paddingTop: 24,
-    flexGrow: 1,
+    paddingTop: 18,
   },
-  headerArea: {
+  roleToggle: {
+    flexDirection: "row",
+    padding: 4,
+    borderRadius: 14,
     marginBottom: 18,
   },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 24,
-    fontWeight: "800",
-    letterSpacing: -0.4,
-  },
-  headerSub: {
-    color: "rgba(255,255,255,0.85)",
-    fontSize: 14,
-    marginTop: 4,
-  },
-  card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 20,
-  },
-  nameRow: {
+  roleToggleBtn: {
+    flex: 1,
     flexDirection: "row",
-    gap: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 11,
   },
-  fieldGroup: {
-    marginBottom: 14,
+  roleToggleText: {
+    fontSize: 13,
+    fontWeight: "700",
   },
-  label: {
-    fontSize: 12,
+  section: {
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  floatingLabelWrap: {
+    borderWidth: 1.5,
+    borderRadius: 14,
+    paddingTop: 6,
+  },
+  floatingLabel: {
+    position: "absolute",
+    top: -8,
+    left: 12,
+    paddingHorizontal: 6,
+    fontSize: 11,
     fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 8,
+    letterSpacing: 0.5,
+    zIndex: 2,
   },
-  inputWrap: {
+  floatingInner: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     paddingHorizontal: 14,
-    height: 50,
-    borderWidth: 1.5,
-    borderRadius: 14,
+    height: 52,
   },
-  input: {
+  floatingInput: {
     flex: 1,
     fontSize: 15,
     fontWeight: "500",
@@ -647,6 +543,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 8,
+    paddingHorizontal: 4,
     gap: 12,
   },
   strengthBars: {
@@ -667,8 +564,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,
-    marginTop: 4,
-    marginBottom: 14,
+    marginTop: 18,
   },
   checkbox: {
     width: 22,
@@ -691,12 +587,28 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    marginBottom: 12,
+    marginTop: 14,
   },
   errorText: {
     fontSize: 13,
     fontWeight: "600",
     flex: 1,
+  },
+  signinRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 22,
+  },
+  footer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    borderTopWidth: 1,
   },
   submitBtn: {
     height: 54,
@@ -710,51 +622,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: -0.2,
-  },
-  roleOpt: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    padding: 16,
-    borderRadius: 18,
-    marginBottom: 12,
-  },
-  roleIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  roleTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 2,
-  },
-  roleDesc: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  radio: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  signupRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 24,
-  },
-  signupText: {
-    fontSize: 14,
-  },
-  signupLink: {
-    fontSize: 14,
-    fontWeight: "800",
   },
 });
