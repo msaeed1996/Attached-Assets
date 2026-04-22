@@ -6,32 +6,76 @@ import {
   TouchableOpacity,
   TextInput,
   Pressable,
-  Modal,
+  ScrollView,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const METHODS = ["Debit Card / Pay Card", "Direct Deposit", "Pay Check"] as const;
-type Method = (typeof METHODS)[number];
+type MethodKey = "debit" | "deposit" | "check";
+type Method = {
+  key: MethodKey;
+  label: string;
+  description: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  fieldLabel: string;
+  placeholder: string;
+  keyboardType: "default" | "number-pad";
+  helper: string;
+};
+
+const METHODS: Method[] = [
+  {
+    key: "debit",
+    label: "Debit Card / Pay Card",
+    description: "Get paid instantly to your card",
+    icon: "credit-card-outline",
+    fieldLabel: "Card Number",
+    placeholder: "1234 5678 9012 3456",
+    keyboardType: "number-pad",
+    helper: "We'll deposit your earnings to this card.",
+  },
+  {
+    key: "deposit",
+    label: "Direct Deposit",
+    description: "Transfer to your bank account",
+    icon: "bank-outline",
+    fieldLabel: "Account & Routing Number",
+    placeholder: "Account # / Routing #",
+    keyboardType: "number-pad",
+    helper: "Funds typically arrive in 1–2 business days.",
+  },
+  {
+    key: "check",
+    label: "Pay Check",
+    description: "Receive a paper check by mail",
+    icon: "email-outline",
+    fieldLabel: "Mailing Address",
+    placeholder: "Street, City, State, ZIP",
+    keyboardType: "default",
+    helper: "Checks are mailed every Friday.",
+  },
+];
 
 export default function PaymentMethodScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ returnTo?: string }>();
-  const [method, setMethod] = useState<Method | null>(null);
+  const [selectedKey, setSelectedKey] = useState<MethodKey | null>(null);
   const [comments, setComments] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const selected = METHODS.find((m) => m.key === selectedKey) ?? null;
 
   function selectMethod(m: Method) {
     Haptics.selectionAsync();
-    setMethod(m);
-    setDropdownOpen(false);
+    setSelectedKey(m.key);
+    setComments("");
   }
 
   function save() {
-    if (!method || !comments.trim()) {
+    if (!selected || !comments.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
@@ -48,211 +92,254 @@ export default function PaymentMethodScreen() {
     router.back();
   }
 
-  const canSave = !!method && comments.trim().length > 0;
+  const canSave = !!selected && comments.trim().length > 0;
 
   return (
-    <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={styles.root}
+    >
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={10} style={styles.backBtn}>
           <Feather name="arrow-left" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payment Methods</Text>
-        <View style={{ width: 22 }} />
-      </View>
-
-      <View style={styles.body}>
-        <Pressable
-          onPress={() => setDropdownOpen(true)}
-          style={styles.selectField}
-        >
-          <Text style={[styles.selectText, !method && styles.placeholder]}>
-            {method ?? "Select a Payment Method"}
-          </Text>
-          <Feather name="chevron-down" size={18} color="#6b7280" />
-        </Pressable>
-
-        {method && (
-          <View style={styles.commentsField}>
-            <Text style={styles.commentsLabel}>Comments</Text>
-            <TextInput
-              value={comments}
-              onChangeText={setComments}
-              placeholder=""
-              placeholderTextColor="#9ca3af"
-              style={styles.commentsInput}
-              keyboardType={method === "Pay Check" ? "default" : "number-pad"}
-            />
-          </View>
-        )}
-
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            onPress={save}
-            disabled={!canSave}
-            activeOpacity={0.85}
-            style={[
-              styles.actionBtn,
-              { backgroundColor: canSave ? "#2563EB" : "#93c5fd" },
-            ]}
-          >
-            <Text style={styles.actionBtnText}>Save</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={exit}
-            activeOpacity={0.85}
-            style={[styles.actionBtn, { backgroundColor: "#9ca3af" }]}
-          >
-            <Text style={styles.actionBtnText}>Exit</Text>
-          </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>Payment Method</Text>
+          <Text style={styles.headerSubtitle}>How would you like to get paid?</Text>
         </View>
       </View>
 
-      <Modal
-        visible={dropdownOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDropdownOpen(false)}
+      <ScrollView
+        contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + 100 }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <Pressable style={styles.dropdownBackdrop} onPress={() => setDropdownOpen(false)}>
-          <Pressable style={styles.dropdownCard} onPress={(e) => e.stopPropagation()}>
-            <Pressable
-              style={styles.dropdownItem}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setMethod(null);
-                setDropdownOpen(false);
-              }}
-            >
-              <Text style={styles.dropdownText}>Select a Payment Method</Text>
-            </Pressable>
-            {METHODS.map((m) => {
-              const active = m === method;
-              return (
-                <Pressable
-                  key={m}
-                  style={[styles.dropdownItem, active && styles.dropdownItemActive]}
-                  onPress={() => selectMethod(m)}
+        <Text style={styles.sectionLabel}>Choose a method</Text>
+
+        <View style={{ gap: 10 }}>
+          {METHODS.map((m) => {
+            const active = m.key === selectedKey;
+            return (
+              <Pressable
+                key={m.key}
+                onPress={() => selectMethod(m)}
+                style={[styles.methodCard, active && styles.methodCardActive]}
+              >
+                <View
+                  style={[
+                    styles.iconWrap,
+                    { backgroundColor: active ? "#DBEAFE" : "#F3F4F6" },
+                  ]}
                 >
-                  <Text style={[styles.dropdownText, active && styles.dropdownTextActive]}>{m}</Text>
-                </Pressable>
-              );
-            })}
-          </Pressable>
-        </Pressable>
-      </Modal>
-    </View>
+                  <MaterialCommunityIcons
+                    name={m.icon}
+                    size={22}
+                    color={active ? "#2563EB" : "#4B5563"}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.methodLabel, active && { color: "#1D4ED8" }]}>
+                    {m.label}
+                  </Text>
+                  <Text style={styles.methodDesc}>{m.description}</Text>
+                </View>
+                <View
+                  style={[
+                    styles.radioOuter,
+                    active && { borderColor: "#2563EB" },
+                  ]}
+                >
+                  {active && <View style={styles.radioInner} />}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {selected && (
+          <View style={styles.detailCard}>
+            <Text style={styles.fieldLabel}>{selected.fieldLabel}</Text>
+            <TextInput
+              value={comments}
+              onChangeText={setComments}
+              placeholder={selected.placeholder}
+              placeholderTextColor="#9CA3AF"
+              style={styles.input}
+              keyboardType={selected.keyboardType}
+              multiline={selected.key === "check"}
+            />
+            <View style={styles.helperRow}>
+              <Feather name="info" size={13} color="#6B7280" />
+              <Text style={styles.helperText}>{selected.helper}</Text>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.secureRow}>
+          <Feather name="lock" size={14} color="#10B981" />
+          <Text style={styles.secureText}>Your payment info is encrypted and secure.</Text>
+        </View>
+      </ScrollView>
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
+        <TouchableOpacity onPress={exit} activeOpacity={0.85} style={styles.cancelBtn}>
+          <Text style={styles.cancelText}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={save}
+          disabled={!canSave}
+          activeOpacity={0.9}
+          style={[
+            styles.saveBtn,
+            { backgroundColor: canSave ? "#2563EB" : "#93C5FD" },
+          ]}
+        >
+          <Feather name="check" size={16} color="#fff" />
+          <Text style={styles.saveText}>Save Payment Method</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#fff" },
+  root: { flex: 1, backgroundColor: "#F9FAFB" },
   header: {
     backgroundColor: "#2563EB",
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 18,
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
   },
   backBtn: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.16)",
+  },
+  headerTitle: { color: "#fff", fontSize: 19, fontWeight: "700" },
+  headerSubtitle: { color: "rgba(255,255,255,0.85)", fontSize: 13, marginTop: 2 },
+
+  body: { padding: 16, gap: 18 },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#6B7280",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 4,
+  },
+  methodCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fff",
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    borderRadius: 14,
+    padding: 14,
+  },
+  methodCardActive: {
+    borderColor: "#2563EB",
+    backgroundColor: "#EFF6FF",
+  },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  body: {
-    padding: 16,
-    gap: 14,
-  },
-  selectField: {
-    flexDirection: "row",
+  methodLabel: { fontSize: 15, fontWeight: "700", color: "#111827" },
+  methodDesc: { fontSize: 12, color: "#6B7280", marginTop: 2 },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#D1D5DB",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#2563EB",
+  },
+
+  detailCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
-    borderColor: "#9ca3af",
-    borderRadius: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    backgroundColor: "#fff",
+    borderColor: "#E5E7EB",
+    gap: 8,
   },
-  selectText: { fontSize: 15, color: "#111827" },
-  placeholder: { color: "#6b7280" },
-  commentsField: {
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  input: {
     borderWidth: 1,
-    borderColor: "#9ca3af",
-    borderRadius: 6,
-    paddingHorizontal: 14,
-    paddingTop: 6,
-    paddingBottom: 6,
-    backgroundColor: "#fff",
-    position: "relative",
-  },
-  commentsLabel: {
-    position: "absolute",
-    top: -8,
-    left: 10,
-    paddingHorizontal: 4,
-    backgroundColor: "#fff",
-    fontSize: 11,
-    color: "#6b7280",
-  },
-  commentsInput: {
-    paddingVertical: 8,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     fontSize: 15,
     color: "#111827",
+    minHeight: 46,
     ...(Platform.OS === "web" ? { outlineStyle: "none" as any } : {}),
   },
-  buttonRow: {
+  helperRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  helperText: { fontSize: 12, color: "#6B7280", flex: 1 },
+
+  secureRow: {
     flexDirection: "row",
-    gap: 10,
+    alignItems: "center",
+    gap: 6,
+    justifyContent: "center",
     marginTop: 4,
   },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  actionBtnText: {
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  dropdownBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.2)",
-    paddingTop: 130,
+  secureText: { fontSize: 12, color: "#10B981", fontWeight: "500" },
+
+  footer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: "row",
+    gap: 10,
     paddingHorizontal: 16,
-  },
-  dropdownCard: {
+    paddingTop: 12,
     backgroundColor: "#fff",
-    borderRadius: 4,
-    paddingVertical: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
   },
-  dropdownItem: {
-    paddingHorizontal: 16,
+  cancelBtn: {
+    paddingHorizontal: 18,
     paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  dropdownItemActive: {
-    backgroundColor: "#e5e7eb",
+  cancelText: { color: "#374151", fontWeight: "600", fontSize: 14 },
+  saveBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 10,
   },
-  dropdownText: {
-    fontSize: 15,
-    color: "#111827",
-  },
-  dropdownTextActive: {
-    fontWeight: "600",
-  },
+  saveText: { color: "#fff", fontWeight: "700", fontSize: 15 },
 });
