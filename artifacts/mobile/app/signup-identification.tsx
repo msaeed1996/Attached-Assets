@@ -87,8 +87,8 @@ export default function SignupIdentificationScreen() {
   const insets = useSafeAreaInsets();
   const { userProfile, setUserProfile, setIsOnboarded } = useApp();
   const isWorker = userProfile?.role === "worker";
-  const totalSteps = isWorker ? 3 : 2;
-  const currentStep = isWorker ? 3 : 2;
+  const totalSteps = isWorker ? 5 : 4;
+  const currentStep = isWorker ? 4 : 3;
 
   const [dob, setDob] = useState("");
   const [ssn, setSsn] = useState("");
@@ -170,13 +170,9 @@ export default function SignupIdentificationScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     setTimeout(() => {
-      if (userProfile) {
-        setUserProfile({ ...userProfile, verified: true });
-      }
-      setIsOnboarded(true);
       setLoading(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace("/(tabs)");
+      router.push("/signup-profile");
     }, 800);
   }
 
