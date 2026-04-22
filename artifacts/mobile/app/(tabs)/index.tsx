@@ -8,6 +8,7 @@ import {
   Platform,
   Modal,
   Pressable,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -141,9 +142,16 @@ export default function HomeScreen() {
               style={styles.avatarCircle}
               onPress={() => router.push("/(tabs)/profile")}
             >
-              <Text style={styles.avatarLetter}>
-                {(userProfile?.name || "U").charAt(0)}
-              </Text>
+              {userProfile?.avatar ? (
+                <Image
+                  source={{ uri: userProfile.avatar }}
+                  style={{ width: "100%", height: "100%", borderRadius: 999 }}
+                />
+              ) : (
+                <Text style={styles.avatarLetter}>
+                  {(userProfile?.name || "U").charAt(0)}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>

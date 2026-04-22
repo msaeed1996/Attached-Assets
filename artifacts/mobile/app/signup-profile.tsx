@@ -146,7 +146,13 @@ export default function SignupProfileScreen() {
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    if (userProfile) setUserProfile({ ...userProfile, verified: true });
+    if (userProfile) {
+      setUserProfile({
+        ...userProfile,
+        verified: true,
+        avatar: pictureUri ?? userProfile.avatar,
+      });
+    }
     setIsOnboarded(true);
     router.replace("/(tabs)");
   }
