@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -126,7 +127,14 @@ export default function ProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarWrap}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initial}</Text>
+            {userProfile?.avatar ? (
+              <Image
+                source={{ uri: userProfile.avatar }}
+                style={{ width: "100%", height: "100%", borderRadius: 999 }}
+              />
+            ) : (
+              <Text style={styles.avatarText}>{initial}</Text>
+            )}
           </View>
           {userProfile?.verified && (
             <View style={styles.verifiedBadge}>

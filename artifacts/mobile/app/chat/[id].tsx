@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
+  Image,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -15,9 +16,10 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useColors } from "@/hooks/useColors";
 import { useMessages } from "@/context/MessagesContext";
 import type { Message } from "@/context/MessagesContext";
+import { useApp } from "@/context/AppContext";
 import * as Haptics from "expo-haptics";
 
-function MessageBubble({ msg, isMe }: { msg: Message; isMe: boolean }) {
+function MessageBubble({ msg, isMe, myAvatar }: { msg: Message; isMe: boolean; myAvatar?: string | null }) {
   const colors = useColors();
   return (
     <View style={[styles.bubbleRow, isMe && styles.bubbleRowMe]}>
@@ -41,6 +43,15 @@ function MessageBubble({ msg, isMe }: { msg: Message; isMe: boolean }) {
           {msg.sentAt}
         </Text>
       </View>
+      {isMe && (
+        <View style={[styles.bubbleAvatar, { backgroundColor: colors.primary, marginLeft: 8, marginRight: 0 }]}>
+          {myAvatar ? (
+            <Image source={{ uri: myAvatar }} style={{ width: "100%", height: "100%", borderRadius: 999 }} />
+          ) : (
+            <Feather name="user" size={14} color="#fff" />
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -50,6 +61,7 @@ export default function ChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { conversations, messages, sendMessage, markAsRead } = useMessages();
+  const { userProfile } = useApp();
   const [text, setText] = useState("");
   const flatRef = useRef<FlatList>(null);
 
@@ -98,7 +110,7 @@ export default function ChatScreen() {
           data={msgs}
           keyExtractor={(m) => m.id}
           renderItem={({ item }) => (
-            <MessageBubble msg={item} isMe={item.senderId === "me"} />
+            <MessageBubble msg={item} isMe={item.senderId === "me"} myAvatar={userProfile?.avatar} />
           )}
           contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
           onContentSizeChange={() => flatRef.current?.scrollToEnd({ animated: true })}
