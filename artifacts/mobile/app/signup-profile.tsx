@@ -9,7 +9,7 @@ import {
   Image,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
@@ -119,7 +119,9 @@ export default function SignupProfileScreen() {
     router.push({ pathname: "/payment-method", params: { returnTo: "/signup-profile" } });
   }
 
-  const allDone = done.signature && done.picture && done.payment;
+  const completedCount = Number(done.signature) + Number(done.picture) + Number(done.payment);
+  const allDone = completedCount === 3;
+  const progressPct = (completedCount / 3) * 100;
 
   function finish() {
     if (!allDone) {
@@ -134,37 +136,74 @@ export default function SignupProfileScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
       <SignupHeader title="My Profile" step={5} totalSteps={5} />
 
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.intro, { color: colors.foreground }]}>
-          Please complete the following requirements to complete your profile and use TrueGigs.
-        </Text>
+        {/* Hero */}
+        <View style={styles.heroCard}>
+          <View style={styles.avatarWrap}>
+            {pictureUri ? (
+              <Image source={{ uri: pictureUri }} style={styles.avatar} />
+            ) : (
+              <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                <Feather name="user" size={32} color="#9CA3AF" />
+              </View>
+            )}
+            <View style={styles.avatarBadge}>
+              <Feather name={allDone ? "check" : "edit-2"} size={11} color="#fff" />
+            </View>
+          </View>
+          <Text style={styles.heroTitle}>Almost done!</Text>
+          <Text style={styles.heroSubtitle}>
+            Complete these {3 - completedCount === 0 ? "final touches" : `${3 - completedCount} steps`} to start working on TrueGigs.
+          </Text>
 
-        <RequirementButton
-          label="Signature"
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
+          </View>
+          <Text style={styles.progressLabel}>
+            {completedCount} of 3 completed
+          </Text>
+        </View>
+
+        {/* Requirements */}
+        <Text style={styles.sectionLabel}>Profile Requirements</Text>
+
+        <RequirementCard
+          icon="draw-pen"
+          title="Signature"
+          description="Sign with your finger to authorize timesheets."
           done={done.signature}
           onPress={captureSignature}
         />
 
-        <RequirementButton
-          label="Profile Picture"
+        <RequirementCard
+          icon="camera-outline"
+          title="Profile Picture"
+          description="Help employers recognize you on the job site."
           done={done.picture}
           onPress={pickImage}
           thumbnailUri={pictureUri}
         />
 
-        <View style={{ height: 40 }} />
-
-        <RequirementButton
-          label="Add Payment Method"
+        <RequirementCard
+          icon="credit-card-outline"
+          title="Payment Method"
+          description="Tell us how you'd like to receive your earnings."
           done={done.payment}
           onPress={addPayment}
         />
+
+        <View style={styles.helpRow}>
+          <Feather name="help-circle" size={14} color="#6B7280" />
+          <Text style={styles.helpText}>
+            All info is encrypted. You can update these later in Settings.
+          </Text>
+        </View>
 
         <SignaturePadModal
           visible={signatureVisible}
@@ -177,12 +216,12 @@ export default function SignupProfileScreen() {
           activeOpacity={0.9}
           style={[
             styles.finishBtn,
-            { backgroundColor: allDone ? "#10b981" : "#9ca3af" },
+            { backgroundColor: allDone ? "#10B981" : "#D1D5DB" },
           ]}
         >
-          <Feather name="check-circle" size={18} color="#fff" />
+          <Feather name={allDone ? "check-circle" : "lock"} size={18} color="#fff" />
           <Text style={styles.finishBtnText}>
-            {allDone ? "Finish & Continue" : "Complete all requirements"}
+            {allDone ? "Finish & Continue" : `Complete ${3 - completedCount} more to continue`}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -190,13 +229,17 @@ export default function SignupProfileScreen() {
   );
 }
 
-function RequirementButton({
-  label,
+function RequirementCard({
+  icon,
+  title,
+  description,
   done,
   onPress,
   thumbnailUri,
 }: {
-  label: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  title: string;
+  description: string;
   done: boolean;
   onPress: () => void;
   thumbnailUri?: string | null;
@@ -204,79 +247,188 @@ function RequirementButton({
   return (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.9}
-      style={[styles.reqBtn, done && styles.reqBtnDone]}
+      activeOpacity={0.85}
+      style={[styles.reqCard, done && styles.reqCardDone]}
     >
-      {thumbnailUri && (
-        <Image source={{ uri: thumbnailUri }} style={styles.thumb} />
-      )}
-      <Text style={styles.reqBtnText}>{label}</Text>
-      {done && (
-        <View style={styles.checkBadge}>
-          <Feather name="check" size={14} color="#fff" />
+      <View
+        style={[
+          styles.reqIconWrap,
+          { backgroundColor: done ? "#D1FAE5" : "#EFF6FF" },
+        ]}
+      >
+        {thumbnailUri ? (
+          <Image source={{ uri: thumbnailUri }} style={styles.reqThumb} />
+        ) : (
+          <MaterialCommunityIcons
+            name={icon}
+            size={22}
+            color={done ? "#059669" : "#2563EB"}
+          />
+        )}
+      </View>
+
+      <View style={{ flex: 1 }}>
+        <View style={styles.reqTitleRow}>
+          <Text style={styles.reqTitle}>{title}</Text>
+          {done && (
+            <View style={styles.doneBadge}>
+              <Feather name="check" size={10} color="#fff" />
+              <Text style={styles.doneBadgeText}>Done</Text>
+            </View>
+          )}
         </View>
-      )}
+        <Text style={styles.reqDesc}>{description}</Text>
+      </View>
+
+      <Feather
+        name={done ? "edit-2" : "chevron-right"}
+        size={16}
+        color={done ? "#059669" : "#9CA3AF"}
+      />
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    gap: 14,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 12,
   },
-  intro: {
-    fontSize: 14,
-    lineHeight: 20,
+
+  heroCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingVertical: 22,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
     marginBottom: 8,
   },
-  reqBtn: {
+  avatarWrap: { position: "relative", marginBottom: 12 },
+  avatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#F3F4F6",
+  },
+  avatarPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    borderStyle: "dashed",
+  },
+  avatarBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: "#2563EB",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  heroTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  heroSubtitle: {
+    fontSize: 13,
+    color: "#6B7280",
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 14,
+    lineHeight: 18,
+  },
+  progressTrack: {
+    width: "100%",
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#F3F4F6",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#10B981",
+    borderRadius: 4,
+  },
+  progressLabel: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 8,
+    fontWeight: "600",
+  },
+
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#6B7280",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginTop: 4,
+    marginBottom: 2,
+    paddingHorizontal: 4,
+  },
+
+  reqCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  reqCardDone: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#A7F3D0",
+  },
+  reqIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  reqThumb: { width: 44, height: 44 },
+  reqTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  reqTitle: { fontSize: 15, fontWeight: "700", color: "#111827" },
+  reqDesc: { fontSize: 12, color: "#6B7280", marginTop: 2, lineHeight: 16 },
+  doneBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#10B981",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
+  },
+  doneBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700" },
+
+  helpRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#2563EB",
-    shadowOpacity: 0.18,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 3,
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 10,
   },
-  reqBtnDone: {
-    backgroundColor: "#10b981",
-    shadowColor: "#10b981",
-  },
-  reqBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-  },
-  thumb: {
-    position: "absolute",
-    left: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.6)",
-    backgroundColor: "#fff",
-  },
-  checkBadge: {
-    position: "absolute",
-    right: 14,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  helpText: { fontSize: 12, color: "#6B7280", textAlign: "center" },
+
   finishBtn: {
-    marginTop: 28,
+    marginTop: 18,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -286,7 +438,7 @@ const styles = StyleSheet.create({
   },
   finishBtnText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
   },
 });
