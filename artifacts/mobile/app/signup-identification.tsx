@@ -14,6 +14,7 @@ import {
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as DocumentPicker from "expo-document-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { SignupHeader } from "@/components/SignupHeader";
@@ -25,6 +26,7 @@ interface DocSlot {
   title: string;
   subtitle: string;
   hasViewLink?: boolean;
+  accept: string[];
 }
 
 const DOCS: DocSlot[] = [
@@ -34,6 +36,7 @@ const DOCS: DocSlot[] = [
     title: "Upload Picture ID",
     subtitle: "e.g. Driver's License or State ID",
     hasViewLink: true,
+    accept: ["image/*", "application/pdf"],
   },
   {
     key: "secondary",
@@ -41,14 +44,36 @@ const DOCS: DocSlot[] = [
     title: "Upload Secondary ID",
     subtitle: "e.g. SSN Card or Birth Certificate",
     hasViewLink: true,
+    accept: ["image/*", "application/pdf"],
   },
   {
     key: "resume",
     icon: "file",
     title: "Upload Resume",
     subtitle: "PDF or Word format",
+    accept: [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ],
   },
 ];
+
+interface UploadedFile {
+  name: string;
+  size?: number;
+  uri: string;
+  mimeType?: string;
+}
+
+function formatBytes(bytes?: number) {
+  if (!bytes && bytes !== 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const MAX_BYTES = 20 * 1024 * 1024;
 
 function formatSSN(v: string) {
   const digits = v.replace(/\D/g, "").slice(0, 9);
@@ -67,19 +92,61 @@ export default function SignupIdentificationScreen() {
 
   const [dob, setDob] = useState("");
   const [ssn, setSsn] = useState("");
-  const [uploaded, setUploaded] = useState<Record<string, boolean>>({});
+  const [uploaded, setUploaded] = useState<Record<string, UploadedFile>>({});
+  const [pickingKey, setPickingKey] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const dobValid = /^\d{4}-\d{2}-\d{2}$/.test(dob) || /^\d{2}\/\d{2}\/\d{4}$/.test(dob);
   const ssnValid = /^\d{3}-\d{2}-\d{4}$/.test(ssn);
-  const requiredDocsUploaded = uploaded.primary && uploaded.secondary;
+  const requiredDocsUploaded = !!uploaded.primary && !!uploaded.secondary;
   const canSubmit = dobValid && ssnValid && requiredDocsUploaded && !loading;
 
-  function toggleUpload(key: string) {
+  async function pickDocument(slot: DocSlot) {
+    if (pickingKey) return;
+    try {
+      setPickingKey(slot.key);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const res = await DocumentPicker.getDocumentAsync({
+        type: slot.accept,
+        multiple: false,
+        copyToCacheDirectory: true,
+      });
+      if (res.canceled) return;
+      const asset = res.assets?.[0];
+      if (!asset) return;
+      if (asset.size && asset.size > MAX_BYTES) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setError(`${asset.name} is larger than the 20MB limit.`);
+        return;
+      }
+      setUploaded((prev) => ({
+        ...prev,
+        [slot.key]: {
+          name: asset.name,
+          size: asset.size,
+          uri: asset.uri,
+          mimeType: asset.mimeType,
+        },
+      }));
+      if (error) setError(null);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      setError(e?.message ?? "Could not open file picker.");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setPickingKey(null);
+    }
+  }
+
+  function removeUpload(key: string) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setUploaded((prev) => ({ ...prev, [key]: !prev[key] }));
+    setUploaded((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   }
 
   function showWhyRequired() {
@@ -182,7 +249,9 @@ export default function SignupIdentificationScreen() {
           </View>
 
           {DOCS.map((doc) => {
-            const done = !!uploaded[doc.key];
+            const file = uploaded[doc.key];
+            const done = !!file;
+            const isPicking = pickingKey === doc.key;
             return (
               <TouchableOpacity
                 key={doc.key}
@@ -191,10 +260,12 @@ export default function SignupIdentificationScreen() {
                   {
                     backgroundColor: done ? "#ecfdf5" : colors.card,
                     borderColor: done ? colors.success : colors.border,
+                    borderStyle: done ? "solid" : "dashed",
                   },
                 ]}
-                onPress={() => toggleUpload(doc.key)}
-                activeOpacity={0.85}
+                onPress={() => (done ? null : pickDocument(doc))}
+                activeOpacity={done ? 1 : 0.85}
+                disabled={isPicking}
               >
                 <View
                   style={[
@@ -202,37 +273,63 @@ export default function SignupIdentificationScreen() {
                     { backgroundColor: done ? "#d1fae5" : "#dbeafe" },
                   ]}
                 >
-                  <Feather
-                    name={done ? "check" : doc.icon}
-                    size={18}
-                    color={done ? colors.success : colors.primary}
-                  />
+                  {isPicking ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Feather
+                      name={done ? "check" : doc.icon}
+                      size={18}
+                      color={done ? colors.success : colors.primary}
+                    />
+                  )}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.docTitle, { color: colors.foreground }]}>{doc.title}</Text>
-                  <Text style={[styles.docSub, { color: colors.mutedForeground }]}>
-                    {done ? "Uploaded · tap to remove" : doc.subtitle}
+                  <Text
+                    style={[styles.docTitle, { color: colors.foreground }]}
+                    numberOfLines={1}
+                  >
+                    {done ? file!.name : doc.title}
+                  </Text>
+                  <Text
+                    style={[styles.docSub, { color: colors.mutedForeground }]}
+                    numberOfLines={1}
+                  >
+                    {done
+                      ? `Uploaded${file!.size ? ` · ${formatBytes(file!.size)}` : ""}`
+                      : doc.subtitle}
                   </Text>
                   {!done && doc.hasViewLink && (
                     <View style={{ marginTop: 6 }}>
                       <Text style={styles.viewLink}>View accepted documents</Text>
                     </View>
                   )}
+                  {done && (
+                    <TouchableOpacity
+                      onPress={() => pickDocument(doc)}
+                      hitSlop={6}
+                      style={{ marginTop: 6 }}
+                    >
+                      <Text style={[styles.viewLink, { color: colors.primary }]}>
+                        Replace file
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
-                <View
-                  style={[
-                    styles.docAction,
-                    {
-                      backgroundColor: done ? colors.success : colors.muted,
-                    },
-                  ]}
-                >
-                  <Feather
-                    name={done ? "check" : "plus"}
-                    size={14}
-                    color={done ? "#fff" : colors.mutedForeground}
-                  />
-                </View>
+                {done ? (
+                  <TouchableOpacity
+                    onPress={() => removeUpload(doc.key)}
+                    style={[styles.docAction, { backgroundColor: "#fee2e2" }]}
+                    hitSlop={6}
+                  >
+                    <Feather name="x" size={14} color={colors.destructive} />
+                  </TouchableOpacity>
+                ) : (
+                  <View
+                    style={[styles.docAction, { backgroundColor: colors.muted }]}
+                  >
+                    <Feather name="plus" size={14} color={colors.mutedForeground} />
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })}
