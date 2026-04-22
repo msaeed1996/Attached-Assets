@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { SignupHeader } from "@/components/SignupHeader";
 import { useApp } from "@/context/AppContext";
+import SignaturePadModal from "@/components/SignaturePadModal";
 
 type Done = { signature: boolean; picture: boolean; payment: boolean };
 
@@ -28,6 +29,7 @@ export default function SignupProfileScreen() {
     picture: false,
     payment: false,
   });
+  const [signatureVisible, setSignatureVisible] = useState(false);
 
   async function pickImage(key: "picture") {
     try {
@@ -47,20 +49,7 @@ export default function SignupProfileScreen() {
 
   function captureSignature() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Alert.prompt?.(
-      "Add Signature",
-      "Type your full legal name to sign",
-      (text) => {
-        if (text && text.trim().length > 1) {
-          setDone((d) => ({ ...d, signature: true }));
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-      },
-    );
-    if (!Alert.prompt) {
-      setDone((d) => ({ ...d, signature: true }));
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+    setSignatureVisible(true);
   }
 
   function addPayment() {
@@ -125,6 +114,12 @@ export default function SignupProfileScreen() {
           label="Add Payment Method"
           done={done.payment}
           onPress={addPayment}
+        />
+
+        <SignaturePadModal
+          visible={signatureVisible}
+          onClose={() => setSignatureVisible(false)}
+          onSave={() => setDone((d) => ({ ...d, signature: true }))}
         />
 
         <TouchableOpacity
