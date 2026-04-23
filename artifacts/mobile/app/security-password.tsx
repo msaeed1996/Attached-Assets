@@ -261,6 +261,7 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
       setNext("");
       setConfirm("");
       setShow({ c: false, n: false, cf: false });
+      setError(null);
     }
   }, [visible]);
 
@@ -276,22 +277,33 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
   const sColors = ["#E5E7EB", "#EF4444", "#F59E0B", "#10B981", "#16A34A"];
   const sLabels = ["", "Weak", "Fair", "Good", "Strong"];
 
+  const [error, setError] = useState<string | null>(null);
+
+  function notify(title: string, msg?: string) {
+    if (Platform.OS === "web") {
+      if (typeof window !== "undefined" && window.alert) window.alert(msg ? `${title}\n\n${msg}` : title);
+    } else {
+      Alert.alert(title, msg);
+    }
+  }
+
   function save() {
+    setError(null);
     if (!current || !next || !confirm) {
-      Alert.alert("Missing info", "Please fill in all fields.");
+      setError("Please fill in all fields.");
       return;
     }
     if (next.length < 8) {
-      Alert.alert("Password too short", "Use at least 8 characters.");
+      setError("Password must be at least 8 characters.");
       return;
     }
     if (next !== confirm) {
-      Alert.alert("Passwords don't match", "Please re-enter your new password.");
+      setError("New passwords don't match.");
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert("Success", "Your password has been updated.");
     onClose();
+    setTimeout(() => notify("Password updated", "Your password has been changed successfully."), 100);
   }
 
   return (
@@ -352,6 +364,13 @@ function ChangePasswordModal({ visible, onClose }: { visible: boolean; onClose: 
             visible={show.cf}
             onToggle={() => setShow((s) => ({ ...s, cf: !s.cf }))}
           />
+
+          {error && (
+            <View style={styles.errorBox}>
+              <Feather name="alert-circle" size={14} color="#DC2626" />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
 
           <View style={styles.modalActions}>
             <Pressable style={styles.cancelBtn} onPress={onClose}>
@@ -530,6 +549,16 @@ const styles = StyleSheet.create({
   strengthBar: { flex: 1, height: 4, borderRadius: 2 },
   strengthLabel: { fontSize: 11, fontWeight: "700", marginLeft: 6, minWidth: 44, textAlign: "right" },
 
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#FEF2F2",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  errorText: { color: "#B91C1C", fontSize: 12, flex: 1 },
   modalActions: {
     flexDirection: "row",
     gap: 10,
