@@ -83,12 +83,14 @@ export default function AboutScreen() {
         {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.logoCircle}>
-            <Feather name="check-circle" size={36} color="#2563eb" />
+            <Feather name="check-circle" size={24} color="#2563eb" />
           </View>
-          <Text style={styles.appName}>TrueGigs</Text>
-          <Text style={styles.tagline}>Real work. Real workers. Real fast.</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.appName}>TrueGigs</Text>
+            <Text style={styles.tagline}>Real work. Real workers. Real fast.</Text>
+          </View>
           <View style={styles.versionPill}>
-            <Text style={styles.versionText}>v{APP_VERSION} · Build {BUILD_NUMBER}</Text>
+            <Text style={styles.versionText}>v{APP_VERSION}</Text>
           </View>
         </View>
 
@@ -208,33 +210,35 @@ const styles = StyleSheet.create({
   backBtn: { width: 36, height: 36, alignItems: "flex-start", justifyContent: "center" },
   headerTitle: { fontSize: 17, fontWeight: "800", color: "#fff", letterSpacing: -0.2 },
 
-  hero: { alignItems: "center", paddingTop: 28, paddingBottom: 22, paddingHorizontal: 24 },
+  hero: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+  },
   logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    ...Platform.select({
-      ios: { shadowColor: "#2563eb", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 12 },
-      android: { elevation: 4 },
-    }),
   },
-  appName: { fontSize: 26, fontWeight: "900", color: "#111827", marginTop: 14, letterSpacing: -0.5 },
-  tagline: { fontSize: 13, color: "#6b7280", marginTop: 4, fontWeight: "500" },
+  appName: { fontSize: 18, fontWeight: "900", color: "#111827", letterSpacing: -0.4 },
+  tagline: { fontSize: 12, color: "#6b7280", marginTop: 1, fontWeight: "500" },
   versionPill: {
-    marginTop: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 999,
     backgroundColor: "#eff6ff",
     borderWidth: 1,
     borderColor: "#dbeafe",
   },
-  versionText: { fontSize: 11, color: "#2563eb", fontWeight: "700" },
+  versionText: { fontSize: 10, color: "#2563eb", fontWeight: "700" },
 
   statsRow: {
     flexDirection: "row",
