@@ -13,6 +13,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useApp } from "@/context/AppContext";
+import { Logo } from "@/components/Logo";
 import * as Haptics from "expo-haptics";
 
 export default function OnboardingScreen() {
@@ -61,9 +62,7 @@ export default function OnboardingScreen() {
       <View style={[styles.welcome, { backgroundColor: colors.navy }]}>
         <View style={[styles.welcomeContent, { paddingTop: insets.top + 60, paddingBottom: insets.bottom + 40 }]}>
           <View style={styles.logoRow}>
-            <View style={[styles.logoMark, { backgroundColor: colors.primary }]}>
-              <Feather name="check-circle" size={28} color="#fff" />
-            </View>
+            <Logo size={44} />
             <Text style={styles.logoText}>TrueGigs</Text>
           </View>
 

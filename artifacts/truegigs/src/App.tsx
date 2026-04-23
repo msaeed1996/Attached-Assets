@@ -7,7 +7,12 @@ function App() {
   return (
     <div className="min-h-screen w-full bg-gray-200 flex justify-center pt-10 pb-10 font-sans">
       <div className="w-full max-w-md bg-gray-50 flex flex-col shadow-2xl rounded-3xl overflow-hidden border border-gray-300 relative">
-        <header className="bg-blue-600 text-white p-4 h-24 flex items-center justify-center">
+        <header className="bg-blue-600 text-white p-4 h-24 flex items-center justify-center gap-3">
+          <img
+            src={`${import.meta.env.BASE_URL}truegigs-logo.webp`}
+            alt="TrueGigs"
+            className="w-10 h-10 rounded-lg object-cover shadow-md"
+          />
           <h1 className="text-xl font-bold tracking-wide">TrueGigs</h1>
         </header>
 

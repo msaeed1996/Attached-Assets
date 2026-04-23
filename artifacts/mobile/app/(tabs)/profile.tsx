@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
+import { Logo } from "@/components/Logo";
 import * as Haptics from "expo-haptics";
 
 function MenuItem({
@@ -166,7 +167,7 @@ export default function ProfileScreen() {
       {/* ── BLUE HEADER BAND ── */}
       <View style={[styles.headerBand, { paddingTop: topPadding + 16 }]}>
         <View style={styles.headerRow}>
-          <View style={{ width: 36 }} />
+          <Logo size={32} />
           <Text style={styles.headerTitle}>My Profile</Text>
           <TouchableOpacity style={styles.settingsBtn} activeOpacity={0.75}>
             <Feather name="settings" size={20} color="#fff" />

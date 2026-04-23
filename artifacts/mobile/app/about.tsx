@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import { Logo } from "@/components/Logo";
 
 const APP_VERSION = "1.0.0";
 const BUILD_NUMBER = "100";
@@ -82,9 +83,7 @@ export default function AboutScreen() {
       >
         {/* Hero */}
         <View style={styles.hero}>
-          <View style={styles.logoCircle}>
-            <Feather name="check-circle" size={24} color="#2563eb" />
-          </View>
+          <Logo size={48} style={styles.logoCircle} />
           <View style={{ flex: 1 }}>
             <Text style={styles.appName}>TrueGigs</Text>
             <Text style={styles.tagline}>Real work. Real workers. Real fast.</Text>

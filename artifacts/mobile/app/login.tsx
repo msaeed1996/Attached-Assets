@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 import { useApp } from "@/context/AppContext";
+import { Logo } from "@/components/Logo";
 
 export default function LoginScreen() {
   const colors = useColors();
@@ -90,9 +91,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.brand}>
-            <View style={styles.logoMark}>
-              <Feather name="check-circle" size={28} color={colors.primary} />
-            </View>
+            <Logo size={64} style={styles.logoMark} />
             <Text style={styles.brandTitle}>TrueGigs</Text>
             <Text style={styles.brandSubtitle}>Welcome back — let's get to work.</Text>
           </View>
