@@ -205,7 +205,7 @@ export default function ProfileScreen() {
 
         <MenuSection title="Account">
           <MenuItem icon="user" label="Personal Information" onPress={() => router.push("/personal-information")} />
-          <MenuItem icon="shield" label="Security & Password" last />
+          <MenuItem icon="shield" label="Security & Password" onPress={() => router.push("/security-password")} last />
         </MenuSection>
 
         {!isEmployer && (
