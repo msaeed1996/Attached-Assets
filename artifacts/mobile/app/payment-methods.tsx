@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,13 @@ import {
   Pressable,
   TextInput,
   KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type MethodId = "debit" | "direct" | "check";
 
@@ -61,17 +63,14 @@ const METHODS: Method[] = [
 ];
 
 type FormState = {
-  // debit
   cardNumber: string;
   cardExpiry: string;
   cardCvv: string;
   cardName: string;
-  // direct deposit
   bankName: string;
   accountName: string;
   routingNumber: string;
   accountNumber: string;
-  // check
   fullName: string;
   street: string;
   city: string;
@@ -95,6 +94,14 @@ const EMPTY_FORM: FormState = {
   zip: "",
 };
 
+type SavedMethod = {
+  id: string;
+  type: MethodId;
+  form: FormState;
+};
+
+const STORAGE_KEY = "truegigs.paymentMethods.v1";
+
 function formatCardNumber(v: string) {
   const digits = v.replace(/\D/g, "").slice(0, 16);
   return digits.replace(/(.{4})/g, "$1 ").trim();
@@ -105,18 +112,81 @@ function formatExpiry(v: string) {
   return `${d.slice(0, 2)}/${d.slice(2)}`;
 }
 
+function summarize(m: SavedMethod): { title: string; subtitle: string } {
+  const meta = METHODS.find((x) => x.id === m.type)!;
+  if (m.type === "debit") {
+    const last4 = m.form.cardNumber.replace(/\s/g, "").slice(-4);
+    return { title: meta.title, subtitle: `•••• •••• •••• ${last4}` };
+  }
+  if (m.type === "direct") {
+    const last4 = m.form.accountNumber.slice(-4);
+    return { title: meta.title, subtitle: `${m.form.bankName} • ••${last4}` };
+  }
+  return {
+    title: meta.title,
+    subtitle: `${m.form.fullName} • ${m.form.city}, ${m.form.state}`,
+  };
+}
+
 export default function PaymentMethodsScreen() {
   const insets = useSafeAreaInsets();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const [selected, setSelected] = useState<MethodId | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [saved, setSaved] = useState<SavedMethod[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState<boolean>(!!returnTo);
 
   const headerPad = Math.max(insets.top, Platform.OS === "web" ? 67 : 56) + 8;
   const set = (k: keyof FormState) => (v: string) => setForm((p) => ({ ...p, [k]: v }));
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) setSaved(JSON.parse(raw));
+      } catch {}
+    })();
+  }, []);
+
+  async function persist(next: SavedMethod[]) {
+    setSaved(next);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+  }
+
   function pick(id: MethodId) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelected(id);
+  }
+
+  function startAdd() {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setSelected(null);
+    setShowAdd(true);
+  }
+
+  function startEdit(m: SavedMethod) {
+    setEditingId(m.id);
+    setForm(m.form);
+    setSelected(m.type);
+    setShowAdd(true);
+  }
+
+  function confirmDelete(m: SavedMethod) {
+    Alert.alert("Remove payment method?", "This action cannot be undone.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          persist(saved.filter((x) => x.id !== m.id));
+        },
+      },
+    ]);
   }
 
   function isValid(): boolean {
@@ -145,20 +215,34 @@ export default function PaymentMethodsScreen() {
     return false;
   }
 
-  function save() {
-    if (!isValid()) {
+  async function save() {
+    if (!isValid() || !selected) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    const next = [...saved];
+    if (editingId) {
+      const idx = next.findIndex((x) => x.id === editingId);
+      if (idx >= 0) next[idx] = { id: editingId, type: selected, form };
+    } else {
+      next.push({ id: `${Date.now()}`, type: selected, form });
+    }
+    await persist(next);
+
     if (returnTo) {
       router.replace({ pathname: returnTo as any, params: { paymentAdded: "1" } });
     } else {
-      router.back();
+      setShowAdd(false);
+      setEditingId(null);
+      setSelected(null);
+      setForm(EMPTY_FORM);
     }
   }
 
   const valid = isValid();
+  const hasSaved = saved.length > 0;
 
   return (
     <KeyboardAvoidingView
@@ -178,166 +262,218 @@ export default function PaymentMethodsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.intro}>
-          <Text style={styles.introTitle}>How would you like to get paid?</Text>
-          <Text style={styles.introSub}>
-            Choose your preferred payment method. You can change it anytime.
-          </Text>
-        </View>
-
-        {METHODS.map((m) => {
-          const isSel = selected === m.id;
-          return (
-            <View key={m.id}>
-              <Pressable
-                onPress={() => pick(m.id)}
-                style={[
-                  styles.card,
-                  isSel && { borderColor: m.color, borderWidth: 2 },
-                ]}
-              >
-                <View style={[styles.cardIcon, { backgroundColor: m.bg }]}>
-                  <Feather name={m.icon as any} size={22} color={m.color} />
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <View style={styles.titleRow}>
-                    <Text style={styles.cardTitle}>{m.title}</Text>
-                    {m.badge && (
-                      <View style={[styles.badge, { backgroundColor: m.bg }]}>
-                        <Text style={[styles.badgeText, { color: m.color }]}>{m.badge}</Text>
-                      </View>
-                    )}
+        {hasSaved && !showAdd && (
+          <>
+            <Text style={styles.sectionLabel}>SAVED METHODS</Text>
+            {saved.map((m) => {
+              const meta = METHODS.find((x) => x.id === m.type)!;
+              const info = summarize(m);
+              return (
+                <View key={m.id} style={styles.savedCard}>
+                  <View style={[styles.cardIcon, { backgroundColor: meta.bg }]}>
+                    <Feather name={meta.icon as any} size={20} color={meta.color} />
                   </View>
-                  <Text style={styles.cardSubtitle}>{m.subtitle}</Text>
-                  <Text style={styles.cardDesc}>{m.description}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>{info.title}</Text>
+                    <Text style={styles.cardSubtitle}>{info.subtitle}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => startEdit(m)} hitSlop={8} style={styles.actionBtn}>
+                    <Feather name="edit-2" size={16} color="#0759AF" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => confirmDelete(m)} hitSlop={8} style={styles.actionBtn}>
+                    <Feather name="trash-2" size={16} color="#DC2626" />
+                  </TouchableOpacity>
                 </View>
+              );
+            })}
+            <Pressable style={styles.addBtn} onPress={startAdd}>
+              <Feather name="plus" size={18} color="#0759AF" />
+              <Text style={styles.addBtnText}>Add another method</Text>
+            </Pressable>
+          </>
+        )}
 
-                <View
-                  style={[
-                    styles.radio,
-                    isSel && { borderColor: m.color, backgroundColor: m.color },
-                  ]}
-                >
-                  {isSel && <Feather name="check" size={12} color="#fff" />}
-                </View>
-              </Pressable>
+        {(showAdd || !hasSaved) && (
+          <>
+            <View style={styles.intro}>
+              <Text style={styles.introTitle}>
+                {editingId ? "Edit payment method" : "How would you like to get paid?"}
+              </Text>
+              <Text style={styles.introSub}>
+                Choose your preferred payment method. You can change it anytime.
+              </Text>
+            </View>
 
-              {isSel && (
-                <View style={[styles.formCard, { borderColor: m.color }]}>
-                  {m.id === "debit" && (
-                    <>
-                      <Field label="Cardholder Name" value={form.cardName} onChangeText={set("cardName")} placeholder="John Doe" />
-                      <Field
-                        label="Card Number"
-                        value={form.cardNumber}
-                        onChangeText={(v) => set("cardNumber")(formatCardNumber(v))}
-                        placeholder="1234 5678 9012 3456"
-                        keyboardType="number-pad"
-                        icon="credit-card"
-                      />
-                      <View style={{ flexDirection: "row", gap: 10 }}>
-                        <View style={{ flex: 1 }}>
+            {METHODS.map((m) => {
+              const isSel = selected === m.id;
+              return (
+                <View key={m.id}>
+                  <Pressable
+                    onPress={() => pick(m.id)}
+                    style={[styles.card, isSel && { borderColor: m.color, borderWidth: 2 }]}
+                  >
+                    <View style={[styles.cardIcon, { backgroundColor: m.bg }]}>
+                      <Feather name={m.icon as any} size={22} color={m.color} />
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.titleRow}>
+                        <Text style={styles.cardTitle}>{m.title}</Text>
+                        {m.badge && (
+                          <View style={[styles.badge, { backgroundColor: m.bg }]}>
+                            <Text style={[styles.badgeText, { color: m.color }]}>{m.badge}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.cardSubtitle}>{m.subtitle}</Text>
+                      <Text style={styles.cardDesc}>{m.description}</Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.radio,
+                        isSel && { borderColor: m.color, backgroundColor: m.color },
+                      ]}
+                    >
+                      {isSel && <Feather name="check" size={12} color="#fff" />}
+                    </View>
+                  </Pressable>
+
+                  {isSel && (
+                    <View style={[styles.formCard, { borderColor: m.color }]}>
+                      {m.id === "debit" && (
+                        <>
+                          <Field label="Cardholder Name" value={form.cardName} onChangeText={set("cardName")} placeholder="John Doe" />
                           <Field
-                            label="Expiry"
-                            value={form.cardExpiry}
-                            onChangeText={(v) => set("cardExpiry")(formatExpiry(v))}
-                            placeholder="MM/YY"
+                            label="Card Number"
+                            value={form.cardNumber}
+                            onChangeText={(v) => set("cardNumber")(formatCardNumber(v))}
+                            placeholder="1234 5678 9012 3456"
                             keyboardType="number-pad"
-                            maxLength={5}
+                            icon="credit-card"
                           />
-                        </View>
-                        <View style={{ flex: 1 }}>
+                          <View style={{ flexDirection: "row", gap: 10 }}>
+                            <View style={{ flex: 1 }}>
+                              <Field
+                                label="Expiry"
+                                value={form.cardExpiry}
+                                onChangeText={(v) => set("cardExpiry")(formatExpiry(v))}
+                                placeholder="MM/YY"
+                                keyboardType="number-pad"
+                                maxLength={5}
+                              />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Field
+                                label="CVV"
+                                value={form.cardCvv}
+                                onChangeText={(v) => set("cardCvv")(v.replace(/\D/g, "").slice(0, 4))}
+                                placeholder="123"
+                                keyboardType="number-pad"
+                                maxLength={4}
+                                secureTextEntry
+                              />
+                            </View>
+                          </View>
+                        </>
+                      )}
+
+                      {m.id === "direct" && (
+                        <>
+                          <Field label="Bank Name" value={form.bankName} onChangeText={set("bankName")} placeholder="e.g. Chase Bank" icon="home" />
+                          <Field label="Account Holder Name" value={form.accountName} onChangeText={set("accountName")} placeholder="John Doe" />
                           <Field
-                            label="CVV"
-                            value={form.cardCvv}
-                            onChangeText={(v) => set("cardCvv")(v.replace(/\D/g, "").slice(0, 4))}
-                            placeholder="123"
+                            label="Routing Number"
+                            value={form.routingNumber}
+                            onChangeText={(v) => set("routingNumber")(v.replace(/\D/g, "").slice(0, 9))}
+                            placeholder="9 digits"
                             keyboardType="number-pad"
-                            maxLength={4}
+                            maxLength={9}
+                          />
+                          <Field
+                            label="Account Number"
+                            value={form.accountNumber}
+                            onChangeText={(v) => set("accountNumber")(v.replace(/\D/g, "").slice(0, 17))}
+                            placeholder="Account number"
+                            keyboardType="number-pad"
                             secureTextEntry
                           />
-                        </View>
-                      </View>
-                    </>
-                  )}
+                        </>
+                      )}
 
-                  {m.id === "direct" && (
-                    <>
-                      <Field label="Bank Name" value={form.bankName} onChangeText={set("bankName")} placeholder="e.g. Chase Bank" icon="home" />
-                      <Field label="Account Holder Name" value={form.accountName} onChangeText={set("accountName")} placeholder="John Doe" />
-                      <Field
-                        label="Routing Number"
-                        value={form.routingNumber}
-                        onChangeText={(v) => set("routingNumber")(v.replace(/\D/g, "").slice(0, 9))}
-                        placeholder="9 digits"
-                        keyboardType="number-pad"
-                        maxLength={9}
-                      />
-                      <Field
-                        label="Account Number"
-                        value={form.accountNumber}
-                        onChangeText={(v) => set("accountNumber")(v.replace(/\D/g, "").slice(0, 17))}
-                        placeholder="Account number"
-                        keyboardType="number-pad"
-                        secureTextEntry
-                      />
-                    </>
-                  )}
-
-                  {m.id === "check" && (
-                    <>
-                      <Field label="Full Name on Check" value={form.fullName} onChangeText={set("fullName")} placeholder="John Doe" />
-                      <Field label="Street Address" value={form.street} onChangeText={set("street")} placeholder="123 Main St" icon="map-pin" />
-                      <Field label="City" value={form.city} onChangeText={set("city")} placeholder="Austin" />
-                      <View style={{ flexDirection: "row", gap: 10 }}>
-                        <View style={{ flex: 1.2 }}>
-                          <Field
-                            label="State"
-                            value={form.state}
-                            onChangeText={(v) => set("state")(v.toUpperCase().slice(0, 2))}
-                            placeholder="TX"
-                            maxLength={2}
-                            autoCapitalize="characters"
-                          />
-                        </View>
-                        <View style={{ flex: 1.5 }}>
-                          <Field
-                            label="ZIP Code"
-                            value={form.zip}
-                            onChangeText={(v) => set("zip")(v.replace(/\D/g, "").slice(0, 5))}
-                            placeholder="78701"
-                            keyboardType="number-pad"
-                            maxLength={5}
-                          />
-                        </View>
-                      </View>
-                    </>
+                      {m.id === "check" && (
+                        <>
+                          <Field label="Full Name on Check" value={form.fullName} onChangeText={set("fullName")} placeholder="John Doe" />
+                          <Field label="Street Address" value={form.street} onChangeText={set("street")} placeholder="123 Main St" icon="map-pin" />
+                          <Field label="City" value={form.city} onChangeText={set("city")} placeholder="Austin" />
+                          <View style={{ flexDirection: "row", gap: 10 }}>
+                            <View style={{ flex: 1.2 }}>
+                              <Field
+                                label="State"
+                                value={form.state}
+                                onChangeText={(v) => set("state")(v.toUpperCase().slice(0, 2))}
+                                placeholder="TX"
+                                maxLength={2}
+                                autoCapitalize="characters"
+                              />
+                            </View>
+                            <View style={{ flex: 1.5 }}>
+                              <Field
+                                label="ZIP Code"
+                                value={form.zip}
+                                onChangeText={(v) => set("zip")(v.replace(/\D/g, "").slice(0, 5))}
+                                placeholder="78701"
+                                keyboardType="number-pad"
+                                maxLength={5}
+                              />
+                            </View>
+                          </View>
+                        </>
+                      )}
+                    </View>
                   )}
                 </View>
-              )}
-            </View>
-          );
-        })}
+              );
+            })}
 
-        <View style={styles.secureNote}>
-          <Feather name="shield" size={14} color="#16A34A" />
-          <Text style={styles.secureText}>
-            Your payment details are encrypted and stored securely.
-          </Text>
-        </View>
+            {hasSaved && !returnTo && (
+              <Pressable
+                style={styles.cancelBtn}
+                onPress={() => {
+                  setShowAdd(false);
+                  setEditingId(null);
+                  setSelected(null);
+                  setForm(EMPTY_FORM);
+                }}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </Pressable>
+            )}
+
+            <View style={styles.secureNote}>
+              <Feather name="shield" size={14} color="#16A34A" />
+              <Text style={styles.secureText}>
+                Your payment details are encrypted and stored securely.
+              </Text>
+            </View>
+          </>
+        )}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
-        <Pressable
-          style={[styles.continueBtn, !valid && styles.continueBtnDisabled]}
-          onPress={save}
-          disabled={!valid}
-        >
-          <Text style={styles.continueText}>{selected ? "Save Payment Method" : "Select a Method"}</Text>
-          {valid && <Feather name="check" size={16} color="#fff" />}
-        </Pressable>
-      </View>
+      {(showAdd || !hasSaved) && (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
+          <Pressable
+            style={[styles.continueBtn, !valid && styles.continueBtnDisabled]}
+            onPress={save}
+            disabled={!valid}
+          >
+            <Text style={styles.continueText}>
+              {editingId ? "Update Payment Method" : selected ? "Save Payment Method" : "Select a Method"}
+            </Text>
+            {valid && <Feather name="check" size={16} color="#fff" />}
+          </Pressable>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -367,16 +503,16 @@ function Field({
     <View style={{ marginBottom: 10 }}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <View style={styles.inputWrap}>
-        {icon && <Feather name={icon as any} size={15} color="#9CA3AF" style={{ marginRight: 8 }} />}
+        {icon && <Feather name={icon as any} size={16} color="#6B7280" style={{ marginRight: 8 }} />}
         <TextInput
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
-          keyboardType={keyboardType ?? "default"}
+          keyboardType={keyboardType}
           maxLength={maxLength}
           secureTextEntry={secureTextEntry}
-          autoCapitalize={autoCapitalize ?? "words"}
+          autoCapitalize={autoCapitalize ?? "none"}
           style={styles.input}
         />
       </View>
@@ -400,6 +536,8 @@ const styles = StyleSheet.create({
   introTitle: { fontSize: 18, fontWeight: "700", color: "#111827" },
   introSub: { fontSize: 13, color: "#6B7280", marginTop: 4, lineHeight: 18 },
 
+  sectionLabel: { fontSize: 11, fontWeight: "700", color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6, marginTop: 4 },
+
   card: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -415,6 +553,45 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
+  savedCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 14,
+    padding: 14,
+  },
+  actionBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F3F4F6",
+  },
+  addBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "#0759AF",
+    marginTop: 4,
+  },
+  addBtnText: { color: "#0759AF", fontWeight: "700", fontSize: 14 },
+  cancelBtn: {
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelText: { color: "#6B7280", fontWeight: "600", fontSize: 14 },
+
   cardIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
   cardTitle: { fontSize: 15, fontWeight: "700", color: "#111827" },
