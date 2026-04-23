@@ -17,14 +17,76 @@ import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import * as LocalAuth from "expo-local-authentication";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const BIOMETRIC_KEY = "tg.biometric.enabled";
 
 export default function SecurityPasswordScreen() {
   const insets = useSafeAreaInsets();
   const [showChange, setShowChange] = useState(false);
-  const [biometric, setBiometric] = useState(true);
+  const [biometric, setBiometric] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState("Biometric Login");
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [twoFactor, setTwoFactor] = useState(false);
 
   const headerPad = Math.max(insets.top, Platform.OS === "web" ? 67 : 56) + 8;
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const hasHw = await LocalAuth.hasHardwareAsync();
+        const enrolled = await LocalAuth.isEnrolledAsync();
+        const types = await LocalAuth.supportedAuthenticationTypesAsync();
+        let label = "Biometric Login";
+        if (types.includes(LocalAuth.AuthenticationType.FACIAL_RECOGNITION)) label = "Face ID Login";
+        else if (types.includes(LocalAuth.AuthenticationType.FINGERPRINT)) label = "Touch ID Login";
+        else if (types.includes(LocalAuth.AuthenticationType.IRIS)) label = "Iris Login";
+        setBiometricLabel(label);
+        setBiometricAvailable(hasHw && enrolled);
+        const saved = await AsyncStorage.getItem(BIOMETRIC_KEY);
+        if (saved === "1" && hasHw && enrolled) setBiometric(true);
+      } catch {}
+    })();
+  }, []);
+
+  async function toggleBiometric(value: boolean) {
+    Haptics.selectionAsync();
+    if (Platform.OS === "web") {
+      Alert.alert("Not available on web", "Biometric login works on iOS and Android only.");
+      return;
+    }
+    if (value) {
+      const hasHw = await LocalAuth.hasHardwareAsync();
+      const enrolled = await LocalAuth.isEnrolledAsync();
+      if (!hasHw) {
+        Alert.alert("Unsupported device", "Your device doesn't support biometric authentication.");
+        return;
+      }
+      if (!enrolled) {
+        Alert.alert(
+          "Set up biometrics first",
+          `Please enable Face ID, Touch ID, or fingerprint in your device settings, then try again.`
+        );
+        return;
+      }
+      const result = await LocalAuth.authenticateAsync({
+        promptMessage: `Enable ${biometricLabel}`,
+        cancelLabel: "Cancel",
+        disableDeviceFallback: false,
+      });
+      if (result.success) {
+        setBiometric(true);
+        await AsyncStorage.setItem(BIOMETRIC_KEY, "1");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } else {
+      setBiometric(false);
+      await AsyncStorage.setItem(BIOMETRIC_KEY, "0");
+    }
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F3F4F6" }}>
@@ -56,15 +118,21 @@ export default function SecurityPasswordScreen() {
               icon="smartphone"
               iconBg="#F3E8FF"
               iconColor="#7C3AED"
-              title="Biometric Login"
-              subtitle="Use Face ID or Touch ID to sign in"
+              title={biometricLabel}
+              subtitle={
+                Platform.OS === "web"
+                  ? "Available on iOS and Android only"
+                  : !biometricAvailable
+                  ? "Set up Face ID or fingerprint in device settings"
+                  : biometric
+                  ? "Enabled · Use to sign in faster"
+                  : "Use biometrics to sign in faster"
+              }
               right={
                 <Switch
                   value={biometric}
-                  onValueChange={(v) => {
-                    Haptics.selectionAsync();
-                    setBiometric(v);
-                  }}
+                  onValueChange={toggleBiometric}
+                  disabled={Platform.OS === "web" || !biometricAvailable}
                   trackColor={{ true: "#7C3AED", false: "#D1D5DB" }}
                   thumbColor="#fff"
                 />
