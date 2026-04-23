@@ -429,11 +429,13 @@ export default function HomeScreen() {
     <Modal
       visible={clockInModalVisible}
       transparent
-      animationType="fade"
+      animationType="slide"
+      statusBarTranslucent
       onRequestClose={() => setClockInModalVisible(false)}
     >
       <Pressable style={modalStyles.backdrop} onPress={() => setClockInModalVisible(false)}>
         <Pressable style={modalStyles.card} onPress={(e) => e.stopPropagation()}>
+          <View style={modalStyles.handle} />
           <View style={modalStyles.header}>
             <Text style={modalStyles.title}>
               {clockModalMode === "out" ? "Ready to Clock Out?" : "Ready to Clock In?"}
@@ -534,32 +536,39 @@ function ModalInfoRow({ icon, label, value }: { icon: string; label: string; val
 const modalStyles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(17,24,39,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 16,
+    backgroundColor: "rgba(2,8,23,0.58)",
+    justifyContent: "flex-end",
   },
   card: {
     width: "100%",
-    maxWidth: 420,
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     overflow: "hidden",
+    paddingTop: 10,
+    paddingBottom: 24,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    elevation: 28,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#e2e8f0",
+    alignSelf: "center",
+    marginBottom: 10,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
-    backgroundColor: "#f9fafb",
   },
   title: { fontSize: 17, fontWeight: "700", color: "#111827" },
   closeBtn: {
