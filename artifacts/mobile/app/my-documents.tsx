@@ -17,6 +17,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import * as DocumentPicker from "expo-document-picker";
+import * as WebBrowser from "expo-web-browser";
 
 type Doc = {
   id: string;
@@ -72,6 +73,20 @@ export default function MyDocumentsScreen() {
     setDraftName("");
   }
 
+  async function previewDoc(doc: Doc) {
+    if (!doc.uri) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      if (Platform.OS === "web") {
+        window.open(doc.uri, "_blank");
+      } else {
+        await WebBrowser.openBrowserAsync(doc.uri);
+      }
+    } catch {
+      Alert.alert("Couldn't open document");
+    }
+  }
+
   function deleteDoc(id: string) {
     Alert.alert("Delete document?", "This action cannot be undone.", [
       { text: "Cancel", style: "cancel" },
@@ -119,7 +134,11 @@ export default function MyDocumentsScreen() {
           keyExtractor={(d) => d.id}
           contentContainerStyle={{ padding: 14, paddingBottom: 110, gap: 10 }}
           renderItem={({ item }) => (
-            <View style={styles.docCard}>
+            <TouchableOpacity
+              style={styles.docCard}
+              onPress={() => previewDoc(item)}
+              activeOpacity={0.8}
+            >
               <View style={styles.docIcon}>
                 <Feather name="file-text" size={20} color="#0759AF" />
               </View>
@@ -132,10 +151,13 @@ export default function MyDocumentsScreen() {
                   {item.size ? ` · ${fmtSize(item.size)}` : ""} · {item.addedAt}
                 </Text>
               </View>
+              <TouchableOpacity onPress={() => previewDoc(item)} hitSlop={8} style={styles.delBtn}>
+                <Feather name="eye" size={16} color="#0759AF" />
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => deleteDoc(item.id)} hitSlop={8} style={styles.delBtn}>
                 <Feather name="trash-2" size={16} color="#dc2626" />
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           )}
         />
       )}
