@@ -219,7 +219,7 @@ export default function ProfileScreen() {
         <MenuSection title="Financials">
           <MenuItem icon="credit-card" label="Paycards & Direct Deposit" bg="#f0fdf4" accent="#16a34a" />
           <MenuItem icon="trending-up" label="Earnings & Payouts" bg="#f0fdf4" accent="#16a34a" />
-          <MenuItem icon="file-text" label="Tax Documents" bg="#f0fdf4" accent="#16a34a" last />
+          <MenuItem icon="file-text" label="My Documents" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/my-documents")} last />
         </MenuSection>
 
         <MenuSection title="App">
