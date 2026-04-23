@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useApp } from "@/context/AppContext";
 
@@ -297,11 +297,12 @@ function EditModal({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent={false}>
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: "#0759AF" }} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1, backgroundColor: "#F9FAFB" }}
       >
-        <View style={[styles.editHeader, { paddingTop: insets.top + 10 }]}>
+        <View style={styles.editHeader}>
           <TouchableOpacity onPress={onClose} hitSlop={10} style={styles.iconBtn}>
             <Feather name="x" size={22} color="#fff" />
           </TouchableOpacity>
@@ -494,6 +495,7 @@ const styles = StyleSheet.create({
   editHeader: {
     backgroundColor: "#0759AF",
     paddingHorizontal: 14,
+    paddingTop: 12,
     paddingBottom: 14,
     flexDirection: "row",
     alignItems: "center",
