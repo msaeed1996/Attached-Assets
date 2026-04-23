@@ -157,7 +157,18 @@ export default function AboutScreen() {
             <LinkRow icon="file-text" label="Terms of Service" onPress={() => open("https://truegigs.com/terms")} />
             <LinkRow icon="lock" label="Privacy Policy" onPress={() => open("https://truegigs.com/privacy")} />
             <LinkRow icon="mail" label="Contact Support" onPress={() => open("mailto:support@truegigs.com")} />
-            <LinkRow icon="star" label="Rate TrueGigs" onPress={() => open("https://truegigs.com/rate")} last />
+            <LinkRow
+              icon="star"
+              label="Rate TrueGigs"
+              onPress={() =>
+                open(
+                  Platform.OS === "android"
+                    ? "https://play.google.com/store/apps/details?id=com.truegigs.truegigs"
+                    : "https://apps.apple.com/us/app/truegigs/id1387381968"
+                )
+              }
+              last
+            />
           </View>
         </View>
 
