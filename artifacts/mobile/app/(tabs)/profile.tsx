@@ -8,6 +8,8 @@ import {
   Platform,
   Image,
   Modal,
+  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -58,24 +60,49 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { userProfile, userRole, setUserRole, setUserProfile, setIsOnboarded } = useApp();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmMode, setConfirmMode] = useState<null | "delete" | "deactivate">(null);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   function openDeleteModal() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setConfirmMode(null);
+    setPassword("");
+    setPwError(null);
+    setShowPassword(false);
     setShowDeleteModal(true);
   }
 
-  function handleDelete() {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  function closeModal() {
     setShowDeleteModal(false);
-    setIsOnboarded(false);
-    setUserRole(null);
-    setUserProfile(null);
-    router.replace("/onboarding");
+    setConfirmMode(null);
+    setPassword("");
+    setPwError(null);
+    setSubmitting(false);
   }
 
-  function handleDeactivate() {
+  function chooseAction(mode: "delete" | "deactivate") {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setPassword("");
+    setPwError(null);
+    setShowPassword(false);
+    setConfirmMode(mode);
+  }
+
+  async function confirmAction() {
+    if (password.trim().length < 6) {
+      setPwError("Please enter your current password (min 6 characters).");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
+    setPwError(null);
+    setSubmitting(true);
+    // Simulate verification — replace with real API call when auth is wired.
+    await new Promise((r) => setTimeout(r, 700));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    setShowDeleteModal(false);
+    closeModal();
     setIsOnboarded(false);
     setUserRole(null);
     setUserProfile(null);
@@ -271,26 +298,89 @@ export default function ProfileScreen() {
         visible={showDeleteModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowDeleteModal(false)}
+        onRequestClose={closeModal}
       >
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setShowDeleteModal(false)}
+          onPress={closeModal}
         >
           <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Delete/Deactivate{"\n"}Account</Text>
-            <Text style={styles.modalBody}>
-              Do you want to de-activate your account or delete it permanently?
-            </Text>
-            <View style={styles.modalActions}>
-              <TouchableOpacity onPress={handleDelete} style={styles.modalBtn} activeOpacity={0.7}>
-                <Text style={styles.modalBtnText}>Delete</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleDeactivate} style={styles.modalBtn} activeOpacity={0.7}>
-                <Text style={styles.modalBtnText}>Deactivate</Text>
-              </TouchableOpacity>
-            </View>
+            {confirmMode === null ? (
+              <>
+                <Text style={styles.modalTitle}>Delete/Deactivate{"\n"}Account</Text>
+                <Text style={styles.modalBody}>
+                  Do you want to de-activate your account or delete it permanently?
+                </Text>
+                <View style={styles.modalActions}>
+                  <TouchableOpacity onPress={() => chooseAction("delete")} style={styles.modalBtn} activeOpacity={0.7}>
+                    <Text style={styles.modalBtnText}>Delete</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => chooseAction("deactivate")} style={styles.modalBtn} activeOpacity={0.7}>
+                    <Text style={styles.modalBtnText}>Deactivate</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.modalTitle}>
+                  Confirm {confirmMode === "delete" ? "Delete" : "Deactivation"}
+                </Text>
+                <Text style={styles.modalBody}>
+                  {confirmMode === "delete"
+                    ? "This will permanently delete your account and cannot be undone. Enter your password to confirm."
+                    : "Your account will be deactivated. Enter your password to confirm."}
+                </Text>
+
+                <Text style={styles.fieldLabel}>Password</Text>
+                <View style={[styles.pwInputWrap, pwError && styles.pwInputError]}>
+                  <TextInput
+                    value={password}
+                    onChangeText={(t) => { setPassword(t); if (pwError) setPwError(null); }}
+                    placeholder="Enter your current password"
+                    placeholderTextColor="#9ca3af"
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!submitting}
+                    style={styles.pwInput}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword((v) => !v)}
+                    activeOpacity={0.7}
+                    style={styles.pwEye}
+                  >
+                    <Feather name={showPassword ? "eye-off" : "eye"} size={16} color="#6b7280" />
+                  </TouchableOpacity>
+                </View>
+                {pwError && <Text style={styles.pwErrorText}>{pwError}</Text>}
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    onPress={() => setConfirmMode(null)}
+                    style={styles.modalBtn}
+                    activeOpacity={0.7}
+                    disabled={submitting}
+                  >
+                    <Text style={[styles.modalBtnText, styles.modalBtnNeutral]}>Back</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={confirmAction}
+                    style={styles.modalBtn}
+                    activeOpacity={0.7}
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <ActivityIndicator size="small" color="#dc2626" />
+                    ) : (
+                      <Text style={[styles.modalBtnText, styles.modalBtnDanger]}>
+                        {confirmMode === "delete" ? "Delete" : "Deactivate"}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -464,4 +554,20 @@ const styles = StyleSheet.create({
   modalActions: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginTop: 4 },
   modalBtn: { paddingHorizontal: 14, paddingVertical: 12, marginLeft: 4 },
   modalBtnText: { fontSize: 16, fontWeight: "600", color: "#7c3aed", letterSpacing: 0.3 },
+  modalBtnNeutral: { color: "#6b7280" },
+  modalBtnDanger: { color: "#dc2626" },
+  fieldLabel: { fontSize: 12, fontWeight: "700", color: "#6b7280", letterSpacing: 0.5, marginTop: 4, marginBottom: 6, textTransform: "uppercase" },
+  pwInputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f3f4f6",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    paddingHorizontal: 12,
+  },
+  pwInputError: { borderColor: "#dc2626", backgroundColor: "#fef2f2" },
+  pwInput: { flex: 1, height: 44, fontSize: 15, color: "#111827", paddingVertical: 0 },
+  pwEye: { padding: 6, marginLeft: 4 },
+  pwErrorText: { fontSize: 12, color: "#dc2626", marginTop: 6 },
 });
