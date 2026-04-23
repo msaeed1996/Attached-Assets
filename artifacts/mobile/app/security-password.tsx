@@ -160,34 +160,6 @@ export default function SecurityPasswordScreen() {
           </View>
         </View>
 
-        <View>
-          <Text style={styles.sectionLabel}>SESSIONS & DEVICES</Text>
-          <View style={styles.card}>
-            <Row
-              icon="monitor"
-              iconBg="#FFF7ED"
-              iconColor="#EA580C"
-              title="Active Sessions"
-              subtitle="Manage devices signed in to your account"
-              onPress={() => Alert.alert("Coming soon", "Session management is on the way.")}
-            />
-            <Divider />
-            <Row
-              icon="log-out"
-              iconBg="#FEF2F2"
-              iconColor="#DC2626"
-              title="Sign Out All Devices"
-              subtitle="Log out everywhere except this device"
-              onPress={() =>
-                Alert.alert("Sign out everywhere?", "You'll need to sign in again on other devices.", [
-                  { text: "Cancel", style: "cancel" },
-                  { text: "Sign Out", style: "destructive" },
-                ])
-              }
-            />
-          </View>
-        </View>
-
         <View style={styles.tipBox}>
           <Feather name="info" size={14} color="#0759AF" />
           <Text style={styles.tipText}>
