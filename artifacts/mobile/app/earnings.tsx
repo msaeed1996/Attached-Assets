@@ -85,13 +85,7 @@ export default function EarningsScreen() {
           <Feather name="chevron-left" size={22} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Earnings & Payouts</Text>
-        <TouchableOpacity
-          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-          style={styles.backBtn}
-          activeOpacity={0.7}
-        >
-          <Feather name="download" size={18} color="#fff" />
-        </TouchableOpacity>
+        <View style={{ width: 36 }} />
       </View>
 
       <ScrollView
@@ -148,7 +142,7 @@ export default function EarningsScreen() {
           <View style={styles.chartCard}>
             <View style={styles.chart}>
               {WEEKLY.map((d, i) => {
-                const px = Math.max((d.value / maxBar) * 110, 6);
+                const px = Math.max((d.value / maxBar) * 78, 6);
                 return (
                   <View key={i} style={styles.barCol}>
                     <View style={styles.barTrack}>
@@ -227,7 +221,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0759af",
     paddingHorizontal: 16,
-    paddingBottom: 18,
+    paddingBottom: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -238,51 +232,51 @@ const styles = StyleSheet.create({
   hero: {
     backgroundColor: "#0759af",
     paddingHorizontal: 20,
-    paddingTop: 4,
-    paddingBottom: 24,
+    paddingTop: 2,
+    paddingBottom: 18,
     alignItems: "center",
   },
-  heroLabel: { fontSize: 12, color: "#bfdbfe", fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.6 },
-  heroAmount: { fontSize: 40, fontWeight: "900", color: "#fff", letterSpacing: -1, marginTop: 4 },
-  rangeRow: { flexDirection: "row", gap: 6, marginTop: 14, backgroundColor: "rgba(255,255,255,0.12)", padding: 4, borderRadius: 999 },
-  rangeChip: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999 },
+  heroLabel: { fontSize: 11, color: "#bfdbfe", fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.6 },
+  heroAmount: { fontSize: 30, fontWeight: "900", color: "#fff", letterSpacing: -0.8, marginTop: 2 },
+  rangeRow: { flexDirection: "row", gap: 4, marginTop: 10, backgroundColor: "rgba(255,255,255,0.12)", padding: 3, borderRadius: 999 },
+  rangeChip: { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 999 },
   rangeChipActive: { backgroundColor: "#fff" },
   rangeChipText: { fontSize: 12, color: "#dbeafe", fontWeight: "700" },
   rangeChipTextActive: { color: "#0759af" },
 
-  statsRow: { flexDirection: "row", gap: 10, paddingHorizontal: 16, marginTop: -14 },
+  statsRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginTop: -12 },
   statTile: {
     flex: 1,
     backgroundColor: "#fff",
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    gap: 4,
+    gap: 2,
     ...Platform.select({
       ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6 },
       android: { elevation: 2 },
     }),
   },
-  statValue: { fontSize: 16, fontWeight: "900", color: "#111827", letterSpacing: -0.3 },
-  statLabel: { fontSize: 10, color: "#6b7280", fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.4 },
+  statValue: { fontSize: 14, fontWeight: "900", color: "#111827", letterSpacing: -0.3 },
+  statLabel: { fontSize: 9, color: "#6b7280", fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.4 },
 
-  section: { paddingHorizontal: 16, paddingTop: 22 },
-  sectionHeaderRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  section: { paddingHorizontal: 16, paddingTop: 14 },
+  sectionHeaderRow: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
   sectionTitle: { flex: 1, fontSize: 14, fontWeight: "800", color: "#111827", letterSpacing: -0.2 },
   sectionMeta: { fontSize: 13, fontWeight: "800", color: "#2563eb" },
   seeAll: { fontSize: 12, fontWeight: "700", color: "#2563eb" },
 
   chartCard: {
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    padding: 16,
+    padding: 12,
   },
-  chart: { flexDirection: "row", alignItems: "flex-end", height: 120, gap: 10 },
+  chart: { flexDirection: "row", alignItems: "flex-end", height: 90, gap: 8 },
   barCol: { flex: 1, alignItems: "center", gap: 6 },
   barTrack: { width: "100%", flex: 1, backgroundColor: "#f3f4f6", borderRadius: 6, overflow: "hidden", justifyContent: "flex-end" },
   barFill: { width: "100%", borderRadius: 6 },
@@ -293,38 +287,38 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     backgroundColor: "#f0fdf4",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#bbf7d0",
-    padding: 14,
+    padding: 12,
   },
   payoutIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     backgroundColor: "#dcfce7",
     alignItems: "center",
     justifyContent: "center",
   },
-  payoutLabel: { fontSize: 11, color: "#15803d", fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.5 },
-  payoutAmount: { fontSize: 20, fontWeight: "900", color: "#14532d", letterSpacing: -0.4, marginTop: 2 },
-  payoutSub: { fontSize: 11, color: "#166534", marginTop: 2 },
+  payoutLabel: { fontSize: 10, color: "#15803d", fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.5 },
+  payoutAmount: { fontSize: 17, fontWeight: "900", color: "#14532d", letterSpacing: -0.4, marginTop: 1 },
+  payoutSub: { fontSize: 10, color: "#166534", marginTop: 1 },
 
   list: {
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#e5e7eb",
     overflow: "hidden",
   },
-  row: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 12, gap: 12 },
+  row: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 9, gap: 10 },
   rowBorder: { borderBottomWidth: 1, borderBottomColor: "#f3f4f6" },
-  rowIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: "#f1f5f9", alignItems: "center", justifyContent: "center" },
-  rowTitle: { fontSize: 13, fontWeight: "700", color: "#111827" },
-  rowSub: { fontSize: 11, color: "#6b7280", marginTop: 2 },
-  rowAmount: { fontSize: 14, fontWeight: "800", color: "#111827" },
-  statusPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, marginTop: 4 },
-  statusText: { fontSize: 10, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.4 },
+  rowIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: "#f1f5f9", alignItems: "center", justifyContent: "center" },
+  rowTitle: { fontSize: 12, fontWeight: "700", color: "#111827" },
+  rowSub: { fontSize: 10, color: "#6b7280", marginTop: 1 },
+  rowAmount: { fontSize: 13, fontWeight: "800", color: "#111827" },
+  statusPill: { paddingHorizontal: 7, paddingVertical: 1, borderRadius: 999, marginTop: 3 },
+  statusText: { fontSize: 9, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.4 },
 
-  footnote: { fontSize: 11, color: "#9ca3af", textAlign: "center", paddingHorizontal: 32, marginTop: 18, lineHeight: 16 },
+  footnote: { fontSize: 10, color: "#9ca3af", textAlign: "center", paddingHorizontal: 32, marginTop: 14, lineHeight: 14 },
 });
