@@ -218,11 +218,11 @@ export default function ProfileScreen() {
         <MenuSection title="Financials">
           <MenuItem icon="credit-card" label="Payment Methods" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/payment-methods")} />
           <MenuItem icon="trending-up" label="Earnings & Payouts" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/earnings")} />
-          <MenuItem icon="file-text" label="My Documents" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/my-documents")} last />
+          <MenuItem icon="file-text" label="My Documents" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/my-documents")} />
+          <MenuItem icon="credit-card" label="My IDs" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/my-ids")} last />
         </MenuSection>
 
         <MenuSection title="App">
-          <MenuItem icon="bell" label="Notifications" bg="#fff7ed" accent="#ea580c" onPress={() => router.push("/notifications")} />
           <MenuItem icon="info" label="About TrueGigs" bg="#f8fafc" accent="#64748b" onPress={() => router.push("/about")} last />
         </MenuSection>
 
