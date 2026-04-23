@@ -206,16 +206,6 @@ export default function PersonalInformationScreen() {
             <Text style={styles.idEmail} numberOfLines={1}>
               {userProfile?.email || "Add your email"}
             </Text>
-            {/* progress */}
-            <View style={styles.progressRow}>
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${stats.percent}%` }]} />
-              </View>
-              <Text style={styles.progressText}>{stats.percent}%</Text>
-            </View>
-            <Text style={styles.progressSub}>
-              {stats.filled} of {stats.total} fields complete
-            </Text>
           </View>
         </View>
       </View>
