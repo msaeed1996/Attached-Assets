@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -7,344 +7,357 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors } from "@/hooks/useColors";
 import * as Haptics from "expo-haptics";
 
-type NotifType = "job" | "application" | "message" | "system" | "payment";
+type NotifType = "match" | "application" | "payment" | "reminder" | "message";
 
-type Notification = {
+type Notif = {
   id: string;
   type: NotifType;
   title: string;
   body: string;
   time: string;
   read: boolean;
-  route?: string;
+  cta?: string;
+  ctaPath?: string;
 };
 
-const INITIAL_NOTIFS: Notification[] = [
+const ICONS: Record<NotifType, { icon: string; color: string; bg: string; label: string }> = {
+  match: { icon: "zap", color: "#2563eb", bg: "#dbeafe", label: "Match" },
+  application: { icon: "briefcase", color: "#7c3aed", bg: "#ede9fe", label: "Application" },
+  payment: { icon: "dollar-sign", color: "#16a34a", bg: "#dcfce7", label: "Payment" },
+  reminder: { icon: "clock", color: "#d97706", bg: "#fef3c7", label: "Reminder" },
+  message: { icon: "message-circle", color: "#0891b2", bg: "#cffafe", label: "Message" },
+};
+
+const FILTERS: Array<{ key: "all" | NotifType; label: string }> = [
+  { key: "all", label: "All" },
+  { key: "match", label: "Matches" },
+  { key: "application", label: "Applications" },
+  { key: "payment", label: "Payments" },
+  { key: "reminder", label: "Reminders" },
+  { key: "message", label: "Messages" },
+];
+
+const SEED: Notif[] = [
   {
     id: "n1",
-    type: "job",
-    title: "New ASAP Job Near You",
-    body: "Event Staff needed at Downtown Convention Center — $22/hr, starts today.",
+    type: "match",
+    title: "New gig match: Bartender",
+    body: "Moody Theater is hiring a bartender Saturday 6pm — $35/hr + tips. Matches your skills.",
     time: "2m ago",
     read: false,
-    route: "/(tabs)/jobs",
+    cta: "View Gig",
   },
   {
     id: "n2",
-    type: "application",
-    title: "Application Accepted",
-    body: "Congrats! Your application for Warehouse Associate at LogiCo has been accepted.",
+    type: "payment",
+    title: "Payment of $138.00 sent",
+    body: "Your earnings from Hilton Austin (Banquet Server, 6h) were sent via Direct Deposit.",
     time: "1h ago",
     read: false,
-    route: "/(tabs)/jobs",
+    cta: "View Earnings",
+    ctaPath: "/earnings",
   },
   {
     id: "n3",
-    type: "job",
-    title: "Job Invitation",
-    body: "TechEvent Inc. has invited you to apply for their Event Crew position.",
+    type: "application",
+    title: "Application accepted",
+    body: "Whole Foods accepted your application for Cashier on Friday at 2pm.",
     time: "3h ago",
     read: false,
-    route: "/(tabs)/invitations",
+    cta: "See Details",
   },
   {
     id: "n4",
-    type: "payment",
-    title: "Payment Received",
-    body: "You've received $176.00 for your shift at Metro Kitchen on Apr 4.",
-    time: "Yesterday",
+    type: "reminder",
+    title: "Shift starts in 1 hour",
+    body: "Forklift Operator at Amazon DFW7 starts at 9:00 AM. Don't forget to clock in.",
+    time: "5h ago",
     read: true,
   },
   {
     id: "n5",
-    type: "system",
-    title: "Profile Verified",
-    body: "Your identity has been verified. You now appear in employer searches.",
-    time: "2 days ago",
+    type: "message",
+    title: "Hilton Austin sent you a message",
+    body: "Thanks for the great service last night — we'd love to have you back next weekend.",
+    time: "Yesterday",
     read: true,
+    cta: "Reply",
   },
   {
     id: "n6",
-    type: "application",
-    title: "Application Viewed",
-    body: "Bright Logistics viewed your application for Forklift Operator.",
-    time: "2 days ago",
+    type: "match",
+    title: "3 new gigs near you",
+    body: "Catering Server, Stock Associate, and Event Setup Crew opportunities posted today.",
+    time: "Yesterday",
     read: true,
-    route: "/(tabs)/jobs",
   },
   {
     id: "n7",
-    type: "job",
-    title: "New Jobs Matching Your Skills",
-    body: "3 new jobs posted in your area match your profile — tap to browse.",
-    time: "3 days ago",
+    type: "payment",
+    title: "Tip received: $24.00",
+    body: "Moody Theater added a tip from your bartender shift on Apr 17.",
+    time: "2d ago",
     read: true,
-    route: "/(tabs)/jobs",
+  },
+  {
+    id: "n8",
+    type: "application",
+    title: "New review on your profile",
+    body: "Fairmont Austin gave you a 5-star rating: \"Punctual, friendly, and professional.\"",
+    time: "3d ago",
+    read: true,
+  },
+  {
+    id: "n9",
+    type: "reminder",
+    title: "Add a payment method",
+    body: "Set up Direct Deposit so you can get paid as soon as your shifts complete.",
+    time: "5d ago",
+    read: true,
+    cta: "Set Up",
+    ctaPath: "/payment-methods",
   },
 ];
 
-const NOTIF_META: Record<NotifType, { icon: string; color: string; bg: string }> = {
-  job:         { icon: "briefcase",   color: "#2563EB", bg: "#dbeafe" },
-  application: { icon: "file-text",   color: "#10b981", bg: "#d1fae5" },
-  message:     { icon: "message-circle", color: "#8b5cf6", bg: "#ede9fe" },
-  system:      { icon: "shield",      color: "#f59e0b", bg: "#fef3c7" },
-  payment:     { icon: "dollar-sign", color: "#059669", bg: "#d1fae5" },
-};
-
 export default function NotificationsScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top + 16;
+  const topPadding = Math.max(insets.top, Platform.OS === "ios" ? 50 : 24);
 
-  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFS);
+  const [items, setItems] = useState<Notif[]>(SEED);
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("all");
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  function markRead(id: string) {
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
-  }
+  const filtered = useMemo(
+    () => (filter === "all" ? items : items.filter((n) => n.type === filter)),
+    [items, filter]
+  );
+  const unreadCount = items.filter((n) => !n.read).length;
 
   function markAllRead() {
-    Haptics.selectionAsync();
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  }
-
-  function handlePress(notif: Notification) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    markRead(notif.id);
-    if (notif.route) router.push(notif.route as any);
+    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
   }
 
-  function deleteNotif(id: string) {
+  function tapItem(n: Notif) {
     Haptics.selectionAsync();
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+    if (n.ctaPath) router.push(n.ctaPath as any);
+  }
+
+  function clearAll() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setItems([]);
+  }
+
+  function pickFilter(k: (typeof FILTERS)[number]["key"]) {
+    Haptics.selectionAsync();
+    setFilter(k);
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: "#f0f4f8" }]}>
+    <View style={{ flex: 1, backgroundColor: "#f1f5f9" }}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPadding, backgroundColor: "#0759af" }]}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Feather name="arrow-left" size={22} color="#fff" />
-          </TouchableOpacity>
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>Notifications</Text>
-            {unreadCount > 0 && (
-              <View style={styles.unreadBadge}>
-                <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
-              </View>
-            )}
-          </View>
+      <View style={[styles.header, { paddingTop: topPadding + 12 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+          <Feather name="chevron-left" size={22} color="#fff" />
+        </TouchableOpacity>
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text style={styles.headerTitle}>Notifications</Text>
           {unreadCount > 0 && (
-            <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
-              <Text style={styles.markAllText}>Mark all read</Text>
-            </TouchableOpacity>
+            <Text style={styles.headerSub}>{unreadCount} unread</Text>
           )}
         </View>
+        <TouchableOpacity
+          onPress={markAllRead}
+          style={styles.headerAction}
+          activeOpacity={0.7}
+          disabled={unreadCount === 0}
+        >
+          <Feather name="check-circle" size={18} color={unreadCount === 0 ? "#94a3b8" : "#fff"} />
+        </TouchableOpacity>
       </View>
 
-      {notifications.length === 0 ? (
-        <View style={styles.emptyState}>
-          <View style={[styles.emptyIcon, { backgroundColor: "#dbeafe" }]}>
-            <Feather name="bell-off" size={32} color="#2563EB" />
-          </View>
-          <Text style={[styles.emptyTitle, { color: "#111827" }]}>All caught up!</Text>
-          <Text style={[styles.emptyBody, { color: "#6b7280" }]}>You have no notifications right now.</Text>
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: insets.bottom + 100, paddingTop: 12 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {notifications.map((notif) => {
-            const meta = NOTIF_META[notif.type];
+      {/* Filter chips */}
+      <View style={styles.filterBar}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          {FILTERS.map((f) => {
+            const active = filter === f.key;
+            const count = f.key === "all" ? items.length : items.filter((n) => n.type === f.key).length;
             return (
               <TouchableOpacity
-                key={notif.id}
-                style={[
-                  styles.notifRow,
-                  { backgroundColor: notif.read ? "#fff" : "#eff6ff", borderColor: notif.read ? "#e5e7eb" : "#bfdbfe" }
-                ]}
-                onPress={() => handlePress(notif)}
-                activeOpacity={0.82}
+                key={f.key}
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => pickFilter(f.key)}
+                activeOpacity={0.8}
               >
-                {/* Unread indicator */}
-                {!notif.read && <View style={styles.unreadDot} />}
-
-                <View style={[styles.notifIcon, { backgroundColor: meta.bg }]}>
-                  <Feather name={meta.icon as any} size={18} color={meta.color} />
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <View style={styles.notifTitleRow}>
-                    <Text style={[styles.notifTitle, { color: "#111827", fontWeight: notif.read ? "600" : "800" }]} numberOfLines={1}>
-                      {notif.title}
-                    </Text>
-                    <Text style={[styles.notifTime, { color: "#9ca3af" }]}>{notif.time}</Text>
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                  {f.label}
+                </Text>
+                {count > 0 && (
+                  <View style={[styles.countPill, active && styles.countPillActive]}>
+                    <Text style={[styles.countText, active && styles.countTextActive]}>{count}</Text>
                   </View>
-                  <Text style={[styles.notifBody, { color: "#6b7280" }]} numberOfLines={2}>
-                    {notif.body}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.deleteBtn}
-                  onPress={() => deleteNotif(notif.id)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Feather name="x" size={14} color="#9ca3af" />
-                </TouchableOpacity>
+                )}
               </TouchableOpacity>
             );
           })}
         </ScrollView>
-      )}
+      </View>
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {filtered.length === 0 ? (
+          <View style={styles.empty}>
+            <View style={styles.emptyIcon}>
+              <Feather name="bell-off" size={26} color="#94a3b8" />
+            </View>
+            <Text style={styles.emptyTitle}>You're all caught up</Text>
+            <Text style={styles.emptyBody}>
+              {items.length === 0
+                ? "No notifications yet. We'll let you know when there's something new."
+                : "No notifications in this category."}
+            </Text>
+          </View>
+        ) : (
+          <View style={{ gap: 8 }}>
+            {filtered.map((n) => {
+              const meta = ICONS[n.type];
+              return (
+                <TouchableOpacity
+                  key={n.id}
+                  style={[styles.card, !n.read && styles.cardUnread]}
+                  onPress={() => tapItem(n)}
+                  activeOpacity={0.75}
+                >
+                  <View style={[styles.iconBubble, { backgroundColor: meta.bg }]}>
+                    <Feather name={meta.icon as any} size={15} color={meta.color} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.cardHeader}>
+                      <Text style={[styles.cardTitle, !n.read && styles.cardTitleUnread]} numberOfLines={1}>
+                        {n.title}
+                      </Text>
+                      {!n.read && <View style={styles.unreadDot} />}
+                    </View>
+                    <Text style={styles.cardBody} numberOfLines={2}>
+                      {n.body}
+                    </Text>
+                    <View style={styles.cardFooter}>
+                      <Text style={styles.cardTime}>{n.time}</Text>
+                      {n.cta && (
+                        <View style={styles.ctaPill}>
+                          <Text style={styles.ctaText}>{n.cta}</Text>
+                          <Feather name="arrow-right" size={11} color="#2563eb" />
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+
+            {items.length > 0 && (
+              <TouchableOpacity onPress={clearAll} style={styles.clearBtn} activeOpacity={0.7}>
+                <Feather name="trash-2" size={13} color="#ef4444" />
+                <Text style={styles.clearBtnText}>Clear all notifications</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
-  headerRow: {
+    backgroundColor: "#0759af",
+    paddingHorizontal: 16,
+    paddingBottom: 14,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
   },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerCenter: {
-    flex: 1,
+  backBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+  headerAction: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+  headerTitle: { fontSize: 17, fontWeight: "800", color: "#fff", letterSpacing: -0.2 },
+  headerSub: { fontSize: 11, color: "#bfdbfe", fontWeight: "600", marginTop: 1 },
+
+  filterBar: { backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#e5e7eb", paddingVertical: 10 },
+  chipRow: { gap: 6, paddingHorizontal: 16 },
+  chip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#fff",
-    letterSpacing: -0.4,
-  },
-  unreadBadge: {
-    backgroundColor: "#ef4444",
-    borderRadius: 10,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  unreadBadgeText: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  markAllBtn: {
-    backgroundColor: "rgba(255,255,255,0.12)",
+    gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
-  },
-  markAllText: {
-    color: "#93c5fd",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-
-  notifRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    marginHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 999,
+    backgroundColor: "#f1f5f9",
     borderWidth: 1,
-    position: "relative",
-    ...Platform.select({
-      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
-      android: { elevation: 1 },
-    }),
+    borderColor: "#e5e7eb",
   },
-  unreadDot: {
-    position: "absolute",
-    top: 16,
-    left: 6,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: "#2563EB",
+  chipActive: { backgroundColor: "#0759af", borderColor: "#0759af" },
+  chipText: { fontSize: 12, fontWeight: "700", color: "#475569" },
+  chipTextActive: { color: "#fff" },
+  countPill: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  countPillActive: { backgroundColor: "rgba(255,255,255,0.25)" },
+  countText: { fontSize: 10, fontWeight: "800", color: "#475569" },
+  countTextActive: { color: "#fff" },
+
+  card: {
+    flexDirection: "row",
+    gap: 12,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
-  notifIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    flexShrink: 0,
-  },
-  notifTitleRow: {
+  cardUnread: { borderColor: "#bfdbfe", backgroundColor: "#f8fafc" },
+  iconBubble: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  cardTitle: { flex: 1, fontSize: 13, fontWeight: "700", color: "#1f2937" },
+  cardTitleUnread: { color: "#0f172a", fontWeight: "800" },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#2563eb" },
+  cardBody: { fontSize: 12, color: "#64748b", marginTop: 3, lineHeight: 17 },
+  cardFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
+  cardTime: { fontSize: 11, color: "#94a3b8", fontWeight: "600" },
+  ctaPill: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-    marginBottom: 3,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: "#eff6ff",
+    borderRadius: 999,
   },
-  notifTitle: {
-    fontSize: 14,
-    flex: 1,
-  },
-  notifTime: {
-    fontSize: 11,
-    fontWeight: "500",
-    flexShrink: 0,
-  },
-  notifBody: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  deleteBtn: {
-    padding: 4,
-    flexShrink: 0,
-  },
+  ctaText: { fontSize: 11, fontWeight: "700", color: "#2563eb" },
 
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
+  clearBtn: {
+    flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingBottom: 60,
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 14,
+    marginTop: 6,
   },
+  clearBtnText: { fontSize: 12, fontWeight: "700", color: "#ef4444" },
+
+  empty: { alignItems: "center", paddingTop: 70, paddingHorizontal: 32, gap: 10 },
   emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    justifyContent: "center",
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#f1f5f9",
     alignItems: "center",
-    marginBottom: 4,
+    justifyContent: "center",
   },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    letterSpacing: -0.3,
-  },
-  emptyBody: {
-    fontSize: 14,
-  },
+  emptyTitle: { fontSize: 15, fontWeight: "800", color: "#111827", marginTop: 4 },
+  emptyBody: { fontSize: 12, color: "#64748b", textAlign: "center", lineHeight: 18 },
 });
