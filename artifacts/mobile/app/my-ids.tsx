@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import { BlurView } from "expo-blur";
 
 type IdStatus = "verified" | "pending" | "expired" | "none";
 
@@ -416,8 +417,23 @@ export default function MyIdsScreen() {
       </Modal>
 
       {/* Preview modal */}
-      <Modal visible={!!previewItem} animationType="fade" transparent onRequestClose={() => setPreviewItem(null)}>
-        <Pressable style={styles.backdrop} onPress={() => setPreviewItem(null)}>
+      <Modal visible={!!previewItem} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setPreviewItem(null)}>
+        {Platform.OS === "ios" ? (
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setPreviewItem(null)}>
+            <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+          </Pressable>
+        ) : (
+          <Pressable
+            style={[
+              styles.backdrop,
+              StyleSheet.absoluteFill,
+              Platform.OS === "web" &&
+                ({ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as any),
+            ]}
+            onPress={() => setPreviewItem(null)}
+          />
+        )}
+        <Pressable style={styles.previewWrap} onPress={() => setPreviewItem(null)}>
           <Pressable style={styles.previewCard} onPress={() => {}}>
             {previewItem && (() => {
               const def = ID_TYPES.find((t) => t.key === previewItem.type) ?? ID_TYPES[ID_TYPES.length - 1];
@@ -481,6 +497,7 @@ export default function MyIdsScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   header: {
@@ -579,6 +596,7 @@ const styles = StyleSheet.create({
 
   // Modal
   backdrop: { flex: 1, backgroundColor: "rgba(15, 23, 42, 0.55)", justifyContent: "flex-end" },
+  previewWrap: { flex: 1, justifyContent: "flex-end" },
   sheet: {
     backgroundColor: "#fff",
     borderTopLeftRadius: 24,
