@@ -362,13 +362,12 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0759AF",
     paddingHorizontal: 14,
-    paddingBottom: 30,
+    paddingBottom: 14,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 14,
   },
   iconBtn: {
     width: 36,
