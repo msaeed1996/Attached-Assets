@@ -176,16 +176,19 @@ export default function PaymentMethodsScreen() {
   }
 
   function confirmDelete(m: SavedMethod) {
+    const doDelete = () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      persist(saved.filter((x) => x.id !== m.id));
+    };
+    if (Platform.OS === "web") {
+      if (typeof window !== "undefined" && window.confirm("Remove this payment method? This cannot be undone.")) {
+        doDelete();
+      }
+      return;
+    }
     Alert.alert("Remove payment method?", "This action cannot be undone.", [
       { text: "Cancel", style: "cancel" },
-      {
-        text: "Remove",
-        style: "destructive",
-        onPress: () => {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          persist(saved.filter((x) => x.id !== m.id));
-        },
-      },
+      { text: "Remove", style: "destructive", onPress: doDelete },
     ]);
   }
 
