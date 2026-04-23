@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   Image,
+  Modal,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -56,6 +57,30 @@ function MenuSection({ title, children }: { title: string; children: React.React
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { userProfile, userRole, setUserRole, setUserProfile, setIsOnboarded } = useApp();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  function openDeleteModal() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setShowDeleteModal(true);
+  }
+
+  function handleDelete() {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setShowDeleteModal(false);
+    setIsOnboarded(false);
+    setUserRole(null);
+    setUserProfile(null);
+    router.replace("/onboarding");
+  }
+
+  function handleDeactivate() {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setShowDeleteModal(false);
+    setIsOnboarded(false);
+    setUserRole(null);
+    setUserProfile(null);
+    router.replace("/onboarding");
+  }
 
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const isEmployer = userRole === "employer";
@@ -223,7 +248,8 @@ export default function ProfileScreen() {
         </MenuSection>
 
         <MenuSection title="App">
-          <MenuItem icon="info" label="About TrueGigs" bg="#f8fafc" accent="#64748b" onPress={() => router.push("/about")} last />
+          <MenuItem icon="info" label="About TrueGigs" bg="#f8fafc" accent="#64748b" onPress={() => router.push("/about")} />
+          <MenuItem icon="trash-2" label="Delete Account" bg="#fef2f2" accent="#dc2626" onPress={openDeleteModal} last />
         </MenuSection>
 
         {/* Switch role */}
@@ -240,6 +266,34 @@ export default function ProfileScreen() {
 
         <Text style={styles.version}>TrueGigs v1.0.0</Text>
       </View>
+
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowDeleteModal(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Delete/Deactivate{"\n"}Account</Text>
+            <Text style={styles.modalBody}>
+              Do you want to de-activate your account or delete it permanently?
+            </Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity onPress={handleDelete} style={styles.modalBtn} activeOpacity={0.7}>
+                <Text style={styles.modalBtnText}>Delete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDeactivate} style={styles.modalBtn} activeOpacity={0.7}>
+                <Text style={styles.modalBtnText}>Deactivate</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 }
@@ -384,4 +438,30 @@ const styles = StyleSheet.create({
   },
   logoutText: { fontSize: 14, fontWeight: "700", color: "#dc2626" },
   version: { textAlign: "center", fontSize: 11, color: "#d1d5db", fontWeight: "500" },
+
+  // Delete/Deactivate modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+  },
+  modalCard: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    paddingTop: 22,
+    paddingHorizontal: 22,
+    paddingBottom: 8,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 24 },
+      android: { elevation: 12 },
+    }),
+  },
+  modalTitle: { fontSize: 22, fontWeight: "700", color: "#111827", marginBottom: 14, lineHeight: 28 },
+  modalBody: { fontSize: 15, color: "#4b5563", lineHeight: 22, marginBottom: 12 },
+  modalActions: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginTop: 4 },
+  modalBtn: { paddingHorizontal: 14, paddingVertical: 12, marginLeft: 4 },
+  modalBtnText: { fontSize: 16, fontWeight: "600", color: "#7c3aed", letterSpacing: 0.3 },
 });
