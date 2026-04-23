@@ -176,7 +176,7 @@ export default function PersonalInformationScreen() {
   }
 
   const initial = (userProfile?.name || "U").trim().charAt(0).toUpperCase();
-  const headerPad = Platform.OS === "web" ? insets.top + 67 : insets.top + 10;
+  const headerPad = Platform.OS === "web" ? insets.top + 67 : Math.max(insets.top, 56) + 8;
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F3F4F6" }}>
