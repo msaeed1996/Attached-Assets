@@ -223,7 +223,6 @@ export default function ProfileScreen() {
 
         <MenuSection title="App">
           <MenuItem icon="bell" label="Notifications" bg="#fff7ed" accent="#ea580c" />
-          <MenuItem icon="help-circle" label="Help & Support" bg="#f8fafc" accent="#64748b" />
           <MenuItem icon="info" label="About TrueGigs" bg="#f8fafc" accent="#64748b" onPress={() => router.push("/about")} last />
         </MenuSection>
 
