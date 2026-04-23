@@ -9,6 +9,7 @@ import {
   Modal,
   Pressable,
   TextInput,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -86,6 +87,10 @@ export default function MyIdsScreen() {
   // Confirm delete
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
+  // Preview / download
+  const [previewItem, setPreviewItem] = useState<IdDoc | null>(null);
+  const [downloadedId, setDownloadedId] = useState<string | null>(null);
+
   const stats = useMemo(() => {
     const total = items.length;
     const verified = items.filter((i) => i.status === "verified").length;
@@ -135,10 +140,30 @@ export default function MyIdsScreen() {
 
   function download(item: IdDoc) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setDownloadedId(item.id);
+    setTimeout(() => setDownloadedId((cur) => (cur === item.id ? null : cur)), 2000);
+    if (Platform.OS === "web") {
+      const safe = item.name.replace(/[^a-z0-9]+/gi, "_");
+      const content = `TrueGigs Document\n\nName: ${item.name}\nUploaded: ${item.uploadedAt}\nExpiry: ${item.expiry ?? "N/A"}\nStatus: ${item.status}\n`;
+      try {
+        const blob = new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${safe}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch {}
+      return;
+    }
+    Alert.alert("Download started", `${item.name} has been saved to your device.`);
   }
 
   function view(item: IdDoc) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setPreviewItem(item);
   }
 
   function confirmDelete(id: string) {
@@ -258,8 +283,19 @@ export default function MyIdsScreen() {
                     <Text style={styles.actionText}>View</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionBtn} onPress={() => download(item)} activeOpacity={0.8}>
-                    <Feather name="download" size={13} color="#475569" />
-                    <Text style={styles.actionText}>Download</Text>
+                    <Feather
+                      name={downloadedId === item.id ? "check" : "download"}
+                      size={13}
+                      color={downloadedId === item.id ? "#16a34a" : "#475569"}
+                    />
+                    <Text
+                      style={[
+                        styles.actionText,
+                        downloadedId === item.id && { color: "#16a34a" },
+                      ]}
+                    >
+                      {downloadedId === item.id ? "Saved" : "Download"}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.actionBtn, styles.actionBtnDanger]}
@@ -377,6 +413,70 @@ export default function MyIdsScreen() {
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* Preview modal */}
+      <Modal visible={!!previewItem} animationType="fade" transparent onRequestClose={() => setPreviewItem(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setPreviewItem(null)}>
+          <Pressable style={styles.previewCard} onPress={() => {}}>
+            {previewItem && (() => {
+              const def = ID_TYPES.find((t) => t.key === previewItem.type) ?? ID_TYPES[ID_TYPES.length - 1];
+              const st = statusMeta(previewItem.status);
+              return (
+                <>
+                  <View style={styles.previewHeader}>
+                    <Text style={styles.previewTitle}>{previewItem.name}</Text>
+                    <TouchableOpacity onPress={() => setPreviewItem(null)} hitSlop={8}>
+                      <Feather name="x" size={20} color="#475569" />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={[styles.previewDoc, { backgroundColor: def.bg }]}>
+                    <Feather name={def.icon as any} size={56} color={def.color} />
+                    <Text style={[styles.previewDocLabel, { color: def.color }]}>
+                      Document Preview
+                    </Text>
+                    <Text style={styles.previewDocSub}>
+                      Secure preview — full document visible only to verified employers.
+                    </Text>
+                  </View>
+                  <View style={styles.previewMetaRow}>
+                    <Text style={styles.previewMetaKey}>Status</Text>
+                    <View style={[styles.statusPill, { backgroundColor: st.bg }]}>
+                      <Feather name={st.icon as any} size={11} color={st.color} />
+                      <Text style={[styles.statusText, { color: st.color }]}>{st.label}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.previewMetaRow}>
+                    <Text style={styles.previewMetaKey}>Uploaded</Text>
+                    <Text style={styles.previewMetaVal}>{previewItem.uploadedAt}</Text>
+                  </View>
+                  <View style={styles.previewMetaRow}>
+                    <Text style={styles.previewMetaKey}>Expires</Text>
+                    <Text style={styles.previewMetaVal}>{formatExpiry(previewItem.expiry)}</Text>
+                  </View>
+                  {previewItem.fileSize && (
+                    <View style={styles.previewMetaRow}>
+                      <Text style={styles.previewMetaKey}>File size</Text>
+                      <Text style={styles.previewMetaVal}>{previewItem.fileSize}</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    style={styles.previewBtn}
+                    onPress={() => {
+                      const it = previewItem;
+                      setPreviewItem(null);
+                      if (it) download(it);
+                    }}
+                    activeOpacity={0.85}
+                  >
+                    <Feather name="download" size={15} color="#fff" />
+                    <Text style={styles.previewBtnText}>Download</Text>
+                  </TouchableOpacity>
+                </>
+              );
+            })()}
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -571,4 +671,46 @@ const styles = StyleSheet.create({
   confirmCancelText: { fontSize: 13, fontWeight: "800", color: "#475569" },
   confirmDelete: { flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: "#dc2626", alignItems: "center" },
   confirmDeleteText: { fontSize: 13, fontWeight: "800", color: "#fff" },
+
+  previewCard: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 28,
+  },
+  previewHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
+  previewTitle: { fontSize: 17, fontWeight: "800", color: "#0f172a" },
+  previewDoc: {
+    height: 180,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    marginBottom: 14,
+    gap: 6,
+  },
+  previewDocLabel: { fontSize: 13, fontWeight: "800", marginTop: 6 },
+  previewDocSub: { fontSize: 11, color: "#475569", textAlign: "center", marginTop: 2 },
+  previewMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
+  },
+  previewMetaKey: { fontSize: 12, fontWeight: "700", color: "#64748b" },
+  previewMetaVal: { fontSize: 13, fontWeight: "700", color: "#0f172a" },
+  previewBtn: {
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: "#0759AF",
+  },
+  previewBtnText: { color: "#fff", fontSize: 14, fontWeight: "800" },
 });
