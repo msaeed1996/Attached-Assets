@@ -179,7 +179,7 @@ export default function EarningsScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Recent Payouts</Text>
-            <TouchableOpacity activeOpacity={0.7}>
+            <TouchableOpacity activeOpacity={0.7} onPress={() => router.push("/transactions")}>
               <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
           </View>
