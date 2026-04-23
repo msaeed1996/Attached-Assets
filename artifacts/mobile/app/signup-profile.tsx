@@ -132,7 +132,7 @@ export default function SignupProfileScreen() {
 
   function addPayment() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({ pathname: "/payment-method", params: { returnTo: "/signup-profile" } });
+    router.push({ pathname: "/payment-methods", params: { returnTo: "/signup-profile" } });
   }
 
   const completedCount = Number(done.signature) + Number(done.picture) + Number(done.payment);
