@@ -210,7 +210,7 @@ export default function ProfileScreen() {
 
         {!isEmployer && (
           <MenuSection title="Work">
-            <MenuItem icon="tool" label="My Skills & Certifications" bg="#ede9fe" accent="#7c3aed" />
+            <MenuItem icon="tool" label="My Skills & Certifications" bg="#ede9fe" accent="#7c3aed" onPress={() => router.push("/skills-certifications")} />
             <MenuItem icon="clock" label="Work History" bg="#ede9fe" accent="#7c3aed" onPress={() => router.push("/work-history")} />
             <MenuItem icon="award" label="Badges & Achievements" bg="#ede9fe" accent="#7c3aed" last />
           </MenuSection>
