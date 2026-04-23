@@ -55,7 +55,7 @@ function statusStyle(s: Status) {
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
-  const topPadding = Platform.OS === "web" ? insets.top + 8 : insets.top;
+  const topPadding = Math.max(insets.top, Platform.OS === "ios" ? 50 : 24);
 
   const [month, setMonth] = useState<string>("All");
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("All");

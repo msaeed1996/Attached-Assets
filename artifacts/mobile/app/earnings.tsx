@@ -47,7 +47,7 @@ type Range = "week" | "month" | "year";
 
 export default function EarningsScreen() {
   const insets = useSafeAreaInsets();
-  const topPadding = Platform.OS === "web" ? insets.top + 8 : insets.top;
+  const topPadding = Math.max(insets.top, Platform.OS === "ios" ? 50 : 24);
   const [range, setRange] = useState<Range>("week");
 
   const totals = useMemo(() => {

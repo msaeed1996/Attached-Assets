@@ -60,7 +60,7 @@ const INITIAL_CERTS: Certification[] = [
 
 export default function SkillsCertificationsScreen() {
   const insets = useSafeAreaInsets();
-  const topPadding = Platform.OS === "web" ? insets.top + 8 : insets.top;
+  const topPadding = Math.max(insets.top, Platform.OS === "ios" ? 50 : 24);
 
   const [skills, setSkills] = useState<Skill[]>(INITIAL_SKILLS);
   const [certs, setCerts] = useState<Certification[]>(INITIAL_CERTS);

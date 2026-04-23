@@ -58,7 +58,7 @@ function LinkRow({ icon, label, onPress, last = false }: { icon: string; label: 
 
 export default function AboutScreen() {
   const insets = useSafeAreaInsets();
-  const topPadding = Platform.OS === "web" ? insets.top + 8 : insets.top;
+  const topPadding = Math.max(insets.top, Platform.OS === "ios" ? 50 : 24);
 
   function open(url: string) {
     Linking.openURL(url).catch(() => {});
