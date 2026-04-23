@@ -322,8 +322,23 @@ export default function MyIdsScreen() {
       </ScrollView>
 
       {/* Add ID Modal */}
-      <Modal visible={addOpen} animationType="slide" transparent onRequestClose={() => setAddOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setAddOpen(false)}>
+      <Modal visible={addOpen} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setAddOpen(false)}>
+        {Platform.OS === "ios" ? (
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setAddOpen(false)}>
+            <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+          </Pressable>
+        ) : (
+          <Pressable
+            style={[
+              styles.backdrop,
+              StyleSheet.absoluteFill,
+              Platform.OS === "web" &&
+                ({ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as any),
+            ]}
+            onPress={() => setAddOpen(false)}
+          />
+        )}
+        <Pressable style={styles.previewWrap} onPress={() => setAddOpen(false)}>
           <Pressable style={styles.sheet} onPress={() => {}}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Upload a Document</Text>
@@ -394,6 +409,7 @@ export default function MyIdsScreen() {
       </Modal>
 
       {/* Delete confirm */}
+
       <Modal visible={!!confirmId} animationType="fade" transparent onRequestClose={() => setConfirmId(null)}>
         <View style={styles.backdrop}>
           <View style={styles.confirmCard}>
