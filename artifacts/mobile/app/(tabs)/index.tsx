@@ -19,6 +19,7 @@ import { useJobs } from "@/context/JobsContext";
 import { useMessages } from "@/context/MessagesContext";
 import * as Haptics from "expo-haptics";
 import NotificationsSheet from "@/components/NotificationsSheet";
+import { BlurView } from "expo-blur";
 import { UPCOMING_SHIFTS } from "@/data/upcomingShifts";
 
 const SAMPLE_INVITATIONS = [
@@ -433,9 +434,25 @@ export default function HomeScreen() {
       statusBarTranslucent
       onRequestClose={() => setClockInModalVisible(false)}
     >
-      <Pressable style={modalStyles.backdrop} onPress={() => setClockInModalVisible(false)}>
-        <Pressable style={modalStyles.card} onPress={(e) => e.stopPropagation()}>
-          <View style={modalStyles.handle} />
+      <View style={{ flex: 1 }}>
+        {Platform.OS === "ios" ? (
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setClockInModalVisible(false)}>
+            <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+          </Pressable>
+        ) : (
+          <Pressable
+            style={[
+              modalStyles.backdrop,
+              StyleSheet.absoluteFill,
+              Platform.OS === "web" &&
+                ({ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as any),
+            ]}
+            onPress={() => setClockInModalVisible(false)}
+          />
+        )}
+        <Pressable style={modalStyles.sheetWrap} onPress={() => setClockInModalVisible(false)}>
+          <Pressable style={modalStyles.card} onPress={(e) => e.stopPropagation()}>
+            <View style={modalStyles.handle} />
           <View style={modalStyles.header}>
             <Text style={modalStyles.title}>
               {clockModalMode === "out" ? "Ready to Clock Out?" : "Ready to Clock In?"}
@@ -512,8 +529,9 @@ export default function HomeScreen() {
               <Text style={modalStyles.verifiedText}>Location verified</Text>
             </View>
           </View>
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </View>
     </Modal>
     </View>
   );
@@ -535,8 +553,10 @@ function ModalInfoRow({ icon, label, value }: { icon: string; label: string; val
 
 const modalStyles = StyleSheet.create({
   backdrop: {
+    backgroundColor: "rgba(2,8,23,0.45)",
+  },
+  sheetWrap: {
     flex: 1,
-    backgroundColor: "rgba(2,8,23,0.58)",
     justifyContent: "flex-end",
   },
   card: {
