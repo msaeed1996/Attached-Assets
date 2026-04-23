@@ -297,12 +297,11 @@ function EditModal({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent={false}>
-      <SafeAreaView edges={["top"]} style={{ backgroundColor: "#0759AF" }} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1, backgroundColor: "#F9FAFB" }}
       >
-        <View style={styles.editHeader}>
+        <View style={[styles.editHeader, { paddingTop: Math.max(insets.top, 56) + 8 }]}>
           <TouchableOpacity onPress={onClose} hitSlop={10} style={styles.iconBtn}>
             <Feather name="x" size={22} color="#fff" />
           </TouchableOpacity>
@@ -495,7 +494,6 @@ const styles = StyleSheet.create({
   editHeader: {
     backgroundColor: "#0759AF",
     paddingHorizontal: 14,
-    paddingTop: 12,
     paddingBottom: 14,
     flexDirection: "row",
     alignItems: "center",
