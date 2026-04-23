@@ -60,7 +60,7 @@ export default function PaymentMethodsScreen() {
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<Method["id"] | null>(null);
 
-  const headerPad = Platform.OS === "web" ? insets.top + 67 : Math.max(insets.top, 56) + 8;
+  const headerPad = Math.max(insets.top, Platform.OS === "web" ? 67 : 56) + 8;
 
   function pick(id: Method["id"]) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
