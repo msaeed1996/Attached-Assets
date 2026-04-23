@@ -10,7 +10,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -107,6 +107,7 @@ function formatExpiry(v: string) {
 
 export default function PaymentMethodsScreen() {
   const insets = useSafeAreaInsets();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const [selected, setSelected] = useState<MethodId | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
 
@@ -150,7 +151,11 @@ export default function PaymentMethodsScreen() {
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    router.back();
+    if (returnTo) {
+      router.replace({ pathname: returnTo as any, params: { paymentAdded: "1" } });
+    } else {
+      router.back();
+    }
   }
 
   const valid = isValid();
