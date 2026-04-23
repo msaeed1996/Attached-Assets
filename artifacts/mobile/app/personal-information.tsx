@@ -190,24 +190,6 @@ export default function PersonalInformationScreen() {
           <View style={{ width: 36 }} />
         </View>
 
-        {/* Identity card */}
-        <View style={styles.idCard}>
-          <View style={styles.idAvatar}>
-            {userProfile?.avatar ? (
-              <Image source={{ uri: userProfile.avatar }} style={{ width: "100%", height: "100%", borderRadius: 999 }} />
-            ) : (
-              <Text style={styles.idAvatarText}>{initial}</Text>
-            )}
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.idName} numberOfLines={1}>
-              {userProfile?.name || "Your Profile"}
-            </Text>
-            <Text style={styles.idEmail} numberOfLines={1}>
-              {userProfile?.email || "Add your email"}
-            </Text>
-          </View>
-        </View>
       </View>
 
       <ScrollView
