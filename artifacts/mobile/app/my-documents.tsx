@@ -88,16 +88,20 @@ export default function MyDocumentsScreen() {
   }
 
   function deleteDoc(id: string) {
+    const doRemove = () => {
+      setDocs((d) => d.filter((x) => x.id !== id));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    };
+    if (Platform.OS === "web") {
+      const ok = typeof window !== "undefined" && window.confirm
+        ? window.confirm("Delete this document? This action cannot be undone.")
+        : true;
+      if (ok) doRemove();
+      return;
+    }
     Alert.alert("Delete document?", "This action cannot be undone.", [
       { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => {
-          setDocs((d) => d.filter((x) => x.id !== id));
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        },
-      },
+      { text: "Delete", style: "destructive", onPress: doRemove },
     ]);
   }
 
@@ -134,30 +138,32 @@ export default function MyDocumentsScreen() {
           keyExtractor={(d) => d.id}
           contentContainerStyle={{ padding: 14, paddingBottom: 110, gap: 10 }}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.docCard}
-              onPress={() => previewDoc(item)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.docIcon}>
-                <Feather name="file-text" size={20} color="#0759AF" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.docName} numberOfLines={1}>
-                  {item.name}
-                </Text>
-                <Text style={styles.docMeta}>
-                  {item.type}
-                  {item.size ? ` · ${fmtSize(item.size)}` : ""} · {item.addedAt}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => previewDoc(item)} hitSlop={8} style={styles.delBtn}>
+            <View style={styles.docCard}>
+              <TouchableOpacity
+                onPress={() => previewDoc(item)}
+                activeOpacity={0.7}
+                style={styles.docMain}
+              >
+                <View style={styles.docIcon}>
+                  <Feather name="file-text" size={20} color="#0759AF" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.docName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={styles.docMeta}>
+                    {item.type}
+                    {item.size ? ` · ${fmtSize(item.size)}` : ""} · {item.addedAt}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <Pressable onPress={() => previewDoc(item)} hitSlop={8} style={styles.delBtn}>
                 <Feather name="eye" size={16} color="#0759AF" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => deleteDoc(item.id)} hitSlop={8} style={styles.delBtn}>
+              </Pressable>
+              <Pressable onPress={() => deleteDoc(item.id)} hitSlop={8} style={styles.delBtn}>
                 <Feather name="trash-2" size={16} color="#dc2626" />
-              </TouchableOpacity>
-            </TouchableOpacity>
+              </Pressable>
+            </View>
           )}
         />
       )}
@@ -282,6 +288,12 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
     borderRadius: 12,
     padding: 12,
+    gap: 4,
+  },
+  docMain: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   docIcon: {
