@@ -9,7 +9,7 @@ import {
   Linking,
 } from "react-native";
 import { router } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 
@@ -163,17 +163,17 @@ export default function AboutScreen() {
 
         {/* Social */}
         <View style={styles.socialRow}>
-          <TouchableOpacity style={styles.socialBtn} onPress={() => open("https://twitter.com/truegigs")} activeOpacity={0.75}>
-            <Feather name="twitter" size={16} color="#2563eb" />
+          <TouchableOpacity style={styles.socialBtn} onPress={() => open("https://www.facebook.com/truegigsstaffing")} activeOpacity={0.75}>
+            <Feather name="facebook" size={16} color="#2563eb" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.socialBtn} onPress={() => open("https://instagram.com/truegigs")} activeOpacity={0.75}>
-            <Feather name="instagram" size={16} color="#2563eb" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialBtn} onPress={() => open("https://linkedin.com/company/truegigs")} activeOpacity={0.75}>
+          <TouchableOpacity style={styles.socialBtn} onPress={() => open("https://www.linkedin.com/company/truegigsstaffing")} activeOpacity={0.75}>
             <Feather name="linkedin" size={16} color="#2563eb" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.socialBtn} onPress={() => open("https://facebook.com/truegigs")} activeOpacity={0.75}>
-            <Feather name="facebook" size={16} color="#2563eb" />
+          <TouchableOpacity style={styles.socialBtn} onPress={() => open("https://www.instagram.com/truegigsstaffing/")} activeOpacity={0.75}>
+            <Feather name="instagram" size={16} color="#2563eb" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.socialBtn} onPress={() => open("https://www.pinterest.com/truegigsstaffing/")} activeOpacity={0.75}>
+            <FontAwesome name="pinterest-p" size={15} color="#2563eb" />
           </TouchableOpacity>
         </View>
 
