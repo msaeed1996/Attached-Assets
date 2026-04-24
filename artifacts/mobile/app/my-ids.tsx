@@ -410,8 +410,23 @@ export default function MyIdsScreen() {
 
       {/* Delete confirm */}
 
-      <Modal visible={!!confirmId} animationType="fade" transparent onRequestClose={() => setConfirmId(null)}>
-        <View style={styles.backdrop}>
+      <Modal visible={!!confirmId} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setConfirmId(null)}>
+        {Platform.OS === "ios" ? (
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setConfirmId(null)}>
+            <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+          </Pressable>
+        ) : (
+          <Pressable
+            style={[
+              styles.backdrop,
+              StyleSheet.absoluteFill,
+              Platform.OS === "web" &&
+                ({ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as any),
+            ]}
+            onPress={() => setConfirmId(null)}
+          />
+        )}
+        <View style={[styles.backdrop, { backgroundColor: "transparent" }]} pointerEvents="box-none">
           <View style={styles.confirmCard}>
             <View style={styles.confirmIcon}>
               <Feather name="alert-triangle" size={20} color="#dc2626" />
