@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 import { Logo } from "@/components/Logo";
 import * as Haptics from "expo-haptics";
+import { BlurView } from "expo-blur";
 
 function MenuItem({
   icon,
@@ -299,10 +300,31 @@ export default function ProfileScreen() {
         visible={showDeleteModal}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={closeModal}
       >
+        {Platform.OS === "ios" ? (
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={closeModal}
+          >
+            <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: "rgba(0,0,0,0.45)" },
+              Platform.OS === "web" &&
+                ({ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as any),
+            ]}
+            activeOpacity={1}
+            onPress={closeModal}
+          />
+        )}
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: "transparent" }]}
           activeOpacity={1}
           onPress={closeModal}
         >
