@@ -38,7 +38,6 @@ export default function SignupScreen() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [zip, setZip] = useState("");
-  const [agree, setAgree] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,8 +50,7 @@ export default function SignupScreen() {
     firstName.trim() &&
     lastName.trim() &&
     phoneValid &&
-    zipValid &&
-    agree;
+    zipValid;
 
   function handleContinue() {
     if (!canContinue) {
@@ -60,7 +58,6 @@ export default function SignupScreen() {
       else if (!firstName.trim() || !lastName.trim()) setError("Please enter your full name.");
       else if (!phoneValid) setError("Please enter a valid 10-digit phone number.");
       else if (!zipValid) setError("Please enter a valid 5-digit zip code.");
-      else if (!agree) setError("Please accept the terms to continue.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
@@ -282,33 +279,6 @@ export default function SignupScreen() {
             })}
           </View>
 
-          {/* Terms */}
-          <TouchableOpacity
-            style={styles.agreeRow}
-            onPress={() => {
-              setAgree((v) => !v);
-              if (error) setError(null);
-            }}
-            activeOpacity={0.8}
-          >
-            <View
-              style={[
-                styles.checkbox,
-                {
-                  backgroundColor: agree ? colors.primary : "transparent",
-                  borderColor: agree ? colors.primary : colors.border,
-                },
-              ]}
-            >
-              {agree && <Feather name="check" size={14} color="#fff" />}
-            </View>
-            <Text style={[styles.agreeText, { color: colors.mutedForeground }]}>
-              I agree to the{" "}
-              <Text style={{ color: colors.primary, fontWeight: "700" }}>Terms</Text> and{" "}
-              <Text style={{ color: colors.primary, fontWeight: "700" }}>Privacy Policy</Text>.
-            </Text>
-          </TouchableOpacity>
-
           {error && (
             <View
               style={[
@@ -320,17 +290,6 @@ export default function SignupScreen() {
               <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>
             </View>
           )}
-
-          <View style={styles.signinRow}>
-            <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>
-              Already have an account?
-            </Text>
-            <TouchableOpacity onPress={() => router.replace("/login")} hitSlop={8}>
-              <Text style={{ color: colors.primary, fontWeight: "800", fontSize: 14 }}>
-                Sign in
-              </Text>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
 
         {/* Sticky footer */}
