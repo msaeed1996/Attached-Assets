@@ -438,65 +438,84 @@ function FormsModal({
   onSigned: () => void;
   alreadySigned: boolean;
 }) {
+  const [sigPadVisible, setSigPadVisible] = useState(false);
+
   return (
-    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
-      {Platform.OS === "ios" ? (
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-          <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
-        </Pressable>
-      ) : (
-        <Pressable
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: "rgba(0,0,0,0.55)" },
-            Platform.OS === "web" &&
-              ({ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as any),
-          ]}
-          onPress={onClose}
-        />
-      )}
-      <View style={fStyles.wrap} pointerEvents="box-none">
-        <View style={fStyles.sheet}>
-          <View style={fStyles.handle} />
-          <View style={fStyles.header}>
-            <View style={fStyles.headerIcon}>
-              <MaterialCommunityIcons name="file-document-outline" size={20} color="#2563EB" />
+    <>
+      <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
+        {Platform.OS === "ios" ? (
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
+            <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+          </Pressable>
+        ) : (
+          <Pressable
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: "rgba(0,0,0,0.55)" },
+              Platform.OS === "web" &&
+                ({ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as any),
+            ]}
+            onPress={onClose}
+          />
+        )}
+        <View style={fStyles.wrap} pointerEvents="box-none">
+          <View style={fStyles.sheet}>
+            <View style={fStyles.handle} />
+            <View style={fStyles.header}>
+              <View style={fStyles.headerIcon}>
+                <MaterialCommunityIcons name="file-document-outline" size={20} color="#2563EB" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={fStyles.title}>Worker Agreement</Text>
+                <Text style={fStyles.subtitle}>
+                  {alreadySigned ? "Signed — tap to view" : "Read carefully before signing"}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={onClose} hitSlop={12}>
+                <Feather name="x" size={20} color="#6B7280" />
+              </TouchableOpacity>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={fStyles.title}>Worker Agreement</Text>
-              <Text style={fStyles.subtitle}>Read before signing</Text>
-            </View>
-            <TouchableOpacity onPress={onClose} hitSlop={12}>
-              <Feather name="x" size={20} color="#6B7280" />
+
+            <ScrollView
+              style={fStyles.docScroll}
+              contentContainerStyle={{ padding: 16 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={fStyles.docText}>{WORKER_AGREEMENT}</Text>
+            </ScrollView>
+
+            {alreadySigned ? (
+              <View style={fStyles.signedBanner}>
+                <Feather name="check-circle" size={16} color="#059669" />
+                <Text style={fStyles.signedText}>You have signed this agreement.</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={fStyles.signBtn}
+                onPress={() => setSigPadVisible(true)}
+                activeOpacity={0.85}
+              >
+                <Feather name="edit-2" size={16} color="#fff" />
+                <Text style={fStyles.signBtnText}>Sign with Finger</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity style={fStyles.closeBtn} onPress={onClose} activeOpacity={0.8}>
+              <Text style={fStyles.closeBtnText}>Close</Text>
             </TouchableOpacity>
           </View>
-
-          <ScrollView
-            style={fStyles.docScroll}
-            contentContainerStyle={{ padding: 16 }}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={fStyles.docText}>{WORKER_AGREEMENT}</Text>
-          </ScrollView>
-
-          {alreadySigned ? (
-            <View style={fStyles.signedBanner}>
-              <Feather name="check-circle" size={16} color="#059669" />
-              <Text style={fStyles.signedText}>You have signed this agreement.</Text>
-            </View>
-          ) : (
-            <TouchableOpacity style={fStyles.signBtn} onPress={onSigned} activeOpacity={0.85}>
-              <Feather name="edit-2" size={16} color="#fff" />
-              <Text style={fStyles.signBtnText}>Sign & Accept</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity style={fStyles.closeBtn} onPress={onClose} activeOpacity={0.8}>
-            <Text style={fStyles.closeBtnText}>Close</Text>
-          </TouchableOpacity>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      <SignaturePadModal
+        visible={sigPadVisible}
+        onClose={() => setSigPadVisible(false)}
+        onSave={() => {
+          setSigPadVisible(false);
+          onSigned();
+        }}
+      />
+    </>
   );
 }
 
