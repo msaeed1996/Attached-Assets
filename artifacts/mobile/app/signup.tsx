@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -38,8 +38,6 @@ export default function SignupScreen() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [zip, setZip] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [agree, setAgree] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,30 +46,12 @@ export default function SignupScreen() {
   const phoneDigits = phone.replace(/\D/g, "");
   const phoneValid = phoneDigits.length === 10;
   const zipValid = /^\d{5}$/.test(zip);
-  const passwordStrength = useMemo(() => {
-    let s = 0;
-    if (password.length >= 8) s++;
-    if (/[A-Z]/.test(password)) s++;
-    if (/[0-9]/.test(password)) s++;
-    if (/[^A-Za-z0-9]/.test(password)) s++;
-    return s;
-  }, [password]);
-  const strengthLabel = ["Too weak", "Weak", "Okay", "Strong", "Excellent"][passwordStrength];
-  const strengthColor = [
-    colors.destructive,
-    colors.destructive,
-    colors.warning,
-    colors.success,
-    colors.success,
-  ][passwordStrength];
-
   const canContinue =
     emailValid &&
     firstName.trim() &&
     lastName.trim() &&
     phoneValid &&
     zipValid &&
-    password.length >= 8 &&
     agree;
 
   function handleContinue() {
@@ -80,7 +60,6 @@ export default function SignupScreen() {
       else if (!firstName.trim() || !lastName.trim()) setError("Please enter your full name.");
       else if (!phoneValid) setError("Please enter a valid 10-digit phone number.");
       else if (!zipValid) setError("Please enter a valid 5-digit zip code.");
-      else if (password.length < 8) setError("Password must be at least 8 characters.");
       else if (!agree) setError("Please accept the terms to continue.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
@@ -232,48 +211,6 @@ export default function SignupScreen() {
               <Feather name="check-circle" size={17} color={colors.success} />
             ) : null,
           })}
-
-          <View style={{ marginTop: 12 }}>
-            {renderField({
-              name: "password",
-              label: "Password",
-              icon: "lock",
-              value: password,
-              onChange: setPassword,
-              placeholder: "At least 8 characters",
-              secure: !showPassword,
-              valid: passwordStrength >= 3,
-              rightSlot: (
-                <TouchableOpacity onPress={() => setShowPassword((s) => !s)} hitSlop={8}>
-                  <Feather
-                    name={showPassword ? "eye-off" : "eye"}
-                    size={17}
-                    color={colors.mutedForeground}
-                  />
-                </TouchableOpacity>
-              ),
-            })}
-            {password.length > 0 && (
-              <View style={styles.strengthRow}>
-                <View style={styles.strengthBars}>
-                  {[0, 1, 2, 3].map((i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.strengthBar,
-                        {
-                          backgroundColor: i < passwordStrength ? strengthColor : colors.border,
-                        },
-                      ]}
-                    />
-                  ))}
-                </View>
-                <Text style={[styles.strengthLabel, { color: strengthColor }]}>
-                  {strengthLabel}
-                </Text>
-              </View>
-            )}
-          </View>
 
           {/* Section: Name */}
           <Text style={[styles.section, { color: colors.mutedForeground }]}>Personal Info</Text>
