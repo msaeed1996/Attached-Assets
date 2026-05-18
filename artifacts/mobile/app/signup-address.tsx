@@ -36,6 +36,7 @@ export default function SignupAddressScreen() {
   const [zip, setZip] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -47,6 +48,7 @@ export default function SignupAddressScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const zipValid = /^\d{5}$/.test(zip);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const passwordsMatch = password.length >= 6 && password === confirmPassword;
 
   const canContinue =
@@ -54,6 +56,7 @@ export default function SignupAddressScreen() {
     zip.trim() &&
     city.trim() &&
     state.trim() &&
+    emailValid &&
     password.length >= 6 &&
     passwordsMatch &&
     agree;
@@ -64,6 +67,7 @@ export default function SignupAddressScreen() {
       else if (!zip.trim() || !zipValid) setError("Please enter a valid 5-digit ZIP code.");
       else if (!city.trim()) setError("Please enter your city.");
       else if (!state.trim()) setError("Please enter your state.");
+      else if (!emailValid) setError("Please enter a valid email address.");
       else if (password.length < 6) setError("Password must be at least 6 characters.");
       else if (!passwordsMatch) setError("Passwords do not match.");
       else if (!agree) setError("Please agree to the Terms of Service to continue.");
@@ -190,6 +194,16 @@ export default function SignupAddressScreen() {
             flex: 1,
           })}
         </View>
+
+        {/* Email */}
+        {field("email", "Email", email, setEmail, {
+          placeholder: "you@example.com",
+          keyboard: "email-address",
+          autoCap: "none",
+          rightSlot: emailValid ? (
+            <Feather name="check-circle" size={17} color={colors.success} />
+          ) : null,
+        })}
 
         {/* Password */}
         {field("password", "Password", password, setPassword, {
