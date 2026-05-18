@@ -151,8 +151,8 @@ export default function SignupAddressScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <SignupHeader
-        title="TrueGigs"
-        subtitle="Let's start making money."
+        title="User Information"
+        subtitle="Tell us where you're located and set your password."
         step={2}
         totalSteps={userRole === "worker" ? 5 : 4}
       />
