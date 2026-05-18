@@ -82,7 +82,7 @@ export default function SignupScreen() {
         location: zip,
       });
       // Employers skip skills, go straight to identification
-      router.push("/signup-identification");
+      router.push("/signup-address");
     } else {
       setUserProfile({
         id: "worker-me",
@@ -98,7 +98,7 @@ export default function SignupScreen() {
         completedJobs: 0,
         bio: "",
       });
-      router.push("/signup-skills");
+      router.push("/signup-address");
     }
   }
 

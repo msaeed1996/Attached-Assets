@@ -98,8 +98,8 @@ export default function SignupSkillsScreen() {
       <SignupHeader
         title="Skills & Experience"
         subtitle="The more skills you add, the more work you'll find."
-        step={2}
-        totalSteps={3}
+        step={3}
+        totalSteps={5}
         rightSlot={
           <TouchableOpacity
             onPress={openAddSkill}

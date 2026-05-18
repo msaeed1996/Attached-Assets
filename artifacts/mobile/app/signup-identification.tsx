@@ -89,7 +89,6 @@ export default function SignupIdentificationScreen() {
   const isWorker = userProfile?.role === "worker";
   const totalSteps = isWorker ? 5 : 4;
   const currentStep = isWorker ? 4 : 3;
-
   const [dob, setDob] = useState("");
   const [ssn, setSsn] = useState("");
   const [uploaded, setUploaded] = useState<Record<string, UploadedFile>>({});
