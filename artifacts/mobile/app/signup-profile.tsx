@@ -9,7 +9,9 @@ import {
   Image,
   Modal,
   Pressable,
+  Platform,
 } from "react-native";
+import { BlurView } from "expo-blur";
 import { router, useLocalSearchParams } from "expo-router";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -21,7 +23,7 @@ import { SignupHeader } from "@/components/SignupHeader";
 import { useApp } from "@/context/AppContext";
 import SignaturePadModal from "@/components/SignaturePadModal";
 
-type Done = { signature: boolean; picture: boolean; payment: boolean };
+type Done = { signature: boolean; picture: boolean; forms: boolean; payment: boolean };
 
 export default function SignupProfileScreen() {
   const colors = useColors();
@@ -31,9 +33,11 @@ export default function SignupProfileScreen() {
   const [done, setDone] = useState<Done>({
     signature: false,
     picture: false,
+    forms: false,
     payment: false,
   });
   const [signatureVisible, setSignatureVisible] = useState(false);
+  const [formsVisible, setFormsVisible] = useState(false);
   const [pictureUri, setPictureUri] = useState<string | null>(null);
   const [photoSheetVisible, setPhotoSheetVisible] = useState(false);
   const params = useLocalSearchParams<{ paymentAdded?: string }>();
@@ -135,9 +139,15 @@ export default function SignupProfileScreen() {
     router.push({ pathname: "/payment-methods", params: { returnTo: "/signup-profile" } });
   }
 
-  const completedCount = Number(done.signature) + Number(done.picture) + Number(done.payment);
-  const allDone = completedCount === 3;
-  const progressPct = (completedCount / 3) * 100;
+  function openForms() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setFormsVisible(true);
+  }
+
+  const completedCount =
+    Number(done.signature) + Number(done.picture) + Number(done.forms) + Number(done.payment);
+  const allDone = completedCount === 4;
+  const progressPct = (completedCount / 4) * 100;
 
   function finish() {
     if (!allDone) {
@@ -181,14 +191,14 @@ export default function SignupProfileScreen() {
           </View>
           <Text style={styles.heroTitle}>Almost done!</Text>
           <Text style={styles.heroSubtitle}>
-            Complete these {3 - completedCount === 0 ? "final touches" : `${3 - completedCount} steps`} to start working on TrueGigs.
+            Complete these {4 - completedCount === 0 ? "final touches" : `${4 - completedCount} steps`} to start working on TrueGigs.
           </Text>
 
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
           </View>
           <Text style={styles.progressLabel}>
-            {completedCount} of 3 completed
+            {completedCount} of 4 completed
           </Text>
         </View>
 
@@ -210,6 +220,14 @@ export default function SignupProfileScreen() {
           done={done.picture}
           onPress={pickImage}
           thumbnailUri={pictureUri}
+        />
+
+        <RequirementCard
+          icon="file-document-outline"
+          title="Forms"
+          description="Review and sign your worker agreement."
+          done={done.forms}
+          onPress={openForms}
         />
 
         <RequirementCard
@@ -290,6 +308,17 @@ export default function SignupProfileScreen() {
           </Pressable>
         </Modal>
 
+        <FormsModal
+          visible={formsVisible}
+          onClose={() => setFormsVisible(false)}
+          onSigned={() => {
+            setDone((d) => ({ ...d, forms: true }));
+            setFormsVisible(false);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }}
+          alreadySigned={done.forms}
+        />
+
         <TouchableOpacity
           onPress={finish}
           activeOpacity={0.9}
@@ -300,7 +329,7 @@ export default function SignupProfileScreen() {
         >
           <Feather name={allDone ? "check-circle" : "lock"} size={18} color="#fff" />
           <Text style={styles.finishBtnText}>
-            {allDone ? "Finish & Continue" : `Complete ${3 - completedCount} more to continue`}
+            {allDone ? "Finish & Continue" : `Complete ${4 - completedCount} more to continue`}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -367,6 +396,192 @@ function RequirementCard({
     </TouchableOpacity>
   );
 }
+
+const WORKER_AGREEMENT = `WORKER AGREEMENT
+
+Effective upon electronic acceptance.
+
+1. INDEPENDENT CONTRACTOR STATUS
+You agree to perform services as an independent contractor through the TrueGigs platform. Nothing in this agreement creates an employer-employee relationship.
+
+2. TIMESHEET AUTHORIZATION
+By using TrueGigs, you authorize the use of your digital signature to approve timesheets submitted through the platform on your behalf.
+
+3. PAYMENT TERMS
+Earnings will be processed and disbursed according to the payment schedule outlined in the platform. TrueGigs is not responsible for delays caused by third-party payment processors.
+
+4. CODE OF CONDUCT
+You agree to conduct yourself professionally on all job sites, follow site-specific safety rules, and treat employers and co-workers with respect.
+
+5. CONFIDENTIALITY
+You may have access to confidential information belonging to employers. You agree not to disclose such information to third parties without prior written consent.
+
+6. PLATFORM RULES
+Violation of TrueGigs platform rules may result in suspension or permanent removal from the platform.
+
+7. DISPUTE RESOLUTION
+Any disputes arising from this agreement shall be resolved through binding arbitration in accordance with applicable law.
+
+8. AMENDMENTS
+TrueGigs reserves the right to update these terms. Continued use of the platform constitutes acceptance of any revised terms.
+
+By tapping "Sign & Accept" below, you acknowledge that you have read, understood, and agreed to this Worker Agreement.`;
+
+function FormsModal({
+  visible,
+  onClose,
+  onSigned,
+  alreadySigned,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSigned: () => void;
+  alreadySigned: boolean;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
+      {Platform.OS === "ios" ? (
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
+          <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+        </Pressable>
+      ) : (
+        <Pressable
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: "rgba(0,0,0,0.55)" },
+            Platform.OS === "web" &&
+              ({ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as any),
+          ]}
+          onPress={onClose}
+        />
+      )}
+      <View style={fStyles.wrap} pointerEvents="box-none">
+        <View style={fStyles.sheet}>
+          <View style={fStyles.handle} />
+          <View style={fStyles.header}>
+            <View style={fStyles.headerIcon}>
+              <MaterialCommunityIcons name="file-document-outline" size={20} color="#2563EB" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={fStyles.title}>Worker Agreement</Text>
+              <Text style={fStyles.subtitle}>Read before signing</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} hitSlop={12}>
+              <Feather name="x" size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            style={fStyles.docScroll}
+            contentContainerStyle={{ padding: 16 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={fStyles.docText}>{WORKER_AGREEMENT}</Text>
+          </ScrollView>
+
+          {alreadySigned ? (
+            <View style={fStyles.signedBanner}>
+              <Feather name="check-circle" size={16} color="#059669" />
+              <Text style={fStyles.signedText}>You have signed this agreement.</Text>
+            </View>
+          ) : (
+            <TouchableOpacity style={fStyles.signBtn} onPress={onSigned} activeOpacity={0.85}>
+              <Feather name="edit-2" size={16} color="#fff" />
+              <Text style={fStyles.signBtnText}>Sign & Accept</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity style={fStyles.closeBtn} onPress={onClose} activeOpacity={0.8}>
+            <Text style={fStyles.closeBtnText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const fStyles = StyleSheet.create({
+  wrap: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 32,
+    maxHeight: "85%",
+  },
+  handle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#E5E7EB",
+    marginBottom: 14,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: "#EFF6FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: { fontSize: 16, fontWeight: "700", color: "#111827" },
+  subtitle: { fontSize: 12, color: "#6B7280", marginTop: 2 },
+  docScroll: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    maxHeight: 320,
+    marginBottom: 14,
+  },
+  docText: {
+    fontSize: 12,
+    color: "#374151",
+    lineHeight: 20,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+  },
+  signBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#2563EB",
+    borderRadius: 12,
+    paddingVertical: 15,
+    marginBottom: 10,
+  },
+  signBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  signedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#D1FAE5",
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginBottom: 10,
+  },
+  signedText: { fontSize: 14, fontWeight: "600", color: "#059669" },
+  closeBtn: {
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+  },
+  closeBtnText: { fontSize: 15, fontWeight: "600", color: "#374151" },
+});
 
 const styles = StyleSheet.create({
   scroll: {
