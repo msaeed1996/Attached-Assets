@@ -23,3 +23,33 @@ id = "72MrCu_Gjxol2ftfOeskL"
 uri = "file://attached_assets/exports/truegigs_background.png"
 type = "image"
 title = "TrueGigs Background (with circles)"
+
+[[outputs]]
+id = "hmqsnUWK0LY1WDhMm1rY0"
+uri = "file://screenshots/screen-login.jpg"
+type = "image"
+title = "Login Screen"
+
+[[outputs]]
+id = "Sb7kR9_D_S0biiH3c_NID"
+uri = "file://screenshots/screen-home.jpg"
+type = "image"
+title = "Home Dashboard (Worker)"
+
+[[outputs]]
+id = "NhpQaLJ3RL52eGBnUllcN"
+uri = "file://screenshots/screen-profile.jpg"
+type = "image"
+title = "Profile Screen"
+
+[[outputs]]
+id = "UPxAEkMdirh5oQ-eM0j1G"
+uri = "file://screenshots/screen-messages.jpg"
+type = "image"
+title = "Messages Screen"
+
+[[outputs]]
+id = "qsN_gwKz2z7CZ2Gw1DRYR"
+uri = "file://screenshots/screen-availability.jpg"
+type = "image"
+title = "Availability Screen"
