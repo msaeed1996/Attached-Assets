@@ -28,6 +28,7 @@ interface AppContextType {
   setUserProfile: (profile: UserProfile | null) => void;
   isOnboarded: boolean;
   setIsOnboarded: (v: boolean) => void;
+  isLoading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -36,6 +37,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRoleState] = useState<UserRole>(null);
   const [userProfile, setUserProfileState] = useState<UserProfile | null>(null);
   const [isOnboarded, setIsOnboardedState] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadStoredState();
@@ -52,6 +54,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (profile) setUserProfileState(JSON.parse(profile));
       if (onboarded === "true") setIsOnboardedState(true);
     } catch {}
+    setIsLoading(false);
   }
 
   function setUserRole(role: UserRole) {
@@ -80,6 +83,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setUserProfile,
         isOnboarded,
         setIsOnboarded,
+        isLoading,
       }}
     >
       {children}
