@@ -34,29 +34,21 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const SESSION_KEY = "tg_session_active";
+const isWeb = Platform.OS === "web";
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRoleState] = useState<UserRole>(null);
   const [userProfile, setUserProfileState] = useState<UserProfile | null>(null);
   const [isOnboarded, setIsOnboardedState] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isWeb);
 
   useEffect(() => {
+    if (isWeb) return;
     loadStoredState();
   }, []);
 
   async function loadStoredState() {
     try {
-      if (Platform.OS === "web" && typeof sessionStorage !== "undefined") {
-        const hasSession = sessionStorage.getItem(SESSION_KEY);
-        if (!hasSession) {
-          await AsyncStorage.multiRemove(["userRole", "userProfile", "isOnboarded"]);
-          setIsLoading(false);
-          return;
-        }
-      }
-
       const [role, profile, onboarded] = await Promise.all([
         AsyncStorage.getItem("userRole"),
         AsyncStorage.getItem("userProfile"),
@@ -71,22 +63,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   function setUserRole(role: UserRole) {
     setUserRoleState(role);
-    if (Platform.OS === "web" && typeof sessionStorage !== "undefined") {
-      sessionStorage.setItem(SESSION_KEY, "1");
+    if (!isWeb) {
+      if (role) AsyncStorage.setItem("userRole", role);
+      else AsyncStorage.removeItem("userRole");
     }
-    if (role) AsyncStorage.setItem("userRole", role);
-    else AsyncStorage.removeItem("userRole");
   }
 
   function setUserProfile(profile: UserProfile | null) {
     setUserProfileState(profile);
-    if (profile) AsyncStorage.setItem("userProfile", JSON.stringify(profile));
-    else AsyncStorage.removeItem("userProfile");
+    if (!isWeb) {
+      if (profile) AsyncStorage.setItem("userProfile", JSON.stringify(profile));
+      else AsyncStorage.removeItem("userProfile");
+    }
   }
 
   function setIsOnboarded(v: boolean) {
     setIsOnboardedState(v);
-    AsyncStorage.setItem("isOnboarded", v ? "true" : "false");
+    if (!isWeb) {
+      AsyncStorage.setItem("isOnboarded", v ? "true" : "false");
+    }
   }
 
   return (
