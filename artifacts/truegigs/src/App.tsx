@@ -1,128 +1,101 @@
-import { useState } from "react";
-
-function App() {
-  const [open, setOpen] = useState(false);
-  const [clockedIn, setClockedIn] = useState(false);
+export default function App() {
+  const expoUrl =
+    "https://e227759e-480f-4a7f-970c-5dd8ddc3b2bc-00-371w85l4vfmh.expo.pike.replit.dev/login";
 
   return (
-    <div className="min-h-screen w-full bg-gray-200 flex justify-center pt-10 pb-10 font-sans">
-      <div className="w-full max-w-md bg-gray-50 flex flex-col shadow-2xl rounded-3xl overflow-hidden border border-gray-300 relative">
-        <header className="bg-blue-600 text-white p-4 h-24 flex items-center justify-center gap-3">
-          <img
-            src={`${import.meta.env.BASE_URL}truegigs-logo.webp`}
-            alt="TrueGigs"
-            className="w-10 h-10 rounded-lg object-cover shadow-md"
-          />
-          <h1 className="text-xl font-bold tracking-wide">TrueGigs</h1>
-        </header>
+    <div
+      style={{
+        minHeight: "100vh",
+        width: "100%",
+        background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        gap: "16px",
+        fontFamily: "system-ui, sans-serif",
+      }}
+    >
+      <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+        TrueGigs · Mobile Preview
+      </div>
 
-        <div className={`p-4 space-y-4 flex-1 ${open ? "opacity-40 blur-[1px] pointer-events-none" : ""}`}>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Upcoming Shift</p>
-                <p className="font-bold text-gray-900 mt-1">Lunch Service</p>
-                <p className="text-sm text-gray-600 mt-1">12:03 PM - 8:00 PM</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  <i className="fas fa-map-marker-alt mr-1 text-blue-500" />
-                  Manhattan
-                </p>
-              </div>
-              {!clockedIn ? (
-                <button
-                  onClick={() => setOpen(true)}
-                  className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                >
-                  Clock In
-                </button>
-              ) : (
-                <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">
-                  ON SHIFT
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">This Week</p>
-            <div className="flex justify-between mt-3">
-              <div>
-                <p className="text-2xl font-bold text-gray-900">0.0</p>
-                <p className="text-xs text-gray-500">hours logged</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">$0</p>
-                <p className="text-xs text-gray-500">earned</p>
-              </div>
-            </div>
-          </div>
+      <div
+        style={{
+          position: "relative",
+          width: "390px",
+          height: "844px",
+          borderRadius: "54px",
+          background: "#1a1a1a",
+          boxShadow:
+            "0 0 0 2px #3a3a3a, 0 0 0 6px #1a1a1a, 0 0 0 8px #444, 0 30px 80px rgba(0,0,0,0.7), inset 0 0 0 2px #2a2a2a",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: "14px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "126px",
+            height: "36px",
+            background: "#1a1a1a",
+            borderRadius: "20px",
+            zIndex: 10,
+            boxShadow: "0 0 0 2px #2a2a2a",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#111" }} />
+          <div style={{ width: "56px", height: "8px", borderRadius: "4px", background: "#111" }} />
         </div>
 
-        {open && (
-          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="w-full bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all">
-              <div className="flex justify-between items-center px-5 py-4 border-b border-gray-100 bg-gray-50/50">
-                <h2 className="text-lg font-bold text-gray-900">Ready to Clock In?</h2>
-                <button
-                  onClick={() => setOpen(false)}
-                  aria-label="Close"
-                  className="text-gray-400 hover:text-gray-700 hover:bg-gray-200 w-8 h-8 rounded-full flex items-center justify-center transition"
-                >
-                  <i className="fas fa-times" />
-                </button>
-              </div>
+        <div
+          style={{
+            position: "absolute",
+            bottom: "12px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "120px",
+            height: "4px",
+            background: "#3a3a3a",
+            borderRadius: "2px",
+          }}
+        />
 
-              <div className="p-5 space-y-4">
-                <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100 space-y-3 text-sm">
-                  <InfoRow icon="fas fa-concierge-bell" label="Event" value="Lunch Service" />
-                  <InfoRow icon="far fa-clock" label="Shift Time" value="12:03 PM - 8:00 PM" />
-                  <InfoRow icon="fas fa-map-marker-alt" label="Location" value="Manhattan" />
-                </div>
+        <div
+          style={{
+            width: "362px",
+            height: "786px",
+            borderRadius: "44px",
+            overflow: "hidden",
+            background: "#fff",
+            position: "relative",
+          }}
+        >
+          <iframe
+            src={expoUrl}
+            style={{
+              width: "100%",
+              height: "100%",
+              border: "none",
+              display: "block",
+            }}
+            title="TrueGigs Mobile App"
+          />
+        </div>
+      </div>
 
-                <div className="flex justify-between items-center px-2 pt-2">
-                  <span className="text-sm font-medium text-gray-600">Total Time Logged:</span>
-                  <span className="text-sm font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-lg">
-                    0.0 hours
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-5 pt-0">
-                <button
-                  onClick={() => {
-                    setClockedIn(true);
-                    setOpen(false);
-                  }}
-                  className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2 relative overflow-hidden group"
-                >
-                  <span className="absolute w-full h-full rounded-xl ring-4 ring-blue-400 opacity-0 group-hover:animate-pulse group-hover:opacity-50 transition-opacity" />
-                  <i className="fas fa-stopwatch text-xl" />
-                  <span>Clock In Now</span>
-                </button>
-                <p className="text-center text-xs text-gray-400 mt-3 flex items-center justify-center">
-                  <i className="fas fa-location-arrow mr-1" /> Location verified
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+      <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px" }}>
+        Live preview · Expo Web
       </div>
     </div>
   );
 }
-
-function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
-  return (
-    <div className="flex items-center">
-      <div className="w-8 flex justify-center text-blue-500">
-        <i className={icon} />
-      </div>
-      <div className="flex flex-col ml-1">
-        <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">{label}</span>
-        <span className="font-bold text-gray-900">{value}</span>
-      </div>
-    </div>
-  );
-}
-
-export default App;
