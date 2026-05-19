@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type UserRole = "employer" | "worker" | null;
@@ -33,6 +34,8 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const SESSION_KEY = "tg_session_active";
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRoleState] = useState<UserRole>(null);
   const [userProfile, setUserProfileState] = useState<UserProfile | null>(null);
@@ -45,6 +48,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   async function loadStoredState() {
     try {
+      if (Platform.OS === "web" && typeof sessionStorage !== "undefined") {
+        const hasSession = sessionStorage.getItem(SESSION_KEY);
+        if (!hasSession) {
+          await AsyncStorage.multiRemove(["userRole", "userProfile", "isOnboarded"]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const [role, profile, onboarded] = await Promise.all([
         AsyncStorage.getItem("userRole"),
         AsyncStorage.getItem("userProfile"),
@@ -59,6 +71,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   function setUserRole(role: UserRole) {
     setUserRoleState(role);
+    if (Platform.OS === "web" && typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem(SESSION_KEY, "1");
+    }
     if (role) AsyncStorage.setItem("userRole", role);
     else AsyncStorage.removeItem("userRole");
   }
