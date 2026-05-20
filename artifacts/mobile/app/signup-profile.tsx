@@ -38,6 +38,8 @@ export default function SignupProfileScreen() {
   });
   const [signatureVisible, setSignatureVisible] = useState(false);
   const [formsVisible, setFormsVisible] = useState(false);
+  const [formsActionVisible, setFormsActionVisible] = useState(false);
+  const [formsSignVisible, setFormsSignVisible] = useState(false);
   const [pictureUri, setPictureUri] = useState<string | null>(null);
   const [photoSheetVisible, setPhotoSheetVisible] = useState(false);
   const params = useLocalSearchParams<{ paymentAdded?: string }>();
@@ -141,7 +143,7 @@ export default function SignupProfileScreen() {
 
   function openForms() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setFormsVisible(true);
+    setFormsActionVisible(true);
   }
 
   const completedCount =
@@ -308,6 +310,76 @@ export default function SignupProfileScreen() {
           </Pressable>
         </Modal>
 
+        {/* Forms 2-option action sheet */}
+        <Modal
+          visible={formsActionVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setFormsActionVisible(false)}
+        >
+          <Pressable
+            style={styles.sheetBackdrop}
+            onPress={() => setFormsActionVisible(false)}
+          >
+            <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+              <View style={styles.sheetHandle} />
+              <Text style={styles.sheetTitle}>Forms</Text>
+              <Text style={styles.sheetSubtitle}>Choose an action for your worker agreement</Text>
+
+              <TouchableOpacity
+                style={styles.sheetOption}
+                activeOpacity={0.75}
+                onPress={() => {
+                  setFormsActionVisible(false);
+                  setTimeout(() => setFormsVisible(true), 200);
+                }}
+              >
+                <View style={[styles.sheetIcon, { backgroundColor: "#EFF6FF" }]}>
+                  <Feather name="eye" size={20} color="#2563EB" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sheetOptionTitle}>View</Text>
+                  <Text style={styles.sheetOptionDesc}>Read your worker agreement</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color="#9CA3AF" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.sheetOption}
+                activeOpacity={0.75}
+                onPress={() => {
+                  setFormsActionVisible(false);
+                  setTimeout(() => setFormsSignVisible(true), 200);
+                }}
+              >
+                <View style={[styles.sheetIcon, { backgroundColor: "#F0FDF4" }]}>
+                  <Feather name="edit-2" size={20} color="#059669" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sheetOptionTitle}>Signature</Text>
+                  <Text style={styles.sheetOptionDesc}>Sign your worker agreement</Text>
+                </View>
+                {done.forms && (
+                  <View style={styles.doneBadge}>
+                    <Feather name="check" size={10} color="#fff" />
+                    <Text style={styles.doneBadgeText}>Done</Text>
+                  </View>
+                )}
+                {!done.forms && <Feather name="chevron-right" size={18} color="#9CA3AF" />}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.sheetCancel}
+                onPress={() => setFormsActionVisible(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.sheetCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        {/* View-only forms modal */}
         <FormsModal
           visible={formsVisible}
           onClose={() => setFormsVisible(false)}
@@ -317,6 +389,17 @@ export default function SignupProfileScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }}
           alreadySigned={done.forms}
+        />
+
+        {/* Direct signature modal for Forms */}
+        <SignaturePadModal
+          visible={formsSignVisible}
+          onClose={() => setFormsSignVisible(false)}
+          onSave={() => {
+            setDone((d) => ({ ...d, forms: true }));
+            setFormsSignVisible(false);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }}
         />
 
         <TouchableOpacity
