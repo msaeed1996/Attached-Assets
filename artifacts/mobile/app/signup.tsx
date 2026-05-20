@@ -8,6 +8,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Pressable,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -40,6 +42,10 @@ export default function SignupScreen() {
   const [zip, setZip] = useState("");
   const [focused, setFocused] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [resendSent, setResendSent] = useState(false);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const phoneDigits = phone.replace(/\D/g, "");
@@ -63,6 +69,21 @@ export default function SignupScreen() {
     }
     setError(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setVerificationCode("");
+    setVerifyError(null);
+    setResendSent(false);
+    setShowVerification(true);
+  }
+
+  function handleVerify() {
+    if (verificationCode.trim().length < 4) {
+      setVerifyError("Please enter the verification code sent to your email.");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
+    setVerifyError(null);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setShowVerification(false);
 
     const fullName = `${firstName.trim()}${middleInitial ? ` ${middleInitial.trim()}.` : ""} ${lastName.trim()}`.trim();
     setUserRole(role);
@@ -78,8 +99,6 @@ export default function SignupScreen() {
         verified: false,
         location: zip,
       });
-      // Employers skip skills, go straight to identification
-      router.push("/signup-address");
     } else {
       setUserProfile({
         id: "worker-me",
@@ -95,8 +114,14 @@ export default function SignupScreen() {
         completedJobs: 0,
         bio: "",
       });
-      router.push("/signup-address");
     }
+    router.push("/signup-address");
+  }
+
+  function handleResend() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setResendSent(true);
+    setTimeout(() => setResendSent(false), 4000);
   }
 
   function renderField(opts: {
@@ -327,6 +352,104 @@ export default function SignupScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Email Verification Modal */}
+      <Modal
+        visible={showVerification}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowVerification(false)}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setShowVerification(false)}
+        >
+          <Pressable
+            style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                onPress={() => setShowVerification(false)}
+                style={styles.modalHeaderBtn}
+                hitSlop={10}
+              >
+                <Feather name="chevron-left" size={22} color={colors.foreground} />
+              </TouchableOpacity>
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+                Email Verification
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowVerification(false)}
+                style={[styles.modalHeaderBtn, styles.modalCloseBox]}
+                hitSlop={10}
+              >
+                <Feather name="x" size={16} color={colors.foreground} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Body */}
+            <View style={styles.modalBody}>
+              <Text style={[styles.verifyLabel, { color: colors.mutedForeground }]}>
+                Check your activation code at:
+              </Text>
+              <Text style={[styles.verifyEmail, { color: colors.foreground }]}>
+                {email}
+              </Text>
+
+              <TextInput
+                style={[
+                  styles.verifyInput,
+                  {
+                    borderColor: verifyError ? "#ef4444" : colors.border,
+                    color: colors.foreground,
+                    backgroundColor: colors.background,
+                  },
+                ]}
+                placeholder="Verification Code"
+                placeholderTextColor={colors.mutedForeground}
+                value={verificationCode}
+                onChangeText={(t) => {
+                  setVerificationCode(t);
+                  if (verifyError) setVerifyError(null);
+                }}
+                keyboardType="number-pad"
+                maxLength={8}
+                autoFocus
+              />
+
+              {verifyError && (
+                <Text style={styles.verifyError}>{verifyError}</Text>
+              )}
+
+              {resendSent && (
+                <Text style={[styles.resendConfirm, { color: colors.success }]}>
+                  ✓ A new code has been sent to your email.
+                </Text>
+              )}
+
+              <TouchableOpacity
+                style={[styles.verifySubmitBtn, { backgroundColor: colors.primary }]}
+                onPress={handleVerify}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.verifySubmitText}>Submit</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.resendBtn, { backgroundColor: "#d1d5db" }]}
+                onPress={handleResend}
+                activeOpacity={0.88}
+              >
+                <Text style={[styles.resendBtnText, { color: "#374151" }]}>
+                  Resend Activation Code
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -476,5 +599,96 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: -0.2,
+  },
+
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
+  },
+  modalSheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 8,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  modalHeaderBtn: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCloseBox: {
+    borderWidth: 1.5,
+    borderColor: "#9ca3af",
+    borderRadius: 6,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  modalBody: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    gap: 12,
+  },
+  verifyLabel: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  verifyEmail: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginTop: -4,
+    marginBottom: 4,
+  },
+  verifyInput: {
+    height: 52,
+    borderWidth: 1.5,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  verifyError: {
+    fontSize: 12,
+    color: "#ef4444",
+    fontWeight: "600",
+    marginTop: -4,
+  },
+  resendConfirm: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: -4,
+  },
+  verifySubmitBtn: {
+    height: 52,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  verifySubmitText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  resendBtn: {
+    height: 50,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resendBtnText: {
+    fontSize: 15,
+    fontWeight: "600",
   },
 });
