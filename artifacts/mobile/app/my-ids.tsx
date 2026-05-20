@@ -283,11 +283,27 @@ export default function MyIdsScreen() {
                     <Feather name="eye" size={13} color="#475569" />
                     <Text style={styles.actionText}>View</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.actionBtn, styles.actionBtnSignature]} onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }} activeOpacity={0.8}>
-                    <Feather name="edit-3" size={13} color="#0759af" />
-                    <Text style={[styles.actionText, { color: "#0759af" }]}>Signature</Text>
+                  <TouchableOpacity style={styles.actionBtn} onPress={() => download(item)} activeOpacity={0.8}>
+                    <Feather
+                      name={downloadedId === item.id ? "check" : "download"}
+                      size={13}
+                      color={downloadedId === item.id ? "#16a34a" : "#475569"}
+                    />
+                    <Text
+                      style={[
+                        styles.actionText,
+                        downloadedId === item.id && { color: "#16a34a" },
+                      ]}
+                    >
+                      {downloadedId === item.id ? "Saved" : "Download"}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, styles.actionBtnDanger]}
+                    onPress={() => confirmDelete(item.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name="trash-2" size={13} color="#dc2626" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -580,7 +596,6 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
   },
   actionBtnDanger: { flex: 0, paddingHorizontal: 14, backgroundColor: "#fef2f2", borderColor: "#fecaca" },
-  actionBtnSignature: { borderColor: "#bfdbfe", backgroundColor: "#eff6ff" },
   actionText: { fontSize: 12, fontWeight: "700", color: "#475569" },
 
   tipBox: {
