@@ -29,6 +29,8 @@ function RootLayoutNav() {
       <Stack.Screen name="login" />
       <Stack.Screen name="signup" />
       <Stack.Screen name="signup-skills" />
+      <Stack.Screen name="signup-work-history" />
+      <Stack.Screen name="signup-add-work-history" />
       <Stack.Screen name="signup-identification" />
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="(tabs)" />

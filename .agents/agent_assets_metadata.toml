@@ -53,3 +53,15 @@ id = "qsN_gwKz2z7CZ2Gw1DRYR"
 uri = "file://screenshots/screen-availability.jpg"
 type = "image"
 title = "Availability Screen"
+
+[[outputs]]
+id = "T-8nfZsFaHRqIIgu1heRv"
+uri = "file://screenshots/screen-work-history-list.jpg"
+type = "image"
+title = "Work History (List Screen)"
+
+[[outputs]]
+id = "w5vZvOpkwNCIAd813AGfq"
+uri = "file://screenshots/screen-work-history-add.jpg"
+type = "image"
+title = "Add Work History (Form Screen)"

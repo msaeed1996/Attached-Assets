@@ -90,7 +90,7 @@ export default function SignupSkillsScreen() {
         skills: skills.map((s) => s.name),
       });
     }
-    router.push("/signup-identification");
+    router.push("/signup-work-history");
   }
 
   return (
@@ -99,7 +99,7 @@ export default function SignupSkillsScreen() {
         title="Skills & Experience"
         subtitle="The more skills you add, the more work you'll find."
         step={3}
-        totalSteps={5}
+        totalSteps={6}
         rightSlot={
           <TouchableOpacity
             onPress={openAddSkill}
