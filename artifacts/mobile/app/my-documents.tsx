@@ -157,11 +157,13 @@ export default function MyDocumentsScreen() {
                   </Text>
                 </View>
               </TouchableOpacity>
-              <Pressable onPress={() => previewDoc(item)} hitSlop={8} style={styles.delBtn}>
-                <Feather name="eye" size={16} color="#0759AF" />
+              <Pressable onPress={() => previewDoc(item)} hitSlop={8} style={styles.actionBtn}>
+                <Feather name="eye" size={14} color="#475569" />
+                <Text style={styles.actionBtnText}>View</Text>
               </Pressable>
-              <Pressable onPress={() => deleteDoc(item.id)} hitSlop={8} style={styles.delBtn}>
-                <Feather name="trash-2" size={16} color="#dc2626" />
+              <Pressable onPress={() => {}} hitSlop={8} style={[styles.actionBtn, styles.actionBtnSig]}>
+                <Feather name="edit-3" size={14} color="#0759AF" />
+                <Text style={[styles.actionBtnText, { color: "#0759AF" }]}>Signature</Text>
               </Pressable>
             </View>
           )}
@@ -307,6 +309,19 @@ const styles = StyleSheet.create({
   docName: { fontSize: 14, fontWeight: "600", color: "#111827" },
   docMeta: { fontSize: 11, color: "#6B7280", marginTop: 2 },
   delBtn: { padding: 8 },
+  actionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: "#f1f5f9",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  actionBtnSig: { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" },
+  actionBtnText: { fontSize: 12, fontWeight: "700", color: "#475569" },
 
   footer: {
     position: "absolute",
