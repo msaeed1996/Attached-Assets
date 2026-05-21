@@ -18,6 +18,7 @@ import { useApp } from "@/context/AppContext";
 import { Logo } from "@/components/Logo";
 import * as Haptics from "expo-haptics";
 import { BlurView } from "expo-blur";
+import SignaturePadModal from "@/components/SignaturePadModal";
 
 function MenuItem({
   icon,
@@ -67,6 +68,8 @@ export default function ProfileScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [pwError, setPwError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [hasSavedSignature, setHasSavedSignature] = useState(false);
 
   function openDeleteModal() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -259,7 +262,18 @@ export default function ProfileScreen() {
 
         <MenuSection title="Account">
           <MenuItem icon="user" label="Personal Information" onPress={() => router.push("/personal-information")} />
-          <MenuItem icon="shield" label="Security & Password" onPress={() => router.push("/security-password")} last />
+          <MenuItem icon="shield" label="Security & Password" onPress={() => router.push("/security-password")} />
+          <MenuItem
+            icon="edit-3"
+            label={hasSavedSignature ? "My Signature ✓" : "My Signature"}
+            bg="#f0fdf4"
+            accent="#16a34a"
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowSignatureModal(true);
+            }}
+            last
+          />
         </MenuSection>
 
         {!isEmployer && (
@@ -295,6 +309,15 @@ export default function ProfileScreen() {
 
         <Text style={styles.version}>TrueGigs v1.0.0</Text>
       </View>
+
+      <SignaturePadModal
+        visible={showSignatureModal}
+        onClose={() => setShowSignatureModal(false)}
+        onSave={() => {
+          setHasSavedSignature(true);
+          setShowSignatureModal(false);
+        }}
+      />
 
       <Modal
         visible={showDeleteModal}
