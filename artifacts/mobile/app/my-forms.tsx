@@ -7,11 +7,12 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import SignaturePadModal from "@/components/SignaturePadModal";
+import { useApp } from "@/context/AppContext";
 
 type FormItem = {
   id: string;
@@ -40,6 +41,8 @@ const INITIAL_FORMS: FormItem[] = [
 
 export default function MyFormsScreen() {
   const insets = useSafeAreaInsets();
+  const { setFormsSigned } = useApp();
+  const params = useLocalSearchParams<{ returnTo?: string }>();
   const [forms, setForms] = useState<FormItem[]>(INITIAL_FORMS);
   const [signingId, setSigningId] = useState<string | null>(null);
 
@@ -57,12 +60,18 @@ export default function MyFormsScreen() {
   function onSaveSig() {
     if (!signingId) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setForms((prev) =>
-      prev.map((f) =>
-        f.id === signingId ? { ...f, signed: true, status: "Signed" } : f
-      )
+    const updated = forms.map((f) =>
+      f.id === signingId ? { ...f, signed: true, status: "Signed" as const } : f
     );
+    setForms(updated);
     setSigningId(null);
+    const anySignedNow = updated.some((f) => f.signed);
+    if (anySignedNow) {
+      setFormsSigned(true);
+    }
+    if (params.returnTo) {
+      setTimeout(() => router.back(), 300);
+    }
   }
 
   return (

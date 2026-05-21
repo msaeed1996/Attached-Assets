@@ -12,7 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { BlurView } from "expo-blur";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as DocumentPicker from "expo-document-picker";
@@ -28,7 +28,7 @@ type Done = { signature: boolean; picture: boolean; forms: boolean; payment: boo
 export default function SignupProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { userProfile, setUserProfile, setIsOnboarded } = useApp();
+  const { userProfile, setUserProfile, setIsOnboarded, formsSigned } = useApp();
 
   const [done, setDone] = useState<Done>({
     signature: false,
@@ -37,9 +37,6 @@ export default function SignupProfileScreen() {
     payment: false,
   });
   const [signatureVisible, setSignatureVisible] = useState(false);
-  const [formsVisible, setFormsVisible] = useState(false);
-  const [formsActionVisible, setFormsActionVisible] = useState(false);
-  const [formsSignVisible, setFormsSignVisible] = useState(false);
   const [pictureUri, setPictureUri] = useState<string | null>(null);
   const [photoSheetVisible, setPhotoSheetVisible] = useState(false);
   const params = useLocalSearchParams<{ paymentAdded?: string }>();
@@ -143,8 +140,16 @@ export default function SignupProfileScreen() {
 
   function openForms() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setFormsActionVisible(true);
+    router.push({ pathname: "/my-forms", params: { returnTo: "/signup-profile" } });
   }
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (formsSigned) {
+        setDone((d) => ({ ...d, forms: true }));
+      }
+    }, [formsSigned])
+  );
 
   const completedCount =
     Number(done.signature) + Number(done.picture) + Number(done.forms) + Number(done.payment);
@@ -310,98 +315,6 @@ export default function SignupProfileScreen() {
           </Pressable>
         </Modal>
 
-        {/* Forms 2-option action sheet */}
-        <Modal
-          visible={formsActionVisible}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setFormsActionVisible(false)}
-        >
-          <Pressable
-            style={styles.sheetBackdrop}
-            onPress={() => setFormsActionVisible(false)}
-          >
-            <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-              <View style={styles.sheetHandle} />
-              <Text style={styles.sheetTitle}>Forms</Text>
-              <Text style={styles.sheetSubtitle}>Choose an action for your worker agreement</Text>
-
-              <TouchableOpacity
-                style={styles.sheetOption}
-                activeOpacity={0.75}
-                onPress={() => {
-                  setFormsActionVisible(false);
-                  setTimeout(() => setFormsVisible(true), 200);
-                }}
-              >
-                <View style={[styles.sheetIcon, { backgroundColor: "#EFF6FF" }]}>
-                  <Feather name="eye" size={20} color="#2563EB" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.sheetOptionTitle}>View</Text>
-                  <Text style={styles.sheetOptionDesc}>Read your worker agreement</Text>
-                </View>
-                <Feather name="chevron-right" size={18} color="#9CA3AF" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.sheetOption}
-                activeOpacity={0.75}
-                onPress={() => {
-                  setFormsActionVisible(false);
-                  setTimeout(() => setFormsSignVisible(true), 200);
-                }}
-              >
-                <View style={[styles.sheetIcon, { backgroundColor: "#F0FDF4" }]}>
-                  <Feather name="edit-2" size={20} color="#059669" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.sheetOptionTitle}>Signature</Text>
-                  <Text style={styles.sheetOptionDesc}>Sign your worker agreement</Text>
-                </View>
-                {done.forms && (
-                  <View style={styles.doneBadge}>
-                    <Feather name="check" size={10} color="#fff" />
-                    <Text style={styles.doneBadgeText}>Done</Text>
-                  </View>
-                )}
-                {!done.forms && <Feather name="chevron-right" size={18} color="#9CA3AF" />}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.sheetCancel}
-                onPress={() => setFormsActionVisible(false)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.sheetCancelText}>Cancel</Text>
-              </TouchableOpacity>
-            </Pressable>
-          </Pressable>
-        </Modal>
-
-        {/* View-only forms modal */}
-        <FormsModal
-          visible={formsVisible}
-          onClose={() => setFormsVisible(false)}
-          onSigned={() => {
-            setDone((d) => ({ ...d, forms: true }));
-            setFormsVisible(false);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          }}
-          alreadySigned={done.forms}
-        />
-
-        {/* Direct signature modal for Forms */}
-        <SignaturePadModal
-          visible={formsSignVisible}
-          onClose={() => setFormsSignVisible(false)}
-          onSave={() => {
-            setDone((d) => ({ ...d, forms: true }));
-            setFormsSignVisible(false);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          }}
-        />
-
         <TouchableOpacity
           onPress={finish}
           activeOpacity={0.9}
@@ -509,181 +422,6 @@ Any disputes arising from this agreement shall be resolved through binding arbit
 TrueGigs reserves the right to update these terms. Continued use of the platform constitutes acceptance of any revised terms.
 
 By tapping "Sign & Accept" below, you acknowledge that you have read, understood, and agreed to this Worker Agreement.`;
-
-function FormsModal({
-  visible,
-  onClose,
-  onSigned,
-  alreadySigned,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onSigned: () => void;
-  alreadySigned: boolean;
-}) {
-  const [sigPadVisible, setSigPadVisible] = useState(false);
-
-  return (
-    <>
-      <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
-        {Platform.OS === "ios" ? (
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-            <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
-          </Pressable>
-        ) : (
-          <Pressable
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: "rgba(0,0,0,0.55)" },
-              Platform.OS === "web" &&
-                ({ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as any),
-            ]}
-            onPress={onClose}
-          />
-        )}
-        <View style={fStyles.wrap} pointerEvents="box-none">
-          <View style={fStyles.sheet}>
-            <View style={fStyles.handle} />
-            <View style={fStyles.header}>
-              <View style={fStyles.headerIcon}>
-                <MaterialCommunityIcons name="file-document-outline" size={20} color="#2563EB" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={fStyles.title}>Worker Agreement</Text>
-                <Text style={fStyles.subtitle}>
-                  {alreadySigned ? "Signed — tap to view" : "Read carefully before signing"}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={onClose} hitSlop={12}>
-                <Feather name="x" size={20} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              style={fStyles.docScroll}
-              contentContainerStyle={{ padding: 16 }}
-              showsVerticalScrollIndicator={false}
-            >
-              <Text style={fStyles.docText}>{WORKER_AGREEMENT}</Text>
-            </ScrollView>
-
-            {alreadySigned ? (
-              <View style={fStyles.signedBanner}>
-                <Feather name="check-circle" size={16} color="#059669" />
-                <Text style={fStyles.signedText}>You have signed this agreement.</Text>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={fStyles.signBtn}
-                onPress={() => setSigPadVisible(true)}
-                activeOpacity={0.85}
-              >
-                <Feather name="edit-2" size={16} color="#fff" />
-                <Text style={fStyles.signBtnText}>Sign with Finger</Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity style={fStyles.closeBtn} onPress={onClose} activeOpacity={0.8}>
-              <Text style={fStyles.closeBtnText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <SignaturePadModal
-        visible={sigPadVisible}
-        onClose={() => setSigPadVisible(false)}
-        onSave={() => {
-          setSigPadVisible(false);
-          onSigned();
-        }}
-      />
-    </>
-  );
-}
-
-const fStyles = StyleSheet.create({
-  wrap: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 32,
-    maxHeight: "85%",
-  },
-  handle: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#E5E7EB",
-    marginBottom: 14,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 12,
-  },
-  headerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "#EFF6FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: { fontSize: 16, fontWeight: "700", color: "#111827" },
-  subtitle: { fontSize: 12, color: "#6B7280", marginTop: 2 },
-  docScroll: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    maxHeight: 320,
-    marginBottom: 14,
-  },
-  docText: {
-    fontSize: 12,
-    color: "#374151",
-    lineHeight: 20,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-  },
-  signBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#2563EB",
-    borderRadius: 12,
-    paddingVertical: 15,
-    marginBottom: 10,
-  },
-  signBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
-  signedBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#D1FAE5",
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginBottom: 10,
-  },
-  signedText: { fontSize: 14, fontWeight: "600", color: "#059669" },
-  closeBtn: {
-    paddingVertical: 13,
-    borderRadius: 12,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-  },
-  closeBtnText: { fontSize: 15, fontWeight: "600", color: "#374151" },
-});
 
 const styles = StyleSheet.create({
   scroll: {

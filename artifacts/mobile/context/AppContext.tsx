@@ -30,6 +30,8 @@ interface AppContextType {
   isOnboarded: boolean;
   setIsOnboarded: (v: boolean) => void;
   isLoading: boolean;
+  formsSigned: boolean;
+  setFormsSigned: (v: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -86,6 +88,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
   const [isOnboarded, setIsOnboardedState] = useState(demoRole !== null);
   const [isLoading, setIsLoading] = useState(!isWeb);
+  const [formsSigned, setFormsSignedState] = useState(false);
 
   useEffect(() => {
     if (isWeb) return;
@@ -129,6 +132,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  function setFormsSigned(v: boolean) {
+    setFormsSignedState(v);
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -139,6 +146,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isOnboarded,
         setIsOnboarded,
         isLoading,
+        formsSigned,
+        setFormsSigned,
       }}
     >
       {children}
