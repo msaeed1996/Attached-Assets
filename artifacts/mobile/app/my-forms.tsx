@@ -41,32 +41,34 @@ const INITIAL_FORMS: FormItem[] = [
     signed: false,
     category: "Tax",
   },
+  {
+    id: "3",
+    name: "Direct Deposit Authorization Form",
+    status: "Signature Required",
+    version: "2025",
+    signed: false,
+    category: "Payroll",
+  },
+  {
+    id: "4",
+    name: "I-9 Employment Eligibility Verification",
+    status: "Pending Review",
+    version: "2024.09",
+    signed: false,
+    category: "HR",
+  },
 ];
 
 const STATUS_CONFIG = {
-  "Signature Required": {
-    bg: "#FFF7ED",
-    text: "#C2410C",
-    dot: "#F97316",
-    icon: "alert-circle" as const,
-  },
-  Signed: {
-    bg: "#F0FDF4",
-    text: "#15803D",
-    dot: "#22C55E",
-    icon: "check-circle" as const,
-  },
-  "Pending Review": {
-    bg: "#F0F9FF",
-    text: "#0369A1",
-    dot: "#38BDF8",
-    icon: "clock" as const,
-  },
+  "Signature Required": { bg: "#FFF3E0", text: "#E65100", dot: "#F97316" },
+  Signed: { bg: "#E8F5E9", text: "#2E7D32", dot: "#22C55E" },
+  "Pending Review": { bg: "#E3F2FD", text: "#1565C0", dot: "#38BDF8" },
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
   Onboarding: "#6366F1",
   Tax: "#0EA5E9",
+  Payroll: "#10B981",
   HR: "#8B5CF6",
   Legal: "#EC4899",
 };
@@ -78,7 +80,7 @@ export default function MyFormsScreen() {
   const [forms, setForms] = useState<FormItem[]>(INITIAL_FORMS);
   const [signingId, setSigningId] = useState<string | null>(null);
 
-  const headerPad = Platform.OS === "web" ? insets.top + 67 : Math.max(insets.top, 16) + 4;
+  const headerPad = Platform.OS === "web" ? insets.top + 67 : Math.max(insets.top, 14) + 2;
 
   function handleSign(id: string) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -97,142 +99,106 @@ export default function MyFormsScreen() {
     );
     setForms(updated);
     setSigningId(null);
-    const anySignedNow = updated.some((f) => f.signed);
-    if (anySignedNow) setFormsSigned(true);
-    if (params.returnTo) {
-      setTimeout(() => router.back(), 300);
-    }
+    if (updated.some((f) => f.signed)) setFormsSigned(true);
+    if (params.returnTo) setTimeout(() => router.back(), 300);
   }
 
   const signedCount = forms.filter((f) => f.signed).length;
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
-      {/* Header */}
+    <View style={{ flex: 1, backgroundColor: "#F1F5F9" }}>
+      {/* Compact header */}
       <LinearGradient
         colors={["#1D4ED8", "#2563EB"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.header, { paddingTop: headerPad }]}
       >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          hitSlop={12}
-          style={styles.backBtn}
-        >
-          <Feather name="chevron-left" size={24} color="#fff" />
+        <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+          <Feather name="chevron-left" size={22} color="#fff" />
         </TouchableOpacity>
-
         <View style={{ flex: 1, alignItems: "center" }}>
           <Text style={styles.headerTitle}>My Forms</Text>
-          <Text style={styles.headerSub}>
-            {signedCount} of {forms.length} signed
-          </Text>
         </View>
-
-        <View style={styles.backBtn} />
+        <View style={[styles.backBtn, styles.countBadge]}>
+          <Text style={styles.countText}>{signedCount}/{forms.length}</Text>
+        </View>
       </LinearGradient>
 
-      {/* Progress strip */}
-      <View style={styles.progressBar}>
-        <View
-          style={[
-            styles.progressFill,
-            { width: `${(signedCount / forms.length) * 100}%` },
-          ]}
-        />
+      {/* Thin progress bar */}
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${(signedCount / forms.length) * 100}%` }]} />
       </View>
 
       <ScrollView
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: insets.bottom + 32 },
-        ]}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 16 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionLabel}>PENDING SIGNATURES</Text>
-
-        {forms.map((form, index) => {
-          const statusCfg = STATUS_CONFIG[form.status];
+        {forms.map((form) => {
+          const st = STATUS_CONFIG[form.status];
           const catColor = CATEGORY_COLORS[form.category] ?? "#6B7280";
 
           return (
             <View key={form.id} style={styles.card}>
-              {/* Card top accent */}
-              <View style={[styles.cardAccent, { backgroundColor: catColor }]} />
+              {/* Left accent bar */}
+              <View style={[styles.accentBar, { backgroundColor: catColor }]} />
 
-              {/* Card header row */}
-              <View style={styles.cardTopRow}>
-                <View style={[styles.iconCircle, { backgroundColor: catColor + "18" }]}>
-                  <MaterialCommunityIcons
-                    name="file-document-outline"
-                    size={20}
-                    color={catColor}
-                  />
-                </View>
-                <View style={[styles.catBadge, { backgroundColor: catColor + "18" }]}>
-                  <Text style={[styles.catBadgeText, { color: catColor }]}>
-                    {form.category}
+              <View style={styles.cardBody}>
+                {/* Top row: icon + name + category pill */}
+                <View style={styles.topRow}>
+                  <View style={[styles.docIcon, { backgroundColor: catColor + "1A" }]}>
+                    <MaterialCommunityIcons name="file-document-outline" size={15} color={catColor} />
+                  </View>
+                  <Text style={styles.formName} numberOfLines={1} ellipsizeMode="tail">
+                    {form.name}
                   </Text>
+                  <View style={[styles.catPill, { backgroundColor: catColor + "1A" }]}>
+                    <Text style={[styles.catPillText, { color: catColor }]}>{form.category}</Text>
+                  </View>
                 </View>
-              </View>
 
-              {/* Form name */}
-              <Text style={styles.formName}>{form.name}</Text>
+                {/* Bottom row: version + status + buttons */}
+                <View style={styles.bottomRow}>
+                  <View style={styles.metaGroup}>
+                    <View style={styles.versionChip}>
+                      <Feather name="tag" size={9} color="#64748B" />
+                      <Text style={styles.versionText}>v{form.version}</Text>
+                    </View>
+                    <View style={[styles.statusPill, { backgroundColor: st.bg }]}>
+                      <View style={[styles.dot, { backgroundColor: st.dot }]} />
+                      <Text style={[styles.statusText, { color: st.text }]}>{form.status}</Text>
+                    </View>
+                  </View>
 
-              {/* Meta row */}
-              <View style={styles.metaRow}>
-                <View style={styles.metaChip}>
-                  <Feather name="tag" size={11} color="#6B7280" />
-                  <Text style={styles.metaChipText}>v{form.version}</Text>
+                  <View style={styles.btnGroup}>
+                    <TouchableOpacity
+                      style={styles.viewBtn}
+                      onPress={() => handleView(form)}
+                      activeOpacity={0.8}
+                    >
+                      <Feather name="eye" size={13} color="#2563EB" />
+                      <Text style={styles.viewBtnText}>View</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.signBtn, form.signed && styles.signBtnDone]}
+                      onPress={() => !form.signed && handleSign(form.id)}
+                      activeOpacity={form.signed ? 1 : 0.85}
+                    >
+                      {form.signed
+                        ? <Feather name="check" size={13} color="#fff" />
+                        : <MaterialCommunityIcons name="draw" size={13} color="#fff" />}
+                      <Text style={styles.signBtnText}>{form.signed ? "Signed" : "Sign"}</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-                <View style={[styles.statusBadge, { backgroundColor: statusCfg.bg }]}>
-                  <View style={[styles.statusDot, { backgroundColor: statusCfg.dot }]} />
-                  <Text style={[styles.statusText, { color: statusCfg.text }]}>
-                    {form.status}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Divider */}
-              <View style={styles.divider} />
-
-              {/* Buttons */}
-              <View style={styles.btnRow}>
-                <TouchableOpacity
-                  style={styles.viewBtn}
-                  onPress={() => handleView(form)}
-                  activeOpacity={0.8}
-                >
-                  <Feather name="eye" size={15} color="#2563EB" />
-                  <Text style={styles.viewBtnText}>View</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.signBtn, form.signed && styles.signBtnDone]}
-                  onPress={() => !form.signed && handleSign(form.id)}
-                  activeOpacity={form.signed ? 1 : 0.85}
-                >
-                  {form.signed ? (
-                    <>
-                      <Feather name="check-circle" size={15} color="#fff" />
-                      <Text style={styles.signBtnText}>Signed</Text>
-                    </>
-                  ) : (
-                    <>
-                      <MaterialCommunityIcons name="draw" size={15} color="#fff" />
-                      <Text style={styles.signBtnText}>Sign Now</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
               </View>
             </View>
           );
         })}
 
         {signedCount === forms.length && (
-          <View style={styles.allDoneBanner}>
-            <Feather name="check-circle" size={20} color="#15803D" />
+          <View style={styles.allDone}>
+            <Feather name="check-circle" size={16} color="#15803D" />
             <Text style={styles.allDoneText}>All forms signed!</Text>
           </View>
         )}
@@ -249,187 +215,178 @@ export default function MyFormsScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
     flexDirection: "row",
     alignItems: "center",
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.15)",
+    backgroundColor: "rgba(255,255,255,0.18)",
+  },
+  countBadge: {
+    backgroundColor: "rgba(255,255,255,0.22)",
+  },
+  countText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
   },
   headerTitle: {
     color: "#fff",
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: "700",
     letterSpacing: 0.2,
   },
-  headerSub: {
-    color: "rgba(255,255,255,0.75)",
-    fontSize: 12,
-    marginTop: 2,
-  },
 
-  progressBar: {
+  progressTrack: {
     height: 3,
-    backgroundColor: "#E2E8F0",
+    backgroundColor: "#CBD5E1",
   },
   progressFill: {
     height: 3,
     backgroundColor: "#22C55E",
   },
 
-  listContent: {
-    padding: 16,
-    gap: 14,
-  },
-
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#94A3B8",
-    letterSpacing: 1.2,
-    marginBottom: 2,
-    marginLeft: 2,
+  list: {
+    padding: 10,
+    gap: 8,
   },
 
   card: {
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 12,
+    flexDirection: "row",
     overflow: "hidden",
     ...Platform.select({
       ios: {
         shadowColor: "#0F172A",
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.07,
-        shadowRadius: 8,
+        shadowRadius: 4,
       },
-      android: { elevation: 3 },
-      web: {
-        boxShadow: "0 2px 12px rgba(15,23,42,0.07)",
-      } as any,
+      android: { elevation: 2 },
+      web: { boxShadow: "0 1px 6px rgba(15,23,42,0.08)" } as any,
     }),
   },
-  cardAccent: {
-    height: 4,
+  accentBar: {
+    width: 4,
+  },
+  cardBody: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    gap: 7,
   },
 
-  cardTopRow: {
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  docIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  formName: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0F172A",
+    letterSpacing: 0.1,
+  },
+  catPill: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 20,
+    flexShrink: 0,
+  },
+  catPillText: {
+    fontSize: 10,
+    fontWeight: "700",
+  },
+
+  bottomRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    marginBottom: 10,
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  catBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  catBadgeText: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.3,
-  },
-
-  formName: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#0F172A",
-    paddingHorizontal: 16,
-    marginBottom: 10,
-    lineHeight: 22,
-  },
-
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
     gap: 8,
-    paddingHorizontal: 16,
-    marginBottom: 14,
   },
-  metaChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "#F1F5F9",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  metaChipText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#64748B",
-  },
-  statusBadge: {
+  metaGroup: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 6,
+    flex: 1,
+    flexWrap: "wrap",
   },
-  statusDot: {
-    width: 6,
-    height: 6,
+  versionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  versionText: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  statusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  dot: {
+    width: 5,
+    height: 5,
     borderRadius: 3,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
   },
 
-  divider: {
-    height: 1,
-    backgroundColor: "#F1F5F9",
-    marginHorizontal: 16,
-    marginBottom: 14,
-  },
-
-  btnRow: {
+  btnGroup: {
     flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    gap: 6,
+    flexShrink: 0,
   },
   viewBtn: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 12,
-    borderRadius: 12,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
     borderWidth: 1.5,
     borderColor: "#2563EB",
     backgroundColor: "#EFF6FF",
   },
   viewBtnText: {
     color: "#2563EB",
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "700",
   },
   signBtn: {
-    flex: 1.4,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 12,
-    borderRadius: 12,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
     backgroundColor: "#2563EB",
   },
   signBtnDone: {
@@ -437,23 +394,23 @@ const styles = StyleSheet.create({
   },
   signBtnText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "700",
   },
 
-  allDoneBanner: {
+  allDone: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
     backgroundColor: "#F0FDF4",
-    borderRadius: 14,
-    paddingVertical: 16,
+    borderRadius: 10,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: "#BBF7D0",
   },
   allDoneText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
     color: "#15803D",
   },
