@@ -39,6 +39,7 @@ function RootLayoutNav() {
       <Stack.Screen name="chat/[id]" options={{ presentation: "card" }} />
       <Stack.Screen name="availability" options={{ presentation: "card" }} />
       <Stack.Screen name="notifications" options={{ presentation: "card" }} />
+      <Stack.Screen name="my-forms" options={{ presentation: "card" }} />
     </Stack>
   );
 }

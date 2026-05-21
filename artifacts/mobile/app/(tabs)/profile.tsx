@@ -287,6 +287,7 @@ export default function ProfileScreen() {
           <MenuItem icon="credit-card" label="Payment Methods" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/payment-methods")} />
           <MenuItem icon="trending-up" label="Earnings & Payouts" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/earnings")} />
           <MenuItem icon="file-text" label="My Documents" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/my-documents")} />
+          <MenuItem icon="clipboard" label="My Forms" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/my-forms")} />
           <MenuItem icon="credit-card" label="My IDs" bg="#f0fdf4" accent="#16a34a" onPress={() => router.push("/my-ids")} last />
         </MenuSection>
 
