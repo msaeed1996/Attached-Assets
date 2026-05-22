@@ -63,35 +63,17 @@ const METHODS: Method[] = [
 ];
 
 type FormState = {
-  cardNumber: string;
-  cardExpiry: string;
-  cardCvv: string;
-  cardName: string;
+  comments: string;
   bankName: string;
-  accountName: string;
-  routingNumber: string;
   accountNumber: string;
-  fullName: string;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
+  routingNumber: string;
 };
 
 const EMPTY_FORM: FormState = {
-  cardNumber: "",
-  cardExpiry: "",
-  cardCvv: "",
-  cardName: "",
+  comments: "",
   bankName: "",
-  accountName: "",
-  routingNumber: "",
   accountNumber: "",
-  fullName: "",
-  street: "",
-  city: "",
-  state: "",
-  zip: "",
+  routingNumber: "",
 };
 
 type SavedMethod = {
@@ -102,29 +84,16 @@ type SavedMethod = {
 
 const STORAGE_KEY = "truegigs.paymentMethods.v1";
 
-function formatCardNumber(v: string) {
-  const digits = v.replace(/\D/g, "").slice(0, 16);
-  return digits.replace(/(.{4})/g, "$1 ").trim();
-}
-function formatExpiry(v: string) {
-  const d = v.replace(/\D/g, "").slice(0, 4);
-  if (d.length < 3) return d;
-  return `${d.slice(0, 2)}/${d.slice(2)}`;
-}
 
 function summarize(m: SavedMethod): { title: string; subtitle: string } {
   const meta = METHODS.find((x) => x.id === m.type)!;
-  if (m.type === "debit") {
-    const last4 = m.form.cardNumber.replace(/\s/g, "").slice(-4);
-    return { title: meta.title, subtitle: `•••• •••• •••• ${last4}` };
-  }
   if (m.type === "direct") {
     const last4 = m.form.accountNumber.slice(-4);
-    return { title: meta.title, subtitle: `${m.form.bankName} • ••${last4}` };
+    return { title: meta.title, subtitle: `${m.form.bankName} • ••••${last4}` };
   }
   return {
     title: meta.title,
-    subtitle: `${m.form.fullName} • ${m.form.city}, ${m.form.state}`,
+    subtitle: m.form.comments.trim() ? m.form.comments.trim() : meta.subtitle,
   };
 }
 
@@ -194,25 +163,14 @@ export default function PaymentMethodsScreen() {
 
   function isValid(): boolean {
     if (!selected) return false;
-    if (selected === "debit") {
-      const digits = form.cardNumber.replace(/\s/g, "");
-      return digits.length >= 15 && form.cardExpiry.length === 5 && form.cardCvv.length >= 3 && form.cardName.trim().length > 1;
+    if (selected === "debit" || selected === "check") {
+      return true; // comments field is optional
     }
     if (selected === "direct") {
       return (
         form.bankName.trim().length > 1 &&
-        form.accountName.trim().length > 1 &&
-        form.routingNumber.replace(/\D/g, "").length === 9 &&
-        form.accountNumber.replace(/\D/g, "").length >= 6
-      );
-    }
-    if (selected === "check") {
-      return (
-        form.fullName.trim().length > 1 &&
-        form.street.trim().length > 2 &&
-        form.city.trim().length > 1 &&
-        form.state.trim().length >= 2 &&
-        form.zip.replace(/\D/g, "").length >= 5
+        form.routingNumber.replace(/\D/g, "").length >= 6 &&
+        form.accountNumber.replace(/\D/g, "").length >= 4
       );
     }
     return false;
@@ -344,93 +302,41 @@ export default function PaymentMethodsScreen() {
 
                   {isSel && (
                     <View style={[styles.formCard, { borderColor: m.color }]}>
-                      {m.id === "debit" && (
-                        <>
-                          <Field label="Cardholder Name" value={form.cardName} onChangeText={set("cardName")} placeholder="John Doe" />
-                          <Field
-                            label="Card Number"
-                            value={form.cardNumber}
-                            onChangeText={(v) => set("cardNumber")(formatCardNumber(v))}
-                            placeholder="1234 5678 9012 3456"
-                            keyboardType="number-pad"
-                            icon="credit-card"
-                          />
-                          <View style={{ flexDirection: "row", gap: 10 }}>
-                            <View style={{ flex: 1 }}>
-                              <Field
-                                label="Expiry"
-                                value={form.cardExpiry}
-                                onChangeText={(v) => set("cardExpiry")(formatExpiry(v))}
-                                placeholder="MM/YY"
-                                keyboardType="number-pad"
-                                maxLength={5}
-                              />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                              <Field
-                                label="CVV"
-                                value={form.cardCvv}
-                                onChangeText={(v) => set("cardCvv")(v.replace(/\D/g, "").slice(0, 4))}
-                                placeholder="123"
-                                keyboardType="number-pad"
-                                maxLength={4}
-                                secureTextEntry
-                              />
-                            </View>
-                          </View>
-                        </>
+                      {(m.id === "debit" || m.id === "check") && (
+                        <Field
+                          label="Comments"
+                          value={form.comments}
+                          onChangeText={set("comments")}
+                          placeholder="Add any notes or comments (optional)"
+                          multiline
+                        />
                       )}
 
                       {m.id === "direct" && (
                         <>
-                          <Field label="Bank Name" value={form.bankName} onChangeText={set("bankName")} placeholder="e.g. Chase Bank" icon="home" />
-                          <Field label="Account Holder Name" value={form.accountName} onChangeText={set("accountName")} placeholder="John Doe" />
                           <Field
-                            label="Routing Number"
-                            value={form.routingNumber}
-                            onChangeText={(v) => set("routingNumber")(v.replace(/\D/g, "").slice(0, 9))}
-                            placeholder="9 digits"
-                            keyboardType="number-pad"
-                            maxLength={9}
+                            label="Bank Name"
+                            value={form.bankName}
+                            onChangeText={set("bankName")}
+                            placeholder="e.g. Chase Bank"
+                            icon="home"
                           />
                           <Field
-                            label="Account Number"
+                            label="Account #"
                             value={form.accountNumber}
                             onChangeText={(v) => set("accountNumber")(v.replace(/\D/g, "").slice(0, 17))}
                             placeholder="Account number"
                             keyboardType="number-pad"
                             secureTextEntry
                           />
-                        </>
-                      )}
-
-                      {m.id === "check" && (
-                        <>
-                          <Field label="Full Name on Check" value={form.fullName} onChangeText={set("fullName")} placeholder="John Doe" />
-                          <Field label="Street Address" value={form.street} onChangeText={set("street")} placeholder="123 Main St" icon="map-pin" />
-                          <Field label="City" value={form.city} onChangeText={set("city")} placeholder="Austin" />
-                          <View style={{ flexDirection: "row", gap: 10 }}>
-                            <View style={{ flex: 1.2 }}>
-                              <Field
-                                label="State"
-                                value={form.state}
-                                onChangeText={(v) => set("state")(v.toUpperCase().slice(0, 2))}
-                                placeholder="TX"
-                                maxLength={2}
-                                autoCapitalize="characters"
-                              />
-                            </View>
-                            <View style={{ flex: 1.5 }}>
-                              <Field
-                                label="ZIP Code"
-                                value={form.zip}
-                                onChangeText={(v) => set("zip")(v.replace(/\D/g, "").slice(0, 5))}
-                                placeholder="78701"
-                                keyboardType="number-pad"
-                                maxLength={5}
-                              />
-                            </View>
-                          </View>
+                          <Field
+                            label="Routing Number"
+                            value={form.routingNumber}
+                            onChangeText={(v) => set("routingNumber")(v.replace(/\D/g, "").slice(0, 9))}
+                            placeholder="9-digit routing number"
+                            keyboardType="number-pad"
+                            maxLength={9}
+                          />
                         </>
                       )}
                     </View>
@@ -491,6 +397,7 @@ function Field({
   secureTextEntry,
   autoCapitalize,
   icon,
+  multiline,
 }: {
   label: string;
   value: string;
@@ -501,12 +408,13 @@ function Field({
   secureTextEntry?: boolean;
   autoCapitalize?: "none" | "characters" | "words" | "sentences";
   icon?: string;
+  multiline?: boolean;
 }) {
   return (
     <View style={{ marginBottom: 10 }}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <View style={styles.inputWrap}>
-        {icon && <Feather name={icon as any} size={16} color="#6B7280" style={{ marginRight: 8 }} />}
+      <View style={[styles.inputWrap, multiline && { alignItems: "flex-start", minHeight: 80 }]}>
+        {icon && <Feather name={icon as any} size={16} color="#6B7280" style={{ marginRight: 8, marginTop: 2 }} />}
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -515,8 +423,10 @@ function Field({
           keyboardType={keyboardType}
           maxLength={maxLength}
           secureTextEntry={secureTextEntry}
-          autoCapitalize={autoCapitalize ?? "none"}
-          style={styles.input}
+          autoCapitalize={autoCapitalize ?? "sentences"}
+          style={[styles.input, multiline && { textAlignVertical: "top", paddingTop: 8 }]}
+          multiline={multiline}
+          numberOfLines={multiline ? 3 : 1}
         />
       </View>
     </View>
