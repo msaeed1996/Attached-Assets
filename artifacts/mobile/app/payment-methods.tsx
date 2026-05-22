@@ -16,6 +16,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as DocumentPicker from "expo-document-picker";
 
 type MethodId = "debit" | "direct" | "check";
 
@@ -105,9 +106,27 @@ export default function PaymentMethodsScreen() {
   const [saved, setSaved] = useState<SavedMethod[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState<boolean>(!!returnTo);
+  const [chosenFile, setChosenFile] = useState<{ name: string; uri: string } | null>(null);
 
   const headerPad = Math.max(insets.top, Platform.OS === "web" ? 67 : 56) + 8;
   const set = (k: keyof FormState) => (v: string) => setForm((p) => ({ ...p, [k]: v }));
+
+  async function pickFile() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["image/*", "application/pdf"],
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled && result.assets?.[0]) {
+        const asset = result.assets[0];
+        setChosenFile({ name: asset.name, uri: asset.uri });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "Could not open file picker.");
+    }
+  }
 
   useEffect(() => {
     (async () => {
@@ -337,6 +356,43 @@ export default function PaymentMethodsScreen() {
                             keyboardType="number-pad"
                             maxLength={9}
                           />
+
+                          {/* Voided check / document upload */}
+                          <Text style={styles.fieldLabel}>Attach Document (optional)</Text>
+                          <TouchableOpacity
+                            style={[
+                              styles.fileBtn,
+                              chosenFile && styles.fileBtnDone,
+                            ]}
+                            onPress={pickFile}
+                            activeOpacity={0.8}
+                          >
+                            <View style={[styles.fileIcon, { backgroundColor: chosenFile ? "#DCFCE7" : "#EFF6FF" }]}>
+                              <Feather
+                                name={chosenFile ? "check-circle" : "upload"}
+                                size={18}
+                                color={chosenFile ? "#16A34A" : "#2563EB"}
+                              />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text style={[styles.fileBtnLabel, chosenFile && { color: "#15803D" }]}>
+                                {chosenFile ? "File attached" : "Choose File"}
+                              </Text>
+                              {chosenFile ? (
+                                <Text style={styles.fileName} numberOfLines={1}>{chosenFile.name}</Text>
+                              ) : (
+                                <Text style={styles.fileHint}>PDF or image (voided check, bank letter…)</Text>
+                              )}
+                            </View>
+                            {chosenFile && (
+                              <TouchableOpacity
+                                hitSlop={10}
+                                onPress={(e) => { e.stopPropagation(); setChosenFile(null); }}
+                              >
+                                <Feather name="x" size={16} color="#6B7280" />
+                              </TouchableOpacity>
+                            )}
+                          </TouchableOpacity>
                         </>
                       )}
                     </View>
@@ -555,6 +611,44 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   secureText: { fontSize: 12, color: "#166534", flex: 1, lineHeight: 17 },
+
+  fileBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#F8FAFF",
+    borderWidth: 1.5,
+    borderColor: "#BFDBFE",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 2,
+  },
+  fileBtnDone: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#86EFAC",
+  },
+  fileIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fileBtnLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#2563EB",
+  },
+  fileName: {
+    fontSize: 11,
+    color: "#15803D",
+    marginTop: 2,
+  },
+  fileHint: {
+    fontSize: 11,
+    color: "#6B7280",
+    marginTop: 2,
+  },
 
   footer: {
     position: "absolute",
