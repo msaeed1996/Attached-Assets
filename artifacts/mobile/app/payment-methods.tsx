@@ -395,6 +395,19 @@ export default function PaymentMethodsScreen() {
                           </TouchableOpacity>
                         </>
                       )}
+
+                      {/* Inline Save button */}
+                      <TouchableOpacity
+                        style={[styles.saveBtn, { backgroundColor: m.color }, !valid && styles.saveBtnDisabled]}
+                        onPress={save}
+                        activeOpacity={0.85}
+                        disabled={!valid}
+                      >
+                        <Feather name={editingId ? "refresh-cw" : "check"} size={16} color="#fff" />
+                        <Text style={styles.saveBtnText}>
+                          {editingId ? "Update" : "Save"}
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   )}
                 </View>
@@ -425,20 +438,6 @@ export default function PaymentMethodsScreen() {
         )}
       </ScrollView>
 
-      {(showAdd || !hasSaved) && (
-        <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
-          <Pressable
-            style={[styles.continueBtn, !valid && styles.continueBtnDisabled]}
-            onPress={save}
-            disabled={!valid}
-          >
-            <Text style={styles.continueText}>
-              {editingId ? "Update Payment Method" : selected ? "Save Payment Method" : "Select a Method"}
-            </Text>
-            {valid && <Feather name="check" size={16} color="#fff" />}
-          </Pressable>
-        </View>
-      )}
     </KeyboardAvoidingView>
   );
 }
@@ -648,6 +647,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#6B7280",
     marginTop: 2,
+  },
+
+  saveBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 13,
+    borderRadius: 12,
+    marginTop: 14,
+  },
+  saveBtnDisabled: {
+    opacity: 0.45,
+  },
+  saveBtnText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
   },
 
   footer: {
