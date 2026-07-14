@@ -10,6 +10,7 @@ import {
   Pressable,
   Image,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,17 +22,17 @@ import NotificationsSheet from "@/components/NotificationsSheet";
 import { BlurView } from "expo-blur";
 import { UPCOMING_SHIFTS } from "@/data/upcomingShifts";
 
-// ─── Static data ─────────────────────────────────────────────────────────────
+// ─── Static data ──────────────────────────────────────────────────────────────
 
 const SAMPLE_INVITATIONS = [
-  { id: "inv-1", jobTitle: "Warehouse Supervisor", company: "Amazon Logistics", location: "Austin, TX", pay: 28, payType: "hourly", startDate: "Tomorrow", urgent: true, jobId: "1" },
-  { id: "inv-2", jobTitle: "Event Coordinator", company: "Prestige Events Co.", location: "Houston, TX", pay: 280, payType: "daily", startDate: "Saturday", urgent: false, jobId: "2" },
+  { id: "inv-1", jobTitle: "Warehouse Supervisor", company: "Amazon Logistics", pay: 28, payType: "hr", startDate: "Tomorrow", time: "8:00 AM", urgent: true },
+  { id: "inv-2", jobTitle: "Event Coordinator", company: "Prestige Events", pay: 280, payType: "day", startDate: "Saturday", time: "9:00 AM", urgent: false },
 ];
 
 const NEARBY_JOBS = [
-  { id: "n1", title: "Event Staff", company: "Prestige Events Co.", location: "Austin, TX", pay: 22, shift: "Sat 8AM–4PM", distance: "1.2 mi", icon: "star" },
-  { id: "n2", title: "Warehouse Associate", company: "Amazon Logistics", location: "Austin, TX", pay: 19, shift: "Mon–Fri 6AM–2PM", distance: "3.4 mi", icon: "package" },
-  { id: "n3", title: "Food Service Worker", company: "Levy Restaurants", location: "Austin, TX", pay: 17, shift: "Fri 5PM–11PM", distance: "2.1 mi", icon: "coffee" },
+  { id: "n1", title: "Event Staff",          company: "Prestige Events Co.", pay: 22, distance: "1.2 mi", time: "Sat 8AM–4PM",     icon: "star"    },
+  { id: "n2", title: "Warehouse Associate",  company: "Amazon Logistics",    pay: 19, distance: "3.4 mi", time: "Mon–Fri 6AM–2PM", icon: "package" },
+  { id: "n3", title: "Food Service Worker",  company: "Levy Restaurants",    pay: 17, distance: "2.1 mi", time: "Fri 5PM–11PM",    icon: "coffee"  },
 ];
 
 const ONBOARDING_TIPS = [
@@ -39,19 +40,6 @@ const ONBOARDING_TIPS = [
   "Set your availability to start receiving shift offers.",
   "Workers with complete profiles get matched much faster.",
 ];
-
-const QUICK_ACTIONS_EMPLOYER = [
-  { icon: "plus-circle", label: "Post Job", route: "/post-job", color: "#5B5FEF", bg: "#EDEDFF" },
-  { icon: "users", label: "Applicants", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe" },
-  { icon: "briefcase", label: "My Jobs", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe" },
-];
-
-function getTimeOfDay() {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 function getDateString() {
   return new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
@@ -97,21 +85,13 @@ export default function HomeScreen() {
   const [activeJobForModal, setActiveJobForModal] = useState<any>(null);
   const [clockInTime, setClockInTime] = useState<Date | null>(null);
   const [clockOutTime, setClockOutTime] = useState<Date | null>(null);
+  const [hideBalance, setHideBalance] = useState(false);
 
   const formatTime = (d: Date | null) =>
     d ? d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true }) : "--:--";
 
   const myApplications = applications.filter((a) => a.workerId === "me");
   const myJobs = jobs.filter((j) => j.employerId === "emp-me");
-
-  const workerQuickActions = [
-    { icon: "briefcase", label: "Available\nJobs",       route: "/(tabs)/jobs",        color: "#5B5FEF", bg: "#EDEDFF" },
-    { icon: "mail",      label: "Job\nInvitations",      route: "/(tabs)/invitations", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length || null },
-    { icon: "layers",    label: "Job\nBoard",            route: "/job-board",          color: "#059669", bg: "#d1fae5" },
-    { icon: "clock",     label: "Time\nSheet",           route: "/timesheet",          color: "#0891b2", bg: "#cffafe" },
-  ];
-
-  const quickActions = isEmployer ? QUICK_ACTIONS_EMPLOYER : workerQuickActions;
 
   return (
     <View style={s.root}>
@@ -120,8 +100,8 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── TOP BAR ── */}
-        <View style={[s.topBar, { paddingTop: topPadding + 16 }]}>
+        {/* ── HEADER ── */}
+        <View style={[s.header, { paddingTop: topPadding + 16 }]}>
           <TouchableOpacity style={s.avatarWrap} onPress={() => router.push("/(tabs)/profile")} activeOpacity={0.85}>
             {userProfile?.avatar ? (
               <Image source={{ uri: userProfile.avatar }} style={s.avatarImg} />
@@ -132,230 +112,42 @@ export default function HomeScreen() {
             )}
           </TouchableOpacity>
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={s.greeting}>Hello {userProfile?.name?.split(" ")[0] || "there"} 👋</Text>
+            <Text style={s.helloText}>Hello {userProfile?.name?.split(" ")[0] || "there"} 👋</Text>
             <Text style={s.dateText}>{getDateString()}</Text>
           </View>
           <TouchableOpacity
-            style={[s.notifBtn, totalUnread > 0 && s.notifBtnActive]}
+            style={s.bellBtn}
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setNotifVisible(true); }}
             activeOpacity={0.8}
           >
-            <Feather name="bell" size={20} color={totalUnread > 0 ? "#5B5FEF" : "#374151"} />
-            {totalUnread > 0 && <View style={s.notifDot} />}
+            <Feather name="bell" size={22} color="#1F2937" />
+            {totalUnread > 0 && <View style={s.bellDot} />}
           </TouchableOpacity>
         </View>
 
         {showOnboarding ? (
-          <OnboardingDashboard pct={pct} />
+          <OnboardingDashboard
+            pct={pct}
+            hideBalance={hideBalance}
+            onToggleHide={() => setHideBalance(!hideBalance)}
+          />
         ) : (
-          <>
-            {/* ── HERO BALANCE-STYLE CARD ── */}
-            <View style={s.heroPad}>
-              <View style={s.heroCard}>
-                <View style={s.heroCardInner}>
-                  <Text style={s.heroCardLabel}>{isEmployer ? "Active Jobs" : "Jobs Completed"}</Text>
-                  <View style={s.heroCardRow}>
-                    <Text style={s.heroCardValue}>
-                      {isEmployer ? String(myJobs.length) : String(userProfile?.completedJobs || 0)}
-                    </Text>
-                    <View style={s.heroCardBadge}>
-                      <Feather name="trending-up" size={12} color="#A5F3FC" />
-                      <Text style={s.heroCardBadgeText}>+2 this week</Text>
-                    </View>
-                  </View>
-                  <View style={s.heroCardStats}>
-                    <View style={s.heroStatItem}>
-                      <Text style={s.heroStatLabel}>Rating</Text>
-                      <Text style={s.heroStatValue}>{userProfile?.rating ?? "—"} ⭐</Text>
-                    </View>
-                    <View style={s.heroStatDiv} />
-                    <View style={s.heroStatItem}>
-                      <Text style={s.heroStatLabel}>Hours</Text>
-                      <Text style={s.heroStatValue}>455 hrs</Text>
-                    </View>
-                    <View style={s.heroStatDiv} />
-                    <View style={s.heroStatItem}>
-                      <Text style={s.heroStatLabel}>Status</Text>
-                      <Text style={[s.heroStatValue, { color: "#86EFAC" }]}>Active</Text>
-                    </View>
-                  </View>
-                </View>
-                {/* Decorative circles */}
-                <View style={s.heroBubble1} />
-                <View style={s.heroBubble2} />
-              </View>
-            </View>
-
-            {/* ── QUICK ACTIONS ── */}
-            <View style={s.qaPad}>
-              {quickActions.map((a) => (
-                <TouchableOpacity
-                  key={a.label}
-                  style={s.qaItem}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); if (a.route) router.push(a.route as any); }}
-                  activeOpacity={0.8}
-                >
-                  <View style={[s.qaCircle, { backgroundColor: a.bg }]}>
-                    <Feather name={a.icon as any} size={20} color={a.color} />
-                    {"badge" in a && a.badge != null && (
-                      <View style={s.qaBadge}><Text style={s.qaBadgeText}>{a.badge}</Text></View>
-                    )}
-                  </View>
-                  <Text style={s.qaLabel}>{a.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* ── ACTIVE JOB (worker) ── */}
-            {!isEmployer && (() => {
-              const acceptedApp = myApplications.find((a) => a.status === "accepted");
-              const activeJob = acceptedApp ? jobs.find((j) => j.id === acceptedApp.jobId) : jobs[0];
-              if (!activeJob) return null;
-              return (
-                <View style={s.sectionWrap}>
-                  <SectionHeader title="Active Job" />
-                  <View style={s.activeJobCard}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                      <View style={[s.txIcon, { backgroundColor: "#EDEDFF" }]}>
-                        <Feather name="briefcase" size={18} color="#5B5FEF" />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={s.txTitle}>{activeJob.title}</Text>
-                        <Text style={s.txSub}>{activeJob.location}</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={[s.clockBtn, { backgroundColor: isClockedIn ? "#10b981" : "#5B5FEF" }]}
-                        onPress={() => {
-                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                          setActiveJobForModal(activeJob);
-                          setClockModalMode(isClockedIn ? "out" : "in");
-                          setClockInModalVisible(true);
-                        }}
-                        activeOpacity={0.85}
-                      >
-                        <Feather name={isClockedIn ? "log-out" : "clock"} size={13} color="#fff" />
-                        <Text style={s.clockBtnText}>{isClockedIn ? "Out" : "In"}</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              );
-            })()}
-
-            {/* ── JOB INVITATIONS ── */}
-            {!isEmployer && (
-              <View style={s.sectionWrap}>
-                <SectionHeader title="Job Invitations" onViewAll={() => router.push("/(tabs)/invitations")} />
-                <View style={s.listCard}>
-                  {SAMPLE_INVITATIONS.map((inv, i) => (
-                    <TouchableOpacity
-                      key={inv.id}
-                      style={[s.txRow, i < SAMPLE_INVITATIONS.length - 1 && s.txRowBorder]}
-                      activeOpacity={0.7}
-                      onPress={() => router.push("/(tabs)/invitations")}
-                    >
-                      <View style={[s.txIcon, { backgroundColor: inv.urgent ? "#FEF2F2" : "#EDEDFF" }]}>
-                        <Feather name="mail" size={18} color={inv.urgent ? "#EF4444" : "#5B5FEF"} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={s.txTitle} numberOfLines={1}>{inv.jobTitle}</Text>
-                        <Text style={s.txSub}>{inv.company} · {inv.startDate}</Text>
-                      </View>
-                      <View style={{ alignItems: "flex-end" }}>
-                        <Text style={[s.txAmount, { color: "#5B5FEF" }]}>${inv.pay}/{inv.payType === "hourly" ? "hr" : "day"}</Text>
-                        {inv.urgent && <Text style={s.urgentTag}>Urgent</Text>}
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* ── UPCOMING SCHEDULE ── */}
-            {!isEmployer && UPCOMING_SHIFTS.length > 0 && (() => {
-              const next = UPCOMING_SHIFTS[0];
-              return (
-                <View style={s.sectionWrap}>
-                  <SectionHeader title="Upcoming Schedule" onViewAll={() => router.push("/upcoming-schedule")} viewAllLabel={`See all (${UPCOMING_SHIFTS.length})`} />
-                  <View style={s.listCard}>
-                    <TouchableOpacity style={s.txRow} activeOpacity={0.7} onPress={() => router.push(`/shift/${next.id}`)}>
-                      <View style={[s.txIcon, { backgroundColor: "#D1FAE5" }]}>
-                        <Feather name="briefcase" size={18} color="#059669" />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={s.txTitle} numberOfLines={1}>{next.jobTitle}</Text>
-                        <Text style={s.txSub}>{next.company} · {next.displayDate}</Text>
-                      </View>
-                      <View style={{ alignItems: "flex-end" }}>
-                        <Text style={[s.txAmount, { color: "#059669" }]}>${next.estimatedEarnings}</Text>
-                        <Text style={s.confirmedTag}>✓ Confirmed</Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })()}
-
-            {/* ── EMPLOYER: My Job Posts ── */}
-            {isEmployer && (
-              <View style={s.sectionWrap}>
-                <SectionHeader title="My Job Posts" onViewAll={() => router.push("/post-job")} viewAllLabel="+ New" />
-                <View style={s.listCard}>
-                  {myJobs.length === 0 ? (
-                    <TouchableOpacity style={[s.txRow, { borderBottomWidth: 0 }]} onPress={() => router.push("/post-job")} activeOpacity={0.8}>
-                      <View style={[s.txIcon, { backgroundColor: "#EDEDFF" }]}>
-                        <Feather name="plus-circle" size={18} color="#5B5FEF" />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={s.txTitle}>Post your first job</Text>
-                        <Text style={s.txSub}>Workers are standing by — takes 2 min</Text>
-                      </View>
-                      <Feather name="arrow-right" size={16} color="#9ca3af" />
-                    </TouchableOpacity>
-                  ) : (
-                    myJobs.map((job, i) => (
-                      <TouchableOpacity key={job.id} style={[s.txRow, i < myJobs.length - 1 && s.txRowBorder]} onPress={() => router.push(`/job/${job.id}`)} activeOpacity={0.8}>
-                        <View style={[s.txIcon, { backgroundColor: "#EDEDFF" }]}>
-                          <Feather name="briefcase" size={18} color="#5B5FEF" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={s.txTitle}>{job.title}</Text>
-                          <Text style={s.txSub}>{job.applicantsCount} applicants · {job.startDate}</Text>
-                        </View>
-                        <View style={[s.openPill]}>
-                          <View style={s.openDot} />
-                          <Text style={s.openText}>Open</Text>
-                        </View>
-                      </TouchableOpacity>
-                    ))
-                  )}
-                </View>
-              </View>
-            )}
-
-            {/* ── INSIGHTS ── */}
-            <View style={[s.sectionWrap, { marginBottom: 8 }]}>
-              <SectionHeader title="AI Insights" onViewAll={() => {}} viewAllLabel="View all ↗" />
-              <View style={s.listCard}>
-                <View style={[s.txRow, s.txRowBorder]}>
-                  <View style={[s.txIcon, { backgroundColor: "#D1FAE5" }]}>
-                    <Feather name="trending-up" size={18} color="#059669" />
-                  </View>
-                  <Text style={[s.txTitle, { flex: 1 }]}>
-                    {isEmployer ? "Jobs with pay ranges fill 3× faster." : "Great! Complete your profile to get more matches."}
-                  </Text>
-                </View>
-                <View style={s.txRow}>
-                  <View style={[s.txIcon, { backgroundColor: "#FEF9C3" }]}>
-                    <Feather name="bar-chart-2" size={18} color="#CA8A04" />
-                  </View>
-                  <Text style={[s.txTitle, { flex: 1 }]}>
-                    {isEmployer ? "Urgent listings get 2× more applications." : "Workers with verified badges get 2× more callbacks."}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </>
+          <FullDashboard
+            isEmployer={isEmployer}
+            userProfile={userProfile}
+            myJobs={myJobs}
+            myApplications={myApplications}
+            jobs={jobs}
+            isClockedIn={isClockedIn}
+            hideBalance={hideBalance}
+            onToggleHide={() => setHideBalance(!hideBalance)}
+            onClockPress={(job) => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              setActiveJobForModal(job);
+              setClockModalMode(isClockedIn ? "out" : "in");
+              setClockInModalVisible(true);
+            }}
+          />
         )}
       </ScrollView>
 
@@ -385,13 +177,13 @@ export default function HomeScreen() {
               </View>
               <View style={ms.body}>
                 <View style={ms.infoCard}>
-                  <MRow icon="briefcase" label="EVENT" value={activeJobForModal?.title || "Lunch Service"} />
-                  <MRow icon="clock" label="SHIFT TIME" value="12:03 PM - 8:00 PM" />
-                  <MRow icon="map-pin" label="LOCATION" value={activeJobForModal?.location || "Manhattan"} />
+                  <MRow icon="briefcase" label="EVENT"      value={activeJobForModal?.title    || "Lunch Service"} />
+                  <MRow icon="clock"     label="SHIFT TIME" value="12:03 PM - 8:00 PM"                            />
+                  <MRow icon="map-pin"   label="LOCATION"   value={activeJobForModal?.location || "Manhattan"}     />
                 </View>
                 {(clockInTime || clockOutTime) && (
                   <View style={ms.stampWrap}>
-                    {clockInTime && <View style={ms.stampRow}><Feather name="log-in" size={12} color="#10b981" /><Text style={ms.stampLbl}>IN</Text><Text style={ms.stampVal}>{formatTime(clockInTime)}</Text></View>}
+                    {clockInTime  && <View style={ms.stampRow}><Feather name="log-in"  size={12} color="#10b981" /><Text style={ms.stampLbl}>IN</Text> <Text style={ms.stampVal}>{formatTime(clockInTime)}</Text></View>}
                     {clockOutTime && <View style={ms.stampRow}><Feather name="log-out" size={12} color="#ef4444" /><Text style={ms.stampLbl}>OUT</Text><Text style={ms.stampVal}>{formatTime(clockOutTime)}</Text></View>}
                   </View>
                 )}
@@ -424,117 +216,114 @@ export default function HomeScreen() {
 
 // ─── Onboarding Dashboard ─────────────────────────────────────────────────────
 
-function OnboardingDashboard({ pct }: { pct: number }) {
-  const { userProfile } = useApp();
+function OnboardingDashboard({ pct, hideBalance, onToggleHide }: { pct: number; hideBalance: boolean; onToggleHide: () => void }) {
   const { items, completedCount, total } = useProfileCompletion();
   const [tipIdx, setTipIdx] = useState(0);
   const profileLocked = pct < 60;
 
-  const onboardingActions = [
-    { icon: "user",         label: "Complete\nProfile",    route: "/(tabs)/profile",        color: "#5B5FEF", bg: "#EDEDFF" },
-    { icon: "briefcase",    label: "Browse\nJobs",         route: "/(tabs)/jobs",           color: "#059669", bg: "#D1FAE5" },
-    { icon: "upload",       label: "Upload\nResume",       route: "/signup-profile",        color: "#f97316", bg: "#ffedd5" },
-    { icon: "calendar",     label: "Set\nAvailability",    route: "/(tabs)/availability",   color: "#0891b2", bg: "#CFFAFE" },
+  const actions = [
+    { icon: "user",      label: "Complete\nProfile",  route: "/(tabs)/profile",      color: "#7C3AED" },
+    { icon: "briefcase", label: "Browse\nJobs",        route: "/(tabs)/jobs",         color: "#7C3AED" },
+    { icon: "calendar",  label: "Set\nAvailability",   route: "/(tabs)/availability", color: "#7C3AED" },
+    { icon: "send",      label: "Apply\nNow",          route: "/(tabs)/jobs",         color: "#7C3AED" },
   ];
 
   return (
     <View>
-      {/* ── Hero Completion Card ── */}
-      <View style={ob.heroPad}>
-        <View style={ob.heroCard}>
-          <View style={ob.heroBubble1} />
-          <View style={ob.heroBubble2} />
-          <View style={ob.heroContent}>
-            <Text style={ob.heroLabel}>Profile Completion</Text>
-            <View style={ob.heroRow}>
-              <Text style={ob.heroPct}>{pct}%</Text>
-              <View style={ob.heroBadge}>
-                <Feather name="trending-up" size={11} color="#A5F3FC" />
-                <Text style={ob.heroBadgeText}>{completedCount}/{total} steps</Text>
-              </View>
+      {/* ── HERO GRADIENT CARD ── */}
+      <View style={s.heroPad}>
+        <LinearGradient
+          colors={["#7C3AED", "#C026D3", "#EC4899"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0.6 }}
+          style={s.heroCard}
+        >
+          <View style={s.heroRow1}>
+            <Text style={s.heroLabel}>Profile Completion</Text>
+            <View style={s.heroBadge}>
+              <Feather name="trending-up" size={10} color="#E9D5FF" />
+              <Text style={s.heroBadgeText}>{completedCount}/{total} steps</Text>
             </View>
-            <View style={ob.progressTrack}>
-              <View style={[ob.progressFill, { width: `${pct}%` as any }]} />
-            </View>
-            <TouchableOpacity
-              style={ob.heroBtn}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/(tabs)/profile"); }}
-              activeOpacity={0.88}
-            >
-              <Text style={ob.heroBtnText}>Complete Profile</Text>
-              <Feather name="arrow-right" size={15} color="#5B5FEF" />
+          </View>
+          <View style={s.heroRow2}>
+            <Text style={s.heroBigNum}>{hideBalance ? "••%" : `${pct}%`}</Text>
+            <TouchableOpacity onPress={onToggleHide} hitSlop={12} style={s.eyeBtn}>
+              <Feather name={hideBalance ? "eye" : "eye-off"} size={20} color="rgba(255,255,255,0.6)" />
             </TouchableOpacity>
           </View>
-        </View>
+          <View style={s.progressTrack}>
+            <View style={[s.progressFill, { width: `${pct}%` as any }]} />
+          </View>
+          {/* Decorative bubbles */}
+          <View style={s.bubble1} />
+          <View style={s.bubble2} />
+        </LinearGradient>
       </View>
 
-      {/* ── Quick Action Icons ── */}
-      <View style={s.qaPad}>
-        {onboardingActions.map((a) => (
+      {/* ── ACTION BUTTONS ── */}
+      <View style={s.actionRow}>
+        {actions.map((a) => (
           <TouchableOpacity
             key={a.label}
-            style={s.qaItem}
+            style={s.actionItem}
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(a.route as any); }}
-            activeOpacity={0.8}
+            activeOpacity={0.75}
           >
-            <View style={[s.qaCircle, { backgroundColor: a.bg }]}>
-              <Feather name={a.icon as any} size={20} color={a.color} />
+            <View style={s.actionCircle}>
+              <Feather name={a.icon as any} size={22} color="#4B5563" />
             </View>
-            <Text style={s.qaLabel}>{a.label}</Text>
+            <Text style={s.actionLabel}>{a.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* ── Getting Started Checklist ── */}
+      {/* ── GETTING STARTED (like AI Insights) ── */}
       <View style={s.sectionWrap}>
-        <SectionHeader title="Getting Started" onViewAll={() => router.push("/(tabs)/profile")} viewAllLabel="View profile ↗" />
+        <SectionRow title="Getting Started" linkLabel="View profile ↗" onLink={() => router.push("/(tabs)/profile")} />
         <View style={s.listCard}>
-          {items.map((item, i) => (
+          {items.slice(0, 4).map((item, i) => (
             <TouchableOpacity
               key={item.key}
-              style={[s.txRow, i < items.length - 1 && s.txRowBorder]}
+              style={[s.txRow, i < 3 && s.txRowBorder]}
               activeOpacity={0.7}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(tabs)/profile"); }}
             >
-              <View style={[s.txIcon, { backgroundColor: item.done ? "#D1FAE5" : "#F3F4F6" }]}>
-                <Feather name={item.icon as any} size={17} color={item.done ? "#059669" : "#9CA3AF"} />
+              <View style={[s.txIconCircle, { backgroundColor: item.done ? "#F0FDF4" : "#F9FAFB" }]}>
+                <Feather name={item.icon as any} size={18} color={item.done ? "#16A34A" : "#9CA3AF"} />
               </View>
-              <Text style={[s.txTitle, { flex: 1 }, item.done && s.txTitleDone]}>{item.label}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.txTitle, item.done && s.txTitleDone]}>{item.label}</Text>
+                <Text style={s.txSub}>{item.done ? "Completed" : "Tap to complete"}</Text>
+              </View>
               {item.done
                 ? <Feather name="check-circle" size={18} color="#22C55E" />
-                : <Feather name="chevron-right" size={16} color="#D1D5DB" />
+                : <View style={s.grayChevron}><Feather name="chevron-right" size={14} color="#9CA3AF" /></View>
               }
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      {/* ── Jobs Near You ── */}
+      {/* ── JOBS NEAR YOU (like Recent Transactions) ── */}
       <View style={s.sectionWrap}>
-        <SectionHeader title="Jobs Near You" onViewAll={() => router.push("/(tabs)/jobs")} viewAllLabel="View all ↗" />
+        <SectionRow title="Jobs Near You" linkLabel="View all ↗" onLink={() => router.push("/(tabs)/jobs")} />
         <View style={s.listCard}>
           {NEARBY_JOBS.map((job, i) => (
             <View key={job.id} style={[s.txRow, i < NEARBY_JOBS.length - 1 && s.txRowBorder]}>
-              <View style={[s.txIcon, { backgroundColor: "#EDEDFF" }]}>
-                <Feather name={job.icon as any} size={17} color="#5B5FEF" />
+              <View style={s.txIconCircle}>
+                <Feather name={job.icon as any} size={18} color="#6B7280" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.txTitle} numberOfLines={1}>{job.title}</Text>
-                <Text style={s.txSub}>{job.company} · {job.distance}</Text>
+                <Text style={s.txTitle}>{job.title}</Text>
+                <Text style={s.txSub}>{job.company}</Text>
               </View>
-              <View style={{ alignItems: "flex-end", gap: 4 }}>
-                <Text style={[s.txAmount, { color: "#111827" }]}>${job.pay}/hr</Text>
+              <View style={{ alignItems: "flex-end" }}>
+                <Text style={[s.txAmount, { color: "#7C3AED" }]}>${job.pay}/hr</Text>
                 {profileLocked ? (
-                  <View style={ob.lockTag}>
-                    <Feather name="lock" size={9} color="#9CA3AF" />
-                    <Text style={ob.lockTagText}>Profile needed</Text>
-                  </View>
+                  <Text style={s.txSubRight}><Feather name="lock" size={9} color="#9CA3AF" /> {job.distance}</Text>
                 ) : (
-                  <TouchableOpacity
-                    style={ob.applyTag}
-                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/(tabs)/jobs"); }}
-                  >
-                    <Text style={ob.applyTagText}>Apply</Text>
+                  <TouchableOpacity onPress={() => router.push("/(tabs)/jobs")}>
+                    <Text style={s.applyLink}>Apply →</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -543,23 +332,27 @@ function OnboardingDashboard({ pct }: { pct: number }) {
         </View>
       </View>
 
-      {/* ── Tips ── */}
+      {/* ── TIPS ── */}
       <View style={[s.sectionWrap, { marginBottom: 8 }]}>
-        <SectionHeader title="Tips & Guidance" />
-        <View style={ob.tipCard}>
-          <View style={ob.tipTop}>
-            <Text style={{ fontSize: 22 }}>💡</Text>
-            <Text style={ob.tipText}>{ONBOARDING_TIPS[tipIdx]}</Text>
+        <SectionRow title="Tips & Guidance" />
+        <View style={[s.listCard, { padding: 16 }]}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
+            <View style={s.txIconCircle}>
+              <Text style={{ fontSize: 16 }}>💡</Text>
+            </View>
+            <Text style={[s.txTitle, { flex: 1, fontWeight: "400", lineHeight: 22, color: "#374151" }]}>
+              {ONBOARDING_TIPS[tipIdx]}
+            </Text>
           </View>
-          <View style={ob.tipNav}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             {ONBOARDING_TIPS.map((_, i) => (
               <TouchableOpacity key={i} onPress={() => setTipIdx(i)} hitSlop={10}>
-                <View style={[ob.tipDot, i === tipIdx && ob.tipDotActive]} />
+                <View style={[s.tipDot, i === tipIdx && s.tipDotActive]} />
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={ob.tipNext} onPress={() => setTipIdx((tipIdx + 1) % ONBOARDING_TIPS.length)}>
-              <Text style={ob.tipNextText}>Next</Text>
-              <Feather name="chevron-right" size={13} color="#5B5FEF" />
+            <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 2, marginLeft: "auto" }} onPress={() => setTipIdx((tipIdx + 1) % ONBOARDING_TIPS.length)}>
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#7C3AED" }}>Next tip</Text>
+              <Feather name="chevron-right" size={13} color="#7C3AED" />
             </TouchableOpacity>
           </View>
         </View>
@@ -568,17 +361,237 @@ function OnboardingDashboard({ pct }: { pct: number }) {
   );
 }
 
-// ─── Reusable sub-components ──────────────────────────────────────────────────
+// ─── Full Worker/Employer Dashboard ──────────────────────────────────────────
 
-function SectionHeader({ title, onViewAll, viewAllLabel = "View all ↗" }: { title: string; onViewAll?: () => void; viewAllLabel?: string }) {
+function FullDashboard({ isEmployer, userProfile, myJobs, myApplications, jobs, isClockedIn, hideBalance, onToggleHide, onClockPress }: any) {
+  const actions = isEmployer ? [
+    { icon: "plus-circle",  label: "Post\nJob",     route: "/post-job"          },
+    { icon: "users",        label: "Applicants",    route: "/(tabs)/jobs"       },
+    { icon: "briefcase",    label: "My\nJobs",      route: "/(tabs)/jobs"       },
+    { icon: "bar-chart-2",  label: "Analytics",     route: "/(tabs)/jobs"       },
+  ] : [
+    { icon: "briefcase",    label: "Browse\nJobs",  route: "/(tabs)/jobs"              },
+    { icon: "mail",         label: "Invitations",   route: "/(tabs)/invitations"       },
+    { icon: "clock",        label: "Time\nSheet",   route: "/timesheet"                },
+    { icon: "dollar-sign",  label: "Earnings",      route: "/timesheet"                },
+  ];
+
+  return (
+    <View>
+      {/* ── HERO CARD ── */}
+      <View style={s.heroPad}>
+        <LinearGradient
+          colors={["#7C3AED", "#C026D3", "#EC4899"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0.6 }}
+          style={s.heroCard}
+        >
+          <View style={s.heroRow1}>
+            <Text style={s.heroLabel}>{isEmployer ? "Active Jobs" : "Jobs Completed"}</Text>
+            <View style={s.heroBadge}>
+              <Feather name="trending-up" size={10} color="#E9D5FF" />
+              <Text style={s.heroBadgeText}>+2 this week</Text>
+            </View>
+          </View>
+          <View style={s.heroRow2}>
+            <Text style={s.heroBigNum}>
+              {hideBalance ? "••" : isEmployer ? String(myJobs.length) : String(userProfile?.completedJobs || 0)}
+            </Text>
+            <TouchableOpacity onPress={onToggleHide} hitSlop={12} style={s.eyeBtn}>
+              <Feather name={hideBalance ? "eye" : "eye-off"} size={20} color="rgba(255,255,255,0.6)" />
+            </TouchableOpacity>
+          </View>
+          <View style={s.heroStatsRow}>
+            <HeroStat label="Rating" value={`${userProfile?.rating ?? "—"} ⭐`} />
+            <View style={s.heroStatDiv} />
+            <HeroStat label="Hours" value="455 hrs" />
+            <View style={s.heroStatDiv} />
+            <HeroStat label="Status" value="Active" valueColor="#A5F3FC" />
+          </View>
+          <View style={s.bubble1} />
+          <View style={s.bubble2} />
+        </LinearGradient>
+      </View>
+
+      {/* ── ACTIONS ── */}
+      <View style={s.actionRow}>
+        {actions.map((a) => (
+          <TouchableOpacity
+            key={a.label}
+            style={s.actionItem}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(a.route as any); }}
+            activeOpacity={0.75}
+          >
+            <View style={s.actionCircle}>
+              <Feather name={a.icon as any} size={22} color="#4B5563" />
+            </View>
+            <Text style={s.actionLabel}>{a.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* ── ACTIVE JOB ── */}
+      {!isEmployer && (() => {
+        const acceptedApp = myApplications.find((a: any) => a.status === "accepted");
+        const activeJob = acceptedApp ? jobs.find((j: any) => j.id === acceptedApp.jobId) : jobs[0];
+        if (!activeJob) return null;
+        return (
+          <View style={s.sectionWrap}>
+            <SectionRow title="Active Job" />
+            <View style={s.listCard}>
+              <View style={s.txRow}>
+                <View style={s.txIconCircle}>
+                  <Feather name="briefcase" size={18} color="#6B7280" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.txTitle}>{activeJob.title}</Text>
+                  <Text style={s.txSub}>{activeJob.location}</Text>
+                </View>
+                <TouchableOpacity
+                  style={[s.clockBtn, { backgroundColor: isClockedIn ? "#10B981" : "#7C3AED" }]}
+                  onPress={() => onClockPress(activeJob)}
+                  activeOpacity={0.85}
+                >
+                  <Feather name={isClockedIn ? "log-out" : "clock"} size={13} color="#fff" />
+                  <Text style={s.clockBtnText}>{isClockedIn ? "Clock Out" : "Clock In"}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        );
+      })()}
+
+      {/* ── JOB INVITATIONS ── */}
+      {!isEmployer && (
+        <View style={s.sectionWrap}>
+          <SectionRow title="Job Invitations" linkLabel="View all ↗" onLink={() => router.push("/(tabs)/invitations")} />
+          <View style={s.listCard}>
+            {SAMPLE_INVITATIONS.map((inv, i) => (
+              <TouchableOpacity
+                key={inv.id}
+                style={[s.txRow, i < SAMPLE_INVITATIONS.length - 1 && s.txRowBorder]}
+                activeOpacity={0.7}
+                onPress={() => router.push("/(tabs)/invitations")}
+              >
+                <View style={s.txIconCircle}>
+                  <Feather name="mail" size={18} color="#6B7280" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.txTitle}>{inv.jobTitle}</Text>
+                  <Text style={s.txSub}>{inv.company}</Text>
+                </View>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={[s.txAmount, { color: "#16A34A" }]}>+${inv.pay}/{inv.payType}</Text>
+                  <Text style={s.txSubRight}>{inv.startDate}, {inv.time}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* ── UPCOMING SCHEDULE ── */}
+      {!isEmployer && UPCOMING_SHIFTS.length > 0 && (() => {
+        const next = UPCOMING_SHIFTS[0];
+        return (
+          <View style={s.sectionWrap}>
+            <SectionRow title="Upcoming Schedule" linkLabel={`View all (${UPCOMING_SHIFTS.length}) ↗`} onLink={() => router.push("/upcoming-schedule")} />
+            <View style={s.listCard}>
+              <TouchableOpacity style={s.txRow} activeOpacity={0.7} onPress={() => router.push(`/shift/${next.id}`)}>
+                <View style={s.txIconCircle}>
+                  <Feather name="briefcase" size={18} color="#6B7280" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.txTitle}>{next.jobTitle}</Text>
+                  <Text style={s.txSub}>{next.company}</Text>
+                </View>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={[s.txAmount, { color: "#16A34A" }]}>+${next.estimatedEarnings}</Text>
+                  <Text style={s.txSubRight}>{next.displayDate}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
+      })()}
+
+      {/* ── EMPLOYER: Job Posts ── */}
+      {isEmployer && (
+        <View style={s.sectionWrap}>
+          <SectionRow title="My Job Posts" linkLabel="+ New" onLink={() => router.push("/post-job")} />
+          <View style={s.listCard}>
+            {myJobs.length === 0 ? (
+              <TouchableOpacity style={[s.txRow]} onPress={() => router.push("/post-job")} activeOpacity={0.8}>
+                <View style={s.txIconCircle}><Feather name="plus-circle" size={18} color="#6B7280" /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.txTitle}>Post your first job</Text>
+                  <Text style={s.txSub}>Takes 2 minutes</Text>
+                </View>
+                <Feather name="chevron-right" size={16} color="#9CA3AF" />
+              </TouchableOpacity>
+            ) : myJobs.map((job: any, i: number) => (
+              <TouchableOpacity key={job.id} style={[s.txRow, i < myJobs.length - 1 && s.txRowBorder]} onPress={() => router.push(`/job/${job.id}`)} activeOpacity={0.8}>
+                <View style={s.txIconCircle}><Feather name="briefcase" size={18} color="#6B7280" /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.txTitle}>{job.title}</Text>
+                  <Text style={s.txSub}>{job.applicantsCount} applicants</Text>
+                </View>
+                <View style={{ alignItems: "flex-end" }}>
+                  <View style={s.openPill}><View style={s.openDot} /><Text style={s.openText}>Open</Text></View>
+                  <Text style={s.txSubRight}>{job.startDate}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* ── AI INSIGHTS ── */}
+      <View style={[s.sectionWrap, { marginBottom: 8 }]}>
+        <SectionRow title="AI Insights" linkLabel="View all ↗" onLink={() => {}} />
+        <View style={s.listCard}>
+          <View style={[s.txRow, s.txRowBorder]}>
+            <View style={[s.txIconCircle, { backgroundColor: "#F0FDF4" }]}>
+              <Feather name="trending-up" size={18} color="#16A34A" />
+            </View>
+            <Text style={[s.txTitle, { flex: 1, fontWeight: "400", color: "#374151" }]}>
+              {isEmployer ? "Great! Jobs with pay ranges fill 3× faster." : "Complete your profile to get more job matches."}
+            </Text>
+          </View>
+          <View style={s.txRow}>
+            <View style={[s.txIconCircle, { backgroundColor: "#FAF5FF" }]}>
+              <Feather name="bar-chart-2" size={18} color="#7C3AED" />
+            </View>
+            <Text style={[s.txTitle, { flex: 1, fontWeight: "400", color: "#374151" }]}>
+              {isEmployer ? "Urgent listings get 2× more applications." : "Workers with verified badges get 2× more callbacks."}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function SectionRow({ title, linkLabel, onLink }: { title: string; linkLabel?: string; onLink?: () => void }) {
   return (
     <View style={s.sectionHeader}>
       <Text style={s.sectionTitle}>{title}</Text>
-      {onViewAll && (
-        <TouchableOpacity onPress={onViewAll}>
-          <Text style={s.viewAll}>{viewAllLabel}</Text>
+      {onLink && linkLabel && (
+        <TouchableOpacity onPress={onLink}>
+          <Text style={s.viewAllLink}>{linkLabel}</Text>
         </TouchableOpacity>
       )}
+    </View>
+  );
+}
+
+function HeroStat({ label, value, valueColor = "#fff" }: { label: string; value: string; valueColor?: string }) {
+  return (
+    <View style={s.heroStatItem}>
+      <Text style={s.heroStatLabel}>{label}</Text>
+      <Text style={[s.heroStatValue, { color: valueColor }]}>{value}</Text>
     </View>
   );
 }
@@ -600,193 +613,127 @@ function MRow({ icon, label, value }: { icon: string; label: string; value: stri
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#FAFAFA" },
 
-  topBar: {
+  // Header
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingBottom: 8,
+    paddingHorizontal: 22,
+    paddingBottom: 14,
     backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#E5E7EB",
   },
-  avatarWrap: { position: "relative" },
-  avatarImg: { width: 46, height: 46, borderRadius: 23 },
-  avatarFallback: {
-    width: 46, height: 46, borderRadius: 23,
-    backgroundColor: "#5B5FEF",
-    justifyContent: "center", alignItems: "center",
-  },
-  avatarLetter: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  greeting: { fontSize: 17, fontWeight: "700", color: "#111827", letterSpacing: -0.2 },
-  dateText: { fontSize: 12, color: "#9CA3AF", marginTop: 1 },
-  notifBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: "#F3F4F6",
-    justifyContent: "center", alignItems: "center",
-    position: "relative",
-  },
-  notifBtnActive: { backgroundColor: "#EDEDFF" },
-  notifDot: {
-    position: "absolute", top: 8, right: 8,
-    width: 8, height: 8, borderRadius: 4,
-    backgroundColor: "#EF4444",
-    borderWidth: 1.5, borderColor: "#fff",
-  },
+  avatarWrap: {},
+  avatarImg:  { width: 48, height: 48, borderRadius: 24 },
+  avatarFallback: { width: 48, height: 48, borderRadius: 24, backgroundColor: "#7C3AED", justifyContent: "center", alignItems: "center" },
+  avatarLetter: { color: "#fff", fontSize: 19, fontWeight: "700" },
+  helloText:  { fontSize: 18, fontWeight: "700", color: "#111827", letterSpacing: -0.3 },
+  dateText:   { fontSize: 12, color: "#9CA3AF", marginTop: 1 },
+  bellBtn:    { position: "relative", width: 42, height: 42, borderRadius: 21, justifyContent: "center", alignItems: "center" },
+  bellDot:    { position: "absolute", top: 8, right: 9, width: 8, height: 8, borderRadius: 4, backgroundColor: "#EF4444", borderWidth: 1.5, borderColor: "#fff" },
 
-  heroPad: { paddingHorizontal: 20, paddingTop: 20 },
-
-  // Full dashboard hero
-  heroCard: {
-    borderRadius: 22,
-    overflow: "hidden",
-    padding: 22,
-    backgroundColor: "#5B5FEF",
-    ...Platform.select({ ios: { shadowColor: "#5B5FEF", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16 }, android: { elevation: 8 } }),
-  },
-  heroCardInner: { zIndex: 2 },
-  heroCardLabel: { color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "500", marginBottom: 6 },
-  heroCardRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 14 },
-  heroCardValue: { color: "#fff", fontSize: 42, fontWeight: "800", letterSpacing: -1 },
-  heroCardBadge: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(255,255,255,0.15)", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  heroCardBadgeText: { color: "#A5F3FC", fontSize: 12, fontWeight: "600" },
-  heroCardStats: { flexDirection: "row", alignItems: "center", paddingTop: 14, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.2)" },
-  heroStatItem: { flex: 1, alignItems: "center" },
-  heroStatLabel: { color: "rgba(255,255,255,0.55)", fontSize: 11, fontWeight: "500", marginBottom: 2 },
+  // Hero card
+  heroPad:    { paddingHorizontal: 20, paddingTop: 20 },
+  heroCard:   { borderRadius: 20, padding: 22, overflow: "hidden", ...Platform.select({ ios: { shadowColor: "#7C3AED", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16 }, android: { elevation: 8 } }) },
+  heroRow1:   { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+  heroLabel:  { color: "rgba(255,255,255,0.75)", fontSize: 13, fontWeight: "500" },
+  heroBadge:  { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(255,255,255,0.18)", paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20 },
+  heroBadgeText: { color: "#E9D5FF", fontSize: 11, fontWeight: "600" },
+  heroRow2:   { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
+  heroBigNum: { color: "#fff", fontSize: 46, fontWeight: "800", letterSpacing: -2 },
+  eyeBtn:     { padding: 4 },
+  progressTrack: { height: 5, backgroundColor: "rgba(255,255,255,0.3)", borderRadius: 3, overflow: "hidden" },
+  progressFill:  { height: 5, backgroundColor: "#fff", borderRadius: 3 },
+  heroStatsRow:  { flexDirection: "row", alignItems: "center", marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.2)" },
+  heroStatItem:  { flex: 1, alignItems: "center" },
+  heroStatLabel: { color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: "500", marginBottom: 3 },
   heroStatValue: { color: "#fff", fontSize: 14, fontWeight: "700" },
-  heroStatDiv: { width: 1, height: 30, backgroundColor: "rgba(255,255,255,0.2)" },
-  heroBubble1: { position: "absolute", width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(255,255,255,0.08)", top: -30, right: -20 },
-  heroBubble2: { position: "absolute", width: 80, height: 80, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.06)", bottom: -20, right: 60 },
+  heroStatDiv:   { width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.2)" },
+  bubble1: { position: "absolute", width: 140, height: 140, borderRadius: 70, backgroundColor: "rgba(255,255,255,0.07)", top: -40, right: -25, zIndex: 0 },
+  bubble2: { position: "absolute", width: 90,  height: 90,  borderRadius: 45, backgroundColor: "rgba(255,255,255,0.05)", bottom: -25, right: 70, zIndex: 0 },
 
-  // Quick Actions row
-  qaPad: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 8,
-  },
-  qaItem: { alignItems: "center", gap: 8 },
-  qaCircle: {
-    width: 56, height: 56, borderRadius: 18,
+  // Action buttons  — white circle, gray border
+  actionRow:   { flexDirection: "row", justifyContent: "space-around", paddingHorizontal: 20, paddingTop: 26, paddingBottom: 6 },
+  actionItem:  { alignItems: "center", gap: 8, minWidth: 64 },
+  actionCircle: {
+    width: 58, height: 58, borderRadius: 29,
+    backgroundColor: "#fff",
+    borderWidth: 1, borderColor: "#E5E7EB",
     justifyContent: "center", alignItems: "center",
-    position: "relative",
+    ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 4 }, android: { elevation: 1 } }),
   },
-  qaBadge: {
-    position: "absolute", top: -4, right: -4,
-    minWidth: 16, height: 16, borderRadius: 8,
-    backgroundColor: "#EF4444",
-    justifyContent: "center", alignItems: "center",
-    paddingHorizontal: 3, borderWidth: 1.5, borderColor: "#FAFAFA",
-  },
-  qaBadgeText: { color: "#fff", fontSize: 9, fontWeight: "700" },
-  qaLabel: { fontSize: 11, fontWeight: "600", color: "#374151", textAlign: "center", lineHeight: 15 },
+  actionLabel: { fontSize: 11.5, fontWeight: "500", color: "#374151", textAlign: "center", lineHeight: 16 },
 
-  // Section
-  sectionWrap: { paddingHorizontal: 20, marginTop: 24 },
+  // Sections
+  sectionWrap:   { paddingHorizontal: 20, marginTop: 26 },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  sectionTitle: { fontSize: 17, fontWeight: "700", color: "#111827", letterSpacing: -0.2 },
-  viewAll: { fontSize: 13, fontWeight: "600", color: "#5B5FEF" },
+  sectionTitle:  { fontSize: 18, fontWeight: "700", color: "#111827", letterSpacing: -0.3 },
+  viewAllLink:   { fontSize: 13, fontWeight: "600", color: "#7C3AED" },
 
-  // List card
+  // List card — matches reference's white card with rows
   listCard: {
     backgroundColor: "#fff",
-    borderRadius: 18,
+    borderRadius: 16,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#E5E7EB",
     ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10 }, android: { elevation: 2 } }),
   },
-  txRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
-  txRowBorder: { borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
-  txIcon: { width: 44, height: 44, borderRadius: 14, justifyContent: "center", alignItems: "center" },
-  txTitle: { fontSize: 14, fontWeight: "600", color: "#111827", marginBottom: 2 },
-  txTitleDone: { color: "#9CA3AF" },
-  txSub: { fontSize: 12, color: "#9CA3AF", fontWeight: "400" },
-  txAmount: { fontSize: 14, fontWeight: "700" },
-  urgentTag: { fontSize: 10, fontWeight: "700", color: "#EF4444" },
-  confirmedTag: { fontSize: 10, fontWeight: "600", color: "#059669" },
+  txRow:        { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
+  txRowBorder:  { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#F3F4F6" },
+  txIconCircle: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center", alignItems: "center",
+  },
+  txTitle:      { fontSize: 14, fontWeight: "600", color: "#111827", marginBottom: 2 },
+  txTitleDone:  { color: "#9CA3AF" },
+  txSub:        { fontSize: 12, color: "#9CA3AF" },
+  txSubRight:   { fontSize: 11, color: "#9CA3AF", marginTop: 2 },
+  txAmount:     { fontSize: 14, fontWeight: "700" },
+  applyLink:    { fontSize: 12, fontWeight: "700", color: "#7C3AED" },
+  grayChevron:  { width: 26, height: 26, borderRadius: 13, backgroundColor: "#F3F4F6", justifyContent: "center", alignItems: "center" },
+
+  // Status chips
   openPill: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#F0FDF4", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  openDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: "#22C55E" },
+  openDot:  { width: 5, height: 5, borderRadius: 3, backgroundColor: "#22C55E" },
   openText: { fontSize: 11, fontWeight: "600", color: "#16A34A" },
 
-  // Active job clock btn
-  activeJobCard: {
-    backgroundColor: "#fff", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#F3F4F6",
-    ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10 }, android: { elevation: 2 } }),
-  },
-  clockBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
+  // Clock button
+  clockBtn:     { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 13, paddingVertical: 8, borderRadius: 12 },
   clockBtnText: { color: "#fff", fontSize: 12, fontWeight: "700" },
-});
 
-// ─── Onboarding styles ────────────────────────────────────────────────────────
-
-const ob = StyleSheet.create({
-  heroPad: { paddingHorizontal: 20, paddingTop: 20 },
-  heroCard: {
-    borderRadius: 22, overflow: "hidden", padding: 22, backgroundColor: "#5B5FEF",
-    ...Platform.select({ ios: { shadowColor: "#5B5FEF", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16 }, android: { elevation: 8 } }),
-  },
-  heroBubble1: { position: "absolute", width: 160, height: 160, borderRadius: 80, backgroundColor: "rgba(255,255,255,0.07)", top: -40, right: -30 },
-  heroBubble2: { position: "absolute", width: 100, height: 100, borderRadius: 50, backgroundColor: "rgba(255,255,255,0.05)", bottom: -30, left: 20 },
-  heroContent: { zIndex: 2 },
-  heroLabel: { color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "500", marginBottom: 6 },
-  heroRow: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 14 },
-  heroPct: { color: "#fff", fontSize: 52, fontWeight: "800", letterSpacing: -2 },
-  heroBadge: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(255,255,255,0.15)", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  heroBadgeText: { color: "#A5F3FC", fontSize: 12, fontWeight: "600" },
-  progressTrack: { height: 6, backgroundColor: "rgba(255,255,255,0.25)", borderRadius: 3, overflow: "hidden", marginBottom: 16 },
-  progressFill: { height: 6, backgroundColor: "#fff", borderRadius: 3 },
-  heroBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    backgroundColor: "#fff", paddingVertical: 13, borderRadius: 14,
-    ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6 }, android: { elevation: 3 } }),
-  },
-  heroBtnText: { color: "#5B5FEF", fontSize: 15, fontWeight: "700" },
-
-  lockTag: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "#F3F4F6", paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8 },
-  lockTagText: { fontSize: 9, fontWeight: "600", color: "#9CA3AF" },
-  applyTag: { backgroundColor: "#5B5FEF", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 },
-  applyTagText: { color: "#fff", fontSize: 11, fontWeight: "700" },
-
-  tipCard: {
-    backgroundColor: "#fff", borderRadius: 18, padding: 16, borderWidth: 1, borderColor: "#F3F4F6",
-    ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10 }, android: { elevation: 2 } }),
-  },
-  tipTop: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 14 },
-  tipText: { flex: 1, fontSize: 14, color: "#374151", lineHeight: 22, fontWeight: "500" },
-  tipNav: { flexDirection: "row", alignItems: "center", gap: 6 },
-  tipDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#E5E7EB" },
-  tipDotActive: { width: 18, backgroundColor: "#5B5FEF" },
-  tipNext: { flexDirection: "row", alignItems: "center", gap: 2, marginLeft: "auto" },
-  tipNextText: { fontSize: 13, fontWeight: "600", color: "#5B5FEF" },
+  // Tips
+  tipDot:       { width: 6, height: 6, borderRadius: 3, backgroundColor: "#E5E7EB" },
+  tipDotActive: { width: 18, backgroundColor: "#7C3AED" },
 });
 
 // ─── Modal styles ─────────────────────────────────────────────────────────────
 
 const ms = StyleSheet.create({
-  backdrop: { backgroundColor: "rgba(0,0,0,0.55)" },
+  backdrop:  { backgroundColor: "rgba(0,0,0,0.55)" },
   sheetWrap: { flex: 1, justifyContent: "flex-end" },
   card: { backgroundColor: "#fff", borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 22, paddingBottom: 32, paddingTop: 14, ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 16 }, android: { elevation: 10 } }) },
-  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "#e5e7eb", alignSelf: "center", marginBottom: 16 },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "#E5E7EB", alignSelf: "center", marginBottom: 16 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 18 },
-  title: { fontSize: 18, fontWeight: "800", color: "#111827", letterSpacing: -0.3 },
-  closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#f3f4f6", justifyContent: "center", alignItems: "center" },
-  body: { gap: 14 },
-  infoCard: { backgroundColor: "#f9fafb", borderRadius: 14, padding: 14, gap: 10, borderWidth: 1, borderColor: "#f3f4f6" },
-  infoRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  infoIcon: { width: 30, height: 30, borderRadius: 8, backgroundColor: "#f3f4f6", justifyContent: "center", alignItems: "center" },
-  infoLabel: { fontSize: 10, fontWeight: "700", color: "#9ca3af", letterSpacing: 0.5, marginBottom: 1 },
+  title:  { fontSize: 18, fontWeight: "800", color: "#111827", letterSpacing: -0.3 },
+  closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#F3F4F6", justifyContent: "center", alignItems: "center" },
+  body:     { gap: 14 },
+  infoCard: { backgroundColor: "#F9FAFB", borderRadius: 14, padding: 14, gap: 10, borderWidth: 1, borderColor: "#F3F4F6" },
+  infoRow:  { flexDirection: "row", alignItems: "center", gap: 12 },
+  infoIcon: { width: 30, height: 30, borderRadius: 8, backgroundColor: "#F3F4F6", justifyContent: "center", alignItems: "center" },
+  infoLabel: { fontSize: 10, fontWeight: "700", color: "#9CA3AF", letterSpacing: 0.5, marginBottom: 1 },
   infoValue: { fontSize: 13, fontWeight: "600", color: "#111827" },
   stampWrap: { flexDirection: "row", gap: 14, justifyContent: "center" },
-  stampRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  stampLbl: { fontSize: 10, fontWeight: "700", color: "#9ca3af" },
-  stampVal: { fontSize: 13, fontWeight: "700", color: "#111827" },
-  totalRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  totalLabel: { fontSize: 13, color: "#6b7280", fontWeight: "500" },
-  totalPill: { backgroundColor: "#f3f4f6", paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
+  stampRow:  { flexDirection: "row", alignItems: "center", gap: 5 },
+  stampLbl:  { fontSize: 10, fontWeight: "700", color: "#9CA3AF" },
+  stampVal:  { fontSize: 13, fontWeight: "700", color: "#111827" },
+  totalRow:  { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  totalLabel: { fontSize: 13, color: "#6B7280", fontWeight: "500" },
+  totalPill:  { backgroundColor: "#F3F4F6", paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
   totalPillText: { fontSize: 13, fontWeight: "700", color: "#111827" },
-  confirmBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#5B5FEF", paddingVertical: 16, borderRadius: 16, ...Platform.select({ ios: { shadowColor: "#5B5FEF", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 }, android: { elevation: 5 } }) },
+  confirmBtn:    { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#7C3AED", paddingVertical: 16, borderRadius: 16, ...Platform.select({ ios: { shadowColor: "#7C3AED", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 }, android: { elevation: 5 } }) },
   confirmBtnText: { color: "#fff", fontSize: 16, fontWeight: "800" },
-  verifiedRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5 },
-  verifiedText: { fontSize: 12, color: "#9ca3af" },
+  verifiedRow:    { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5 },
+  verifiedText:   { fontSize: 12, color: "#9CA3AF" },
 });
