@@ -233,9 +233,9 @@ function OnboardingDashboard({ pct, hideBalance, onToggleHide }: { pct: number; 
       {/* ── HERO GRADIENT CARD ── */}
       <View style={s.heroPad}>
         <LinearGradient
-          colors={["#7C3AED", "#C026D3", "#EC4899"]}
+          colors={["#0D47A1", "#1565C0", "#1976D2"]}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0.6 }}
+          end={{ x: 1, y: 1 }}
           style={s.heroCard}
         >
           <View style={s.heroRow1}>
@@ -381,9 +381,9 @@ function FullDashboard({ isEmployer, userProfile, myJobs, myApplications, jobs, 
       {/* ── HERO CARD ── */}
       <View style={s.heroPad}>
         <LinearGradient
-          colors={["#7C3AED", "#C026D3", "#EC4899"]}
+          colors={["#0D47A1", "#1565C0", "#1976D2"]}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0.6 }}
+          end={{ x: 1, y: 1 }}
           style={s.heroCard}
         >
           <View style={s.heroRow1}>
