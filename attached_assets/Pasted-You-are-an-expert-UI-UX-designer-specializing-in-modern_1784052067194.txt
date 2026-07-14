@@ -1,0 +1,491 @@
+You are an expert UI/UX designer specializing in modern mobile applications. Redesign my staffing app dashboard specifically for brand-new users who have just signed up and have not yet completed their profile or received any jobs.
+
+
+
+Design Goals
+
+
+
+Create a welcoming onboarding dashboard that encourages users to complete their profile and start applying for jobs instead of showing empty job lists.
+
+
+
+The design should feel modern, clean, premium, and similar to apps like Uber Driver, Instawork, Wonolo, and Indeed Flex.
+
+
+
+Use rounded cards, subtle shadows, soft gradients, clean typography, and plenty of whitespace.
+
+
+
+Keep the existing bottom navigation:
+
+
+
+Home
+
+Availability
+
+Messages
+
+Profile
+
+
+
+Do NOT redesign the navigation.
+
+
+
+Dashboard Layout
+
+1. Welcome Hero Section
+
+
+
+Show a personalized welcome card.
+
+
+
+Example:
+
+
+
+👋 Welcome, John!
+
+
+
+Complete your profile to unlock job opportunities near you.
+
+
+
+Display a profile completion progress bar.
+
+
+
+Example:
+
+
+
+Profile Completion
+
+
+
+20%
+
+
+
+Progress Bar
+
+
+
+Large CTA button:
+
+
+
+Complete Profile
+
+
+
+Use a blue gradient background with rounded corners.
+
+
+
+2. Getting Started Checklist
+
+
+
+Create a checklist card.
+
+
+
+Title:
+
+
+
+Getting Started
+
+
+
+Subtitle:
+
+
+
+Complete these steps to begin receiving job offers.
+
+
+
+Checklist items:
+
+
+
+✅ Account Created
+
+
+
+⬜ Verify Email
+
+
+
+⬜ Verify Phone Number
+
+
+
+⬜ Upload Profile Photo
+
+
+
+⬜ Upload Resume
+
+
+
+⬜ Add Skills
+
+
+
+⬜ Add Work Experience
+
+
+
+⬜ Complete Identity Verification
+
+
+
+⬜ Set Availability
+
+
+
+Each completed task should show a green checkmark.
+
+
+
+Incomplete tasks should have a light gray circle.
+
+
+
+Each task should be tappable.
+
+
+
+3. Jobs Near You
+
+
+
+Instead of Job Invitations, show nearby opportunities.
+
+
+
+Display 3–5 modern job cards.
+
+
+
+Each card includes:
+
+
+
+Job Title
+
+Company Name
+
+Location
+
+Hourly Pay
+
+Shift Time
+
+Distance
+
+Save Job icon
+
+Apply button
+
+
+
+If profile isn't complete:
+
+
+
+Display a lock icon and message:
+
+
+
+"Complete your profile to apply."
+
+
+
+4. Profile Strength Card
+
+
+
+Show a card explaining why profile completion matters.
+
+
+
+Title:
+
+
+
+Increase Your Hiring Chances
+
+
+
+Description:
+
+
+
+Workers with complete profiles receive more invitations and get matched with jobs faster.
+
+
+
+Display benefits:
+
+
+
+✓ Receive job invitations sooner
+
+
+
+✓ Appear in employer searches
+
+
+
+✓ Faster approval process
+
+
+
+Primary Button:
+
+
+
+Complete Profile
+
+
+
+5. Quick Actions
+
+
+
+Create a grid of shortcuts:
+
+
+
+Complete Profile
+
+Browse Jobs
+
+Upload Resume
+
+Set Availability
+
+Contact Support
+
+Help Center
+
+
+
+Use modern rounded icons and cards.
+
+
+
+6. Tips & Guidance Card
+
+
+
+Display rotating onboarding tips.
+
+
+
+Examples:
+
+
+
+💡 Add a profile photo to increase employer trust.
+
+
+
+💡 Complete your availability to receive shift offers.
+
+
+
+💡 Workers with complete profiles are matched faster.
+
+
+
+Include a small illustration or icon.
+
+
+
+Empty State Cards
+
+
+
+Replace empty sections with guidance.
+
+
+
+Job Invitations
+
+
+
+No invitations yet.
+
+
+
+Complete your profile to start receiving job invitations.
+
+
+
+Button:
+
+
+
+Browse Jobs
+
+
+
+Upcoming Schedule
+
+
+
+No shifts scheduled.
+
+
+
+Apply for jobs to build your schedule.
+
+
+
+Button:
+
+
+
+Find Jobs
+
+
+
+Timesheets
+
+
+
+Your completed shifts will appear here.
+
+
+
+Button:
+
+
+
+View Opportunities
+
+
+
+Visual Style
+
+
+
+Design Language:
+
+
+
+Modern SaaS
+
+Premium staffing marketplace
+
+Clean onboarding experience
+
+iOS inspired
+
+Soft shadows
+
+Large rounded corners (16–20px)
+
+White cards
+
+Light gray background (#F5F7FA)
+
+Primary blue (#2563EB)
+
+Success green (#22C55E)
+
+Accent orange (#F97316)
+
+
+
+Typography:
+
+
+
+Bold headlines
+
+Clean readable text
+
+High contrast
+
+Accessible sizing
+
+
+
+Spacing:
+
+
+
+24px screen padding
+
+16px card padding
+
+20px section spacing
+
+UX Logic
+
+
+
+If profile completion is below 80%:
+
+
+
+Show onboarding dashboard.
+
+
+
+Hide:
+
+
+
+Active Job
+
+Clock In
+
+Job Invitations
+
+Upcoming Schedule
+
+Timesheets
+
+Earnings
+
+
+
+If profile completion reaches 100%:
+
+
+
+Automatically switch to the worker dashboard showing:
+
+
+
+Active Job
+
+Clock In
+
+Job Invitations
+
+Upcoming Schedule
+
+Timesheets
+
+Earnings Summary
+
+Deliverables
+
+
+
+Create a fully responsive mobile dashboard (375px width) that feels production-ready and comparable to Instawork, Wonolo, and Uber Driver. Focus heavily on onboarding, profile completion, and helping new workers reach their first job as quickly as possible. The interface should feel modern, premium, and optimized for conversion.
