@@ -1,0 +1,300 @@
+You are a senior Mobile UI/UX Designer and React/React Native developer. Redesign the Home Dashboard of my staffing app for brand-new users.
+
+Context
+
+This app is a staffing platform where workers sign up and wait to receive job invitations from recruiters.
+
+During signup, users already complete:
+
+Personal information
+Skills
+Work experience
+Resume upload
+Availability
+Contact information
+
+So the profile is already complete when they first log in.
+
+However, a new user has:
+
+No accepted jobs
+No job invitations
+No upcoming shifts
+No approved hours
+No alerts
+No work history
+
+Do NOT display empty cards that say "No data found", "No accepted jobs", or "No invitations".
+
+Also do NOT show fake content, including:
+
+Companies Hiring
+Featured Employers
+Nearby Jobs
+Job Categories
+Fake statistics
+
+If there are no jobs available, the UI should still feel professional, informative, and engaging.
+
+Goal
+
+The dashboard should reassure users that:
+
+Their account is active.
+Their profile is complete.
+They are ready to receive opportunities.
+The staffing team is working to match them with jobs.
+
+The screen should never feel empty.
+
+Design Style
+
+Create a premium modern mobile dashboard inspired by:
+
+Uber Driver
+Indeed Flex
+Instawork
+LinkedIn
+
+Use:
+
+White cards
+Rounded corners (18px)
+Soft shadows
+Blue primary (#2563EB)
+Green success (#22C55E)
+Light gray background (#F5F7FA)
+Clean typography
+Plenty of whitespace
+Modern icons from Lucide or Heroicons
+Smooth card spacing
+
+Design for a 375px mobile screen.
+
+Dashboard Layout
+1. Welcome Hero Card
+
+Large card at the top.
+
+Content:
+
+👋 Welcome to TrueGigs
+
+Your account has been successfully created.
+
+Your profile is active and ready for job matching.
+
+Status badge:
+
+🟢 Ready for Opportunities
+
+Description:
+
+We'll notify you as soon as a recruiter finds a suitable job for your skills and availability.
+
+Primary Button:
+
+Update Availability
+
+Secondary Button:
+
+View Profile
+
+2. Job Match Status Card
+
+Title:
+
+Job Match Status
+
+Show four progress rows:
+
+✅ Registration Complete
+
+✅ Profile Complete
+
+✅ Availability Active
+
+⏳ Waiting for Matching Opportunities
+
+Below the checklist display:
+
+"We're actively matching your profile with available positions. You'll receive a notification when a suitable opportunity becomes available."
+
+Include a subtle loading animation or pulse icon beside "Waiting for Matching Opportunities."
+
+3. What Happens Next
+
+Create a timeline card.
+
+Title:
+
+What Happens Next?
+
+Display five steps with icons.
+
+Your profile is reviewed.
+Recruiters search for matching workers.
+You'll receive a job invitation.
+Accept or decline the offer.
+Check in and start your shift.
+
+Connect the steps with a vertical timeline.
+
+4. Your Information
+
+Show a summary card.
+
+Title:
+
+Your Profile Summary
+
+Display:
+
+Skills
+
+Experience
+
+Preferred Work Location
+
+Availability
+
+Employment Type
+
+Each item should have a small icon.
+
+Button:
+
+Edit Profile
+
+5. Notification Preferences
+
+Title:
+
+Stay Updated
+
+Description:
+
+Receive instant notifications whenever:
+
+• A recruiter sends you an invitation
+
+• A new job matches your profile
+
+• Your application status changes
+
+Show a toggle:
+
+Notifications Enabled
+
+6. Quick Actions
+
+Display six rounded shortcut buttons.
+
+Browse Jobs
+
+Availability
+
+Messages
+
+Profile
+
+Support
+
+Settings
+
+Use colorful modern icons.
+
+7. Helpful Tips
+
+Display one rotating tip card.
+
+Examples:
+
+💡 Keep your availability updated for better job matches.
+
+💡 Respond quickly to invitations to increase your hiring chances.
+
+💡 Update your work experience regularly.
+
+💡 Enable notifications so you never miss an opportunity.
+
+Allow the tip to rotate automatically every few seconds.
+
+8. Support Card
+
+Title:
+
+Need Assistance?
+
+Description:
+
+Our staffing team is here to help.
+
+Buttons:
+
+Contact Support
+
+Call Recruiter
+
+Email Us
+
+9. Referral Card
+
+Display a colorful banner.
+
+Title:
+
+Invite Friends
+
+Description:
+
+Invite qualified workers and earn rewards when they complete their first assignment.
+
+Primary Button:
+
+Invite Friends
+
+Empty State Rules
+
+Never display:
+
+No jobs found
+No invitations found
+No alerts
+No data available
+
+Instead, replace empty sections with useful information, onboarding guidance, status updates, or next steps.
+
+Future State Logic
+
+When the user receives their first invitation:
+
+Replace the "Job Match Status" card with:
+
+Job Invitations
+
+When the user accepts a job:
+
+Show:
+
+Active Job
+Check In
+Upcoming Shift
+Approved Hours
+
+The dashboard should automatically evolve based on the user's activity.
+
+Technical Requirements
+Mobile-first responsive layout
+Reusable card components
+Smooth scrolling
+Consistent spacing (16–24px)
+Rounded buttons
+Modern icon library
+Accessible typography
+Clean component hierarchy
+Subtle animations (fade-in, pulse, hover, loading shimmer)
+Production-ready React components
+Final Goal
+
+Design a dashboard that never feels empty, even when the user has no jobs. Every section should provide value by informing, guiding, or reassuring the user. The experience should communicate that the account is active, the profile is complete, and the platform is working to find the right opportunities—without showing placeholder data or misleading information. The UI should feel polished, trustworthy, and comparable to modern staffing applications.
