@@ -65,19 +65,19 @@ const QUICK_ACTIONS = [
   { label: "My Jobs",      sub: "Applications",             icon: "briefcase",      grad: [C.coral, "#F87171"]  as [string,string], route: "/(tabs)/jobs"         },
 ];
 
-const TIPS = [
-  { icon: "📅", title: "Stay Available", body: "Keep your availability updated — workers with current schedules get matched 2× faster." },
-  { icon: "🔔", title: "Enable Notifications", body: "Turn on notifications so you never miss a new job opportunity or recruiter message." },
-  { icon: "⚡", title: "Reply Quickly", body: "Respond to invitations fast. Recruiters prefer workers who reply within the hour." },
-  { icon: "📝", title: "Update Experience", body: "Update your work experience regularly to unlock higher-paying job categories." },
+const TIPS: Array<{ icon: string; title: string; body: string; btnLabel: string; route: string; grad: [string, string]; color: string; bg: string }> = [
+  { icon: "calendar",       title: "Stay Available",         body: "Workers with updated schedules get matched 2× faster.",     btnLabel: "Update Availability",   route: "/(tabs)/availability", grad: [C.blue,   "#3B82F6"], color: C.blue,   bg: C.blueLight },
+  { icon: "bell",           title: "Turn On Notifications",  body: "Never miss a job opportunity or recruiter message.",        btnLabel: "Enable Notifications",  route: "/(tabs)/profile",      grad: [C.orange, "#FB923C"], color: C.orange, bg: C.orangeBg  },
+  { icon: "user",           title: "Complete Your Profile",  body: "A full profile unlocks higher-paying job categories.",      btnLabel: "Edit Profile",          route: "/(tabs)/profile",      grad: [C.purple, "#A78BFA"], color: C.purple, bg: C.purpleBg  },
+  { icon: "message-circle", title: "Respond Quickly",        body: "Recruiters prefer workers who reply within the hour.",      btnLabel: "Open Messages",         route: "/(tabs)/messages",     grad: [C.green,  "#4ADE80"], color: C.green,  bg: C.greenBg   },
 ];
 
-const TIMELINE_STEPS = [
-  { num: "1", label: "Profile\nReady",      icon: "user-check",   color: C.blue,   bg: C.blueLight },
-  { num: "2", label: "Recruiter\nReviews",  icon: "search",        color: C.purple, bg: C.purpleBg  },
-  { num: "3", label: "Receive\nInvitation", icon: "mail",          color: C.green,  bg: C.greenBg   },
-  { num: "4", label: "Accept\nShift",       icon: "check-circle",  color: C.orange, bg: C.orangeBg  },
-  { num: "5", label: "Check\nIn",           icon: "clock",         color: C.coral,  bg: C.coralBg   },
+const TIMELINE_STEPS: Array<{ label: string; icon: string; status: "done" | "current" | "upcoming" }> = [
+  { label: "Profile\nReady",     icon: "user-check",  status: "done"     },
+  { label: "Recruiter\nReview",  icon: "search",       status: "current"  },
+  { label: "Job\nInvitation",    icon: "mail",         status: "upcoming" },
+  { label: "Accept\nShift",      icon: "check-circle", status: "upcoming" },
+  { label: "Check\nIn",          icon: "clock",        status: "upcoming" },
 ];
 
 function getGreeting() {
@@ -240,39 +240,12 @@ function NewUser({ userProfile, firstName }: { userProfile: any; firstName: stri
 
       {/* ── WHAT HAPPENS NEXT ── */}
       <Section title="What Happens Next?" accent={C.purple} icon="map">
-        <View style={s.card}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.timelineScroll}>
-            {TIMELINE_STEPS.map((step, i) => (
-              <View key={i} style={s.timelineStepWrap}>
-                <View style={[s.timelineCircle, { backgroundColor: step.bg }]}>
-                  <Text style={[s.timelineNum, { color: step.color }]}>{step.num}</Text>
-                </View>
-                <View style={[s.timelineIconBadge, { backgroundColor: step.bg }]}>
-                  <Feather name={step.icon as any} size={14} color={step.color} />
-                </View>
-                <Text style={s.timelineLabel}>{step.label}</Text>
-                {i < TIMELINE_STEPS.length - 1 && (
-                  <View style={s.timelineArrow}>
-                    <Feather name="chevron-right" size={16} color={C.textMuted} />
-                  </View>
-                )}
-              </View>
-            ))}
-          </ScrollView>
-        </View>
+        <PremiumTimeline />
       </Section>
 
-      {/* ── HELPFUL TIPS CAROUSEL ── */}
-      <Section title="Helpful Tips" accent={C.orange} icon="sun">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast" snapToInterval={SW - 40 + 12} contentContainerStyle={s.tipsScroll}>
-          {TIPS.map((tip, i) => (
-            <View key={i} style={s.tipCard}>
-              <Text style={s.tipEmoji}>{tip.icon}</Text>
-              <Text style={s.tipTitle}>{tip.title}</Text>
-              <Text style={s.tipBody}>{tip.body}</Text>
-            </View>
-          ))}
-        </ScrollView>
+      {/* ── TODAY'S TIP ── */}
+      <Section title="Today's Tip" accent={C.orange} icon="sun">
+        <TodaysTip />
       </Section>
 
       {/* ── SUPPORT ── */}
@@ -502,6 +475,201 @@ function StatChip({ label, value, color }: { label: string; value: string; color
   );
 }
 
+// ─── Premium Timeline ──────────────────────────────────────────────────────────
+function PremiumTimeline() {
+  const ringScale = useRef(new Animated.Value(1)).current;
+  const ringOpacity = useRef(new Animated.Value(0.6)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(ringScale,   { toValue: 1.65, duration: 950, useNativeDriver: true }),
+          Animated.timing(ringOpacity, { toValue: 0,    duration: 950, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(ringScale,   { toValue: 1,   duration: 0,   useNativeDriver: true }),
+          Animated.timing(ringOpacity, { toValue: 0.6, duration: 0,   useNativeDriver: true }),
+        ]),
+      ])
+    ).start();
+  }, []);
+
+  const currentIdx = TIMELINE_STEPS.findIndex((s) => s.status === "current");
+
+  return (
+    <View style={s.card}>
+      {/* ── Step track ── */}
+      <View style={s.tlOuter}>
+        {TIMELINE_STEPS.map((step, i) => {
+          const isDone     = step.status === "done";
+          const isCurrent  = step.status === "current";
+          const isUpcoming = step.status === "upcoming";
+          // line after this step: green if next is done or current, blue if next is current, gray otherwise
+          const lineColor  = isDone ? C.green : isCurrent ? C.blue : C.border;
+          const lineFilled = isDone || isCurrent;
+
+          return (
+            <React.Fragment key={i}>
+              {/* Step column */}
+              <View style={s.tlStepCol}>
+                {/* Pulse ring (current only) */}
+                {isCurrent && (
+                  <Animated.View
+                    style={[
+                      s.tlPulseRing,
+                      { transform: [{ scale: ringScale }], opacity: ringOpacity },
+                    ]}
+                  />
+                )}
+
+                {/* Circle */}
+                <View
+                  style={[
+                    s.tlCircle,
+                    isDone     && { backgroundColor: C.green,  borderColor: C.green  },
+                    isCurrent  && { backgroundColor: C.blue,   borderColor: C.blue   },
+                    isUpcoming && { backgroundColor: C.white,  borderColor: C.border },
+                  ]}
+                >
+                  {isDone ? (
+                    <Feather name="check" size={16} color="#fff" />
+                  ) : (
+                    <Feather
+                      name={step.icon as any}
+                      size={isCurrent ? 16 : 14}
+                      color={isCurrent ? "#fff" : C.textMuted}
+                    />
+                  )}
+                </View>
+
+                {/* Label */}
+                <Text
+                  style={[
+                    s.tlLabel,
+                    isDone    && { color: C.green },
+                    isCurrent && { color: C.blue, fontWeight: "700" },
+                  ]}
+                >
+                  {step.label}
+                </Text>
+
+                {/* "Current Step" badge */}
+                {isCurrent && (
+                  <View style={s.tlCurBadge}>
+                    <Text style={s.tlCurText}>Current</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Connector line */}
+              {i < TIMELINE_STEPS.length - 1 && (
+                <View style={[s.tlLine, { backgroundColor: lineFilled ? lineColor : C.border }]} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </View>
+
+      {/* ── Info message ── */}
+      <View style={s.tlMsgRow}>
+        <View style={[s.tlMsgIcon, { backgroundColor: C.blueLight }]}>
+          <Feather name="search" size={13} color={C.blue} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={s.tlMsgText}>
+            We're matching your profile with available opportunities. You'll receive a notification when a recruiter selects you.
+          </Text>
+          <View style={s.tlTimeBadge}>
+            <Feather name="clock" size={11} color={C.textMuted} />
+            <Text style={s.tlTimeText}>Usually within 24–48 hours</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ─── Today's Tip ───────────────────────────────────────────────────────────────
+function TodaysTip() {
+  const [idx, setIdx] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const tip = TIPS[idx];
+
+  const goTo = (next: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Animated.timing(fadeAnim, { toValue: 0, duration: 140, useNativeDriver: true }).start(() => {
+      setIdx(next);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+    });
+  };
+
+  return (
+    <View style={s.ttCard}>
+      {/* Top bar: gradient icon + counter + nav */}
+      <View style={s.ttTopRow}>
+        <LinearGradient colors={tip.grad} style={s.ttIconGrad}>
+          <Feather name={tip.icon as any} size={24} color="#fff" />
+        </LinearGradient>
+        <View style={{ flex: 1 }} />
+        <Text style={s.ttCounter}>{idx + 1} / {TIPS.length}</Text>
+        <TouchableOpacity
+          style={[s.ttArrowBtn, { opacity: idx === 0 ? 0.3 : 1 }]}
+          onPress={() => idx > 0 && goTo(idx - 1)}
+          activeOpacity={0.7}
+        >
+          <Feather name="chevron-left" size={18} color={C.textSub} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[s.ttArrowBtn, { opacity: idx === TIPS.length - 1 ? 0.3 : 1 }]}
+          onPress={() => idx < TIPS.length - 1 && goTo(idx + 1)}
+          activeOpacity={0.7}
+        >
+          <Feather name="chevron-right" size={18} color={C.textSub} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Animated content */}
+      <Animated.View style={{ opacity: fadeAnim }}>
+        {/* Colored accent stripe */}
+        <View style={[s.ttAccentBar, { backgroundColor: tip.color + "18" }]}>
+          <View style={[s.ttAccentDot, { backgroundColor: tip.color }]} />
+          <Text style={[s.ttAccentLabel, { color: tip.color }]}>Quick tip</Text>
+        </View>
+
+        <Text style={s.ttTitle}>{tip.title}</Text>
+        <Text style={s.ttBody}>{tip.body}</Text>
+
+        {/* Action button */}
+        <TouchableOpacity
+          style={s.ttBtnWrap}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push(tip.route as any); }}
+          activeOpacity={0.85}
+        >
+          <LinearGradient colors={tip.grad} style={s.ttBtnGrad}>
+            <Text style={s.ttBtnText}>{tip.btnLabel}</Text>
+            <Feather name="arrow-right" size={14} color="#fff" />
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Pagination dots */}
+      <View style={s.ttDots}>
+        {TIPS.map((_, i) => (
+          <TouchableOpacity key={i} onPress={() => goTo(i)} activeOpacity={0.7}>
+            <Animated.View
+              style={[
+                s.ttDot,
+                i === idx && { width: 20, backgroundColor: tip.color },
+              ]}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 // ─── Styles ────────────────────────────────────────────────────────────────────
 const CARD_W = (SW - 40 - 12) / 2; // 2-col with 20px side padding + 12px gap
 
@@ -599,29 +767,97 @@ const s = StyleSheet.create({
   pendingPill:  { backgroundColor: C.orangeBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   pendingText:  { fontSize: 11, fontWeight: "700", color: C.orange },
 
-  // ── Horizontal Timeline ──
-  timelineScroll: { paddingHorizontal: 16, paddingVertical: 20, gap: 0, flexDirection: "row", alignItems: "center" },
-  timelineStepWrap:{ alignItems: "center", position: "relative" },
-  timelineCircle: { width: 48, height: 48, borderRadius: 24, justifyContent: "center", alignItems: "center" },
-  timelineNum:    { fontSize: 18, fontWeight: "900" },
-  timelineIconBadge: { width: 28, height: 28, borderRadius: 8, justifyContent: "center", alignItems: "center", marginTop: 8 },
-  timelineLabel:  { fontSize: 11, fontWeight: "600", color: C.textMid, textAlign: "center", marginTop: 6, lineHeight: 16 },
-  timelineArrow:  { position: "absolute", right: -22, top: 14 },
-
-  // ── Tips Carousel ──
-  tipsScroll: { paddingHorizontal: 20, gap: 12 },
-  tipCard:    {
-    width: SW - 40,
+  // ── Premium Timeline ──
+  tlOuter: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingHorizontal: 16,
+    paddingTop: 22,
+    paddingBottom: 8,
+  },
+  tlStepCol: { alignItems: "center", width: 52, position: "relative" },
+  tlPulseRing: {
+    position: "absolute",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: C.blue,
+    top: 0,
+    zIndex: 0,
+  },
+  tlCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 2,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1,
     backgroundColor: C.white,
-    borderRadius: 20,
+    borderColor: C.border,
+  },
+  tlLabel: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: C.textMuted,
+    textAlign: "center",
+    marginTop: 7,
+    lineHeight: 14,
+  },
+  tlCurBadge: {
+    marginTop: 5,
+    backgroundColor: C.blue + "15",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  tlCurText:  { fontSize: 9, fontWeight: "800", color: C.blue, letterSpacing: 0.3 },
+  tlLine:     { flex: 1, height: 2, marginTop: 20, borderRadius: 1 },
+  tlMsgRow:   {
+    flexDirection: "row",
+    gap: 11,
+    alignItems: "flex-start",
+    marginHorizontal: 16,
+    marginBottom: 18,
+    marginTop: 8,
+    backgroundColor: C.blueLight + "60",
+    borderRadius: 14,
+    padding: 13,
+  },
+  tlMsgIcon:  { width: 30, height: 30, borderRadius: 9, justifyContent: "center", alignItems: "center", flexShrink: 0 },
+  tlMsgText:  { fontSize: 12.5, color: C.textMid, lineHeight: 19, marginBottom: 8 },
+  tlTimeBadge:{ flexDirection: "row", alignItems: "center", gap: 5 },
+  tlTimeText: { fontSize: 11, color: C.textMuted, fontWeight: "600" },
+
+  // ── Today's Tip ──
+  ttCard: {
+    backgroundColor: C.white,
+    borderRadius: 22,
     padding: 20,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: C.border,
-    ...shadow("#000", 0.05, 12, 3),
+    ...shadow("#000", 0.07, 16, 4),
   },
-  tipEmoji: { fontSize: 32, marginBottom: 10 },
-  tipTitle: { fontSize: 16, fontWeight: "800", color: C.text, marginBottom: 6 },
-  tipBody:  { fontSize: 13.5, color: C.textSub, lineHeight: 21 },
+  ttTopRow:    { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
+  ttIconGrad:  { width: 52, height: 52, borderRadius: 16, justifyContent: "center", alignItems: "center" },
+  ttCounter:   { fontSize: 12, fontWeight: "600", color: C.textMuted, marginRight: 6 },
+  ttArrowBtn:  { width: 34, height: 34, borderRadius: 10, backgroundColor: C.slateBg, justifyContent: "center", alignItems: "center" },
+  ttAccentBar: { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 11, paddingVertical: 6, borderRadius: 10, alignSelf: "flex-start", marginBottom: 12 },
+  ttAccentDot: { width: 6, height: 6, borderRadius: 3 },
+  ttAccentLabel:{ fontSize: 11, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" },
+  ttTitle:     { fontSize: 19, fontWeight: "800", color: C.text, letterSpacing: -0.4, marginBottom: 6 },
+  ttBody:      { fontSize: 13.5, color: C.textSub, lineHeight: 21, marginBottom: 18 },
+  ttBtnWrap:   { borderRadius: 15, overflow: "hidden", marginBottom: 20 },
+  ttBtnGrad:   { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14 },
+  ttBtnText:   { color: "#fff", fontSize: 14, fontWeight: "800" },
+  ttDots:      { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7 },
+  ttDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: C.border,
+    transition: "all 0.2s",
+  } as any,
 
   // ── Support ──
   supportDesc:   { fontSize: 13, color: C.textSub, lineHeight: 20, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 },
