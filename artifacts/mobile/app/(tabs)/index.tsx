@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -6,899 +6,1609 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  Animated,
+  Modal,
+  Pressable,
   Image,
-  Dimensions,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColors } from "@/hooks/useColors";
 import { useApp } from "@/context/AppContext";
 import { useJobs } from "@/context/JobsContext";
 import { useMessages } from "@/context/MessagesContext";
 import * as Haptics from "expo-haptics";
 import NotificationsSheet from "@/components/NotificationsSheet";
+import { BlurView } from "expo-blur";
+import { UPCOMING_SHIFTS } from "@/data/upcomingShifts";
 
-const { width: SW } = Dimensions.get("window");
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-const C = {
-  blue:     "#2563EB",
-  blueDark: "#1E3A8A",
-  blueMid:  "#1D4ED8",
-  blueLight:"#DBEAFE",
-  green:    "#22C55E",
-  greenBg:  "#DCFCE7",
-  orange:   "#F97316",
-  orangeBg: "#FFF7ED",
-  purple:   "#8B5CF6",
-  purpleBg: "#F5F3FF",
-  coral:    "#F43F5E",
-  coralBg:  "#FFF1F2",
-  slate:    "#64748B",
-  slateBg:  "#F1F5F9",
-  bg:       "#F6F8FC",
-  white:    "#FFFFFF",
-  text:     "#111827",
-  textMid:  "#374151",
-  textSub:  "#6B7280",
-  textMuted:"#9CA3AF",
-  border:   "#E5E7EB",
-  borderLight: "#F3F4F6",
-};
-
-const shadow = (color = "#000", opacity = 0.06, radius = 12, y = 4) =>
-  Platform.select({
-    ios:     { shadowColor: color, shadowOffset: { width: 0, height: y }, shadowOpacity: opacity, shadowRadius: radius },
-    android: { elevation: Math.round(radius / 2) },
-    default: {},
-  }) as object;
-
-// ─── Data ──────────────────────────────────────────────────────────────────────
-const QUICK_ACTIONS = [
-  { label: "Availability", sub: "Manage your schedule",     icon: "calendar",       grad: [C.blue, "#3B82F6"]   as [string,string], route: "/(tabs)/availability" },
-  { label: "Messages",     sub: "Recruiter updates",        icon: "message-circle", grad: [C.purple, "#A78BFA"] as [string,string], route: "/(tabs)/messages"     },
-  { label: "Profile",      sub: "Personal information",     icon: "user",           grad: [C.orange, "#FB923C"] as [string,string], route: "/(tabs)/profile"      },
-  { label: "Support",      sub: "Need assistance",          icon: "headphones",     grad: [C.green, "#4ADE80"]  as [string,string], route: "/(tabs)/messages"     },
-  { label: "Settings",     sub: "App preferences",          icon: "settings",       grad: [C.slate, "#94A3B8"]  as [string,string], route: "/(tabs)/profile"      },
-  { label: "My Jobs",      sub: "Applications",             icon: "briefcase",      grad: [C.coral, "#F87171"]  as [string,string], route: "/(tabs)/jobs"         },
+const SAMPLE_INVITATIONS = [
+  {
+    id: "inv-1",
+    jobTitle: "Warehouse Supervisor",
+    company: "Amazon Logistics",
+    companyRating: 4.2,
+    location: "Austin, TX",
+    pay: 28,
+    payType: "hourly",
+    startDate: "Tomorrow",
+    duration: "1 week",
+    sentAt: "30 min ago",
+    urgent: true,
+    jobId: "1",
+  },
+  {
+    id: "inv-2",
+    jobTitle: "Event Coordinator",
+    company: "Prestige Events Co.",
+    companyRating: 4.7,
+    location: "Houston, TX",
+    pay: 280,
+    payType: "daily",
+    startDate: "Saturday",
+    duration: "2 days",
+    sentAt: "2 hours ago",
+    urgent: false,
+    jobId: "2",
+  },
 ];
 
-const TIPS: Array<{ icon: string; title: string; body: string; btnLabel: string; route: string; grad: [string, string]; color: string; bg: string }> = [
-  { icon: "calendar",       title: "Stay Available",         body: "Workers with updated schedules get matched 2× faster.",     btnLabel: "Update Availability",   route: "/(tabs)/availability", grad: [C.blue,   "#3B82F6"], color: C.blue,   bg: C.blueLight },
-  { icon: "bell",           title: "Turn On Notifications",  body: "Never miss a job opportunity or recruiter message.",        btnLabel: "Enable Notifications",  route: "/(tabs)/profile",      grad: [C.orange, "#FB923C"], color: C.orange, bg: C.orangeBg  },
-  { icon: "user",           title: "Complete Your Profile",  body: "A full profile unlocks higher-paying job categories.",      btnLabel: "Edit Profile",          route: "/(tabs)/profile",      grad: [C.purple, "#A78BFA"], color: C.purple, bg: C.purpleBg  },
-  { icon: "message-circle", title: "Respond Quickly",        body: "Recruiters prefer workers who reply within the hour.",      btnLabel: "Open Messages",         route: "/(tabs)/messages",     grad: [C.green,  "#4ADE80"], color: C.green,  bg: C.greenBg   },
+const QUICK_ACTIONS_EMPLOYER = [
+  { icon: "plus-circle", label: "Post Job", route: "/post-job", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
+  { icon: "users", label: "Applicants", route: "/(tabs)/jobs", color: "#7c3aed", bg: "#ede9fe", badge: null, isAvailability: false },
+  { icon: "briefcase", label: "My Jobs", route: "/(tabs)/jobs", color: "#0891b2", bg: "#cffafe", badge: null, isAvailability: false },
 ];
 
-const TIMELINE_STEPS: Array<{ label: string; icon: string; status: "done" | "current" | "upcoming" }> = [
-  { label: "Profile\nReady",     icon: "user-check",  status: "done"     },
-  { label: "Recruiter\nReview",  icon: "search",       status: "current"  },
-  { label: "Job\nInvitation",    icon: "mail",         status: "upcoming" },
-  { label: "Accept\nShift",      icon: "check-circle", status: "upcoming" },
-  { label: "Check\nIn",          icon: "clock",        status: "upcoming" },
-];
-
-function getGreeting() {
+function getTimeOfDay() {
   const h = new Date().getHours();
-  if (h < 12) return "Good Morning,";
-  if (h < 17) return "Good Afternoon,";
-  return "Good Evening,";
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
 }
 
-// ─── Root ──────────────────────────────────────────────────────────────────────
 export default function HomeScreen() {
-  const insets  = useSafeAreaInsets();
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
   const { userProfile, userRole } = useApp();
-  const { jobs, applications } = useJobs();
+  const { jobs, applications, savedJobs } = useJobs();
   const { conversations } = useMessages();
+  const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
+  const isEmployer = userRole === "employer";
+  const [isClockedIn, setIsClockedIn] = React.useState(false);
+  const [notifVisible, setNotifVisible] = React.useState(false);
+  const [clockInModalVisible, setClockInModalVisible] = React.useState(false);
+  const [clockModalMode, setClockModalMode] = React.useState<"in" | "out">("in");
+  const [activeJobForModal, setActiveJobForModal] = React.useState<any>(null);
+  const [clockInTime, setClockInTime] = React.useState<Date | null>(null);
+  const [clockOutTime, setClockOutTime] = React.useState<Date | null>(null);
 
-  const topPad    = Platform.OS === "web" ? insets.top + 67 : insets.top;
-  const isEmp     = userRole === "employer";
-  const unread    = conversations.reduce((s, c) => s + c.unreadCount, 0);
-  const accepted  = applications.filter((a) => a.workerId === "me" && a.status === "accepted");
-  const myJobs    = jobs.filter((j: any) => j.employerId === "emp-me");
+  const formatTime = (d: Date | null) =>
+    d
+      ? d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })
+      : "--:--";
 
-  const [notifOpen, setNotifOpen] = useState(false);
-  const fadeAnim  = useRef(new Animated.Value(0)).current;
+  const myApplications = applications.filter((a) => a.workerId === "me");
+  const myJobs = jobs.filter((j) => j.employerId === "emp-me");
+  const urgentJobs = jobs.filter((j) => j.urgency === "urgent").slice(0, 3);
+  const totalUnread = conversations.reduce((s, c) => s + c.unreadCount, 0);
 
-  useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 550, useNativeDriver: true }).start();
-  }, []);
+  const workerQuickActions = [
+    { icon: "briefcase", label: "Available Jobs", route: "/(tabs)/jobs", color: "#2563EB", bg: "#dbeafe", badge: null, isAvailability: false },
+    { icon: "mail", label: "Job Invitation", route: "/(tabs)/invitations", color: "#7c3aed", bg: "#ede9fe", badge: myApplications.length > 0 ? myApplications.length : null, isAvailability: false },
+    { icon: "layers", label: "Job Board", route: "/job-board", color: "#059669", bg: "#d1fae5", badge: null, isAvailability: false },
+    { icon: "clock", label: "Time Sheet", route: "/timesheet", color: "#0891b2", bg: "#cffafe", badge: null, isAvailability: false },
+  ];
 
-  const firstName = userProfile?.name?.split(" ")[0] || "there";
+  const quickActions = isEmployer ? QUICK_ACTIONS_EMPLOYER : workerQuickActions;
 
   return (
-    <View style={s.root}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}
-      >
-        {/* ── CURVED HEADER ── */}
-        <LinearGradient
-          colors={[C.blueDark, C.blueMid, C.blue]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[s.header, { paddingTop: topPad + 20 }]}
-        >
-          {/* Decorative circles */}
-          <View style={s.hCircle1} />
-          <View style={s.hCircle2} />
-          <View style={s.hCircle3} />
-
-          <View style={s.hRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={s.hGreeting}>{getGreeting()}</Text>
-              <Text style={s.hSub}>Welcome back</Text>
-              <Text style={s.hBrand}>TrueGigs</Text>
-              <Text style={s.hTagline}>Connecting Great Talent with Great Opportunities</Text>
-            </View>
-            <View style={s.hRight}>
-              <TouchableOpacity
-                style={s.hIconBtn}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setNotifOpen(true); }}
-                activeOpacity={0.8}
-              >
-                <Feather name="bell" size={21} color="#fff" />
-                {unread > 0 && <View style={s.bellDot} />}
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push("/(tabs)/profile")} style={s.avatarTouch} activeOpacity={0.85}>
-                {userProfile?.avatar ? (
-                  <Image source={{ uri: userProfile.avatar }} style={s.avatar} />
-                ) : (
-                  <View style={s.avatarFb}>
-                    <Text style={s.avatarLetter}>{firstName.charAt(0)}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+    <View style={[styles.root, { backgroundColor: "#f0f4f8" }]}>
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* ── HERO HEADER ── */}
+      <View style={[styles.hero, { paddingTop: topPadding + 20 }]}>
+        {/* Top bar */}
+        <View style={styles.topBar}>
+          <View>
+            <Text style={styles.heroGreeting}>{getTimeOfDay()}</Text>
+            <View style={styles.heroNameRow}>
+              <Text style={styles.heroName}>
+                {userProfile?.name?.split(" ")[0] || "Welcome"}
+              </Text>
+              {!isEmployer && (
+                <View style={styles.approvedBadge}>
+                  <Feather name="check-circle" size={12} color="#34d399" />
+                  <Text style={styles.approvedBadgeText}>Approved</Text>
+                </View>
+              )}
             </View>
           </View>
-        </LinearGradient>
-
-        {/* ── CONTENT ── */}
-        <Animated.View style={[s.content, { opacity: fadeAnim }]}>
-          {isEmp ? (
-            <EmployerDashboard myJobs={myJobs} jobs={jobs} />
-          ) : accepted.length > 0 ? (
-            <ActiveWorker userProfile={userProfile} accepted={accepted} jobs={jobs} firstName={firstName} />
-          ) : (
-            <NewUser userProfile={userProfile} firstName={firstName} />
-          )}
-        </Animated.View>
-      </ScrollView>
-
-      <NotificationsSheet visible={notifOpen} onClose={() => setNotifOpen(false)} />
-    </View>
-  );
-}
-
-// ─── New User Dashboard ────────────────────────────────────────────────────────
-function NewUser({ userProfile, firstName }: { userProfile: any; firstName: string }) {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 0.25, duration: 900, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1,    duration: 900, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, []);
-
-  return (
-    <>
-      {/* ── FLOATING STATUS CARD ── */}
-      <View style={s.statusCard}>
-        <View style={s.statusBadgeRow}>
-          <Animated.View style={[s.statusDot, { opacity: pulseAnim }]} />
-          <Text style={s.statusBadgeText}>Active</Text>
+          <View style={styles.topBarRight}>
+            {totalUnread > 0 && (
+              <TouchableOpacity
+                style={styles.notifBtn}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setNotifVisible(true);
+                }}
+              >
+                <Feather name="bell" size={20} color="#fff" />
+                <View style={styles.notifDot} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={styles.avatarCircle}
+              onPress={() => router.push("/(tabs)/profile")}
+            >
+              {userProfile?.avatar ? (
+                <Image
+                  source={{ uri: userProfile.avatar }}
+                  style={{ width: "100%", height: "100%", borderRadius: 999 }}
+                />
+              ) : (
+                <Text style={styles.avatarLetter}>
+                  {(userProfile?.name || "U").charAt(0)}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
-        <Text style={s.statusTitle}>Ready for Opportunities</Text>
-        <Text style={s.statusBody}>
-          Your profile is complete and active. Our recruiters are matching you with available opportunities based on your skills and availability.
-        </Text>
-        <View style={s.statusBtns}>
-          <TouchableOpacity
-            style={s.statusBtnPrimary}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/(tabs)/availability"); }}
-            activeOpacity={0.85}
-          >
-            <LinearGradient colors={[C.blue, "#3B82F6"]} style={s.statusBtnGrad}>
-              <Feather name="calendar" size={14} color="#fff" />
-              <Text style={s.statusBtnPrimaryText}>Update Availability</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.statusBtnOutline}
-            onPress={() => router.push("/(tabs)/profile")}
-            activeOpacity={0.85}
-          >
-            <Feather name="user" size={14} color={C.blue} />
-            <Text style={s.statusBtnOutlineText}>View Profile</Text>
-          </TouchableOpacity>
+
+        {/* Role pill — employer only */}
+        {isEmployer && (
+          <View style={styles.rolePill}>
+            <View style={[styles.roleDot, { backgroundColor: "#60a5fa" }]} />
+            <Text style={styles.rolePillText}>
+              {`Employer · ${userProfile?.company || ""}`}
+            </Text>
+          </View>
+        )}
+
+        {/* ── STAT TILES ── */}
+        <View style={styles.statTiles}>
+          {isEmployer ? (
+            <>
+              <StatTile icon="briefcase" value={String(myJobs.length)} label="Active Jobs" accent="#60a5fa" />
+              <StatTile icon="users" value="12" label="Total Hired" accent="#a78bfa" />
+              <StatTile icon="trending-up" value="98%" label="Fill Rate" accent="#34d399" />
+            </>
+          ) : (
+            <>
+              <StatTile icon="award" value={String(userProfile?.completedJobs || 0)} label="Jobs Completed" accent="#60a5fa" />
+              <StatTile icon="star" value={String(userProfile?.rating || "—")} label="Rating" accent="#fbbf24" />
+              <StatTile icon="clock" value="455" label="Job Hours" accent="#34d399" />
+            </>
+          )}
         </View>
       </View>
+
+      {/* ── ACTIVE JOB CARD (worker only) ── */}
+      {!isEmployer && (() => {
+        const acceptedApp = myApplications.find((a) => a.status === "accepted");
+        const activeJob = acceptedApp ? jobs.find((j) => j.id === acceptedApp.jobId) : jobs[0];
+        if (!activeJob) return null;
+        return (
+          <View style={styles.activeJobSection}>
+            <View style={[styles.activeJobCard, { borderColor: isClockedIn ? "#10b981" : "#2563EB" }]}>
+              {/* Left: info */}
+              <View style={styles.activeJobLeft}>
+                <View style={styles.activeJobHeader}>
+                  <View style={styles.activeDot} />
+                  <Text style={styles.activeJobBadge}>ACTIVE JOB — #1</Text>
+                </View>
+                <Text style={styles.activeJobTitle} numberOfLines={1}>{activeJob.title}</Text>
+                <View style={styles.activeJobLocation}>
+                  <Feather name="map-pin" size={11} color="#2563EB" />
+                  <Text style={styles.activeJobLocationText}>{activeJob.location}</Text>
+                </View>
+              </View>
+              {/* Right: clock in + pay */}
+              <View style={styles.activeJobRight}>
+                <TouchableOpacity
+                  style={[styles.clockInBtn, { backgroundColor: isClockedIn ? "#10b981" : "#2563EB" }]}
+                  onPress={() => {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    setActiveJobForModal(activeJob);
+                    setClockModalMode(isClockedIn ? "out" : "in");
+                    setClockInModalVisible(true);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Feather name={isClockedIn ? "log-out" : "clock"} size={14} color="#fff" />
+                  <Text style={styles.clockInText}>
+                    {isClockedIn ? "CLOCK OUT" : "CLOCK IN"}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.activeJobPayBelow}>${activeJob.pay}/{activeJob.payType}</Text>
+              </View>
+            </View>
+          </View>
+        );
+      })()}
 
       {/* ── QUICK ACTIONS ── */}
-      <Section title="Quick Actions" accent={C.orange} icon="zap">
-        <View style={s.qaGrid}>
-          {QUICK_ACTIONS.map((a) => <ActionCard key={a.label} {...a} />)}
-        </View>
-      </Section>
-
-      {/* ── JOB MATCH STATUS ── */}
-      <Section title="Job Match Status" accent={C.green} icon="activity">
-        <View style={s.card}>
-          <MatchRow icon="user-check"  label="Registration Complete"          done />
-          <MatchRow icon="shield"      label="Profile Active"                 done />
-          <MatchRow icon="calendar"    label="Availability Updated"           done />
-          <MatchRow icon="clock"       label="Waiting for Opportunities"      pulse={pulseAnim} last />
-        </View>
-      </Section>
-
-      {/* ── WHAT HAPPENS NEXT ── */}
-      <Section title="What Happens Next?" accent={C.purple} icon="map">
-        <PremiumTimeline />
-      </Section>
-
-      {/* ── TODAY'S TIP ── */}
-      <Section title="Today's Tip" accent={C.orange} icon="sun">
-        <TodaysTip />
-      </Section>
-
-      {/* ── SUPPORT ── */}
-      <Section title="Need Help?" accent={C.coral} icon="headphones">
-        <View style={s.card}>
-          <Text style={s.supportDesc}>Our staffing team is here to help you get started and answer any questions.</Text>
-          <View style={s.supportBtnRow}>
-            <SupportBtn icon="message-circle" label="Chat"  color={C.blue}   bg={C.blueLight} onPress={() => router.push("/(tabs)/messages")} />
-            <SupportBtn icon="phone"          label="Call"  color={C.green}  bg={C.greenBg}  onPress={() => {}} />
-            <SupportBtn icon="mail"           label="Email" color={C.purple} bg={C.purpleBg} onPress={() => {}} />
-          </View>
-        </View>
-      </Section>
-
-      {/* ── REFERRAL ── */}
-      <View style={[s.ph, { marginBottom: 8 }]}>
-        <LinearGradient
-          colors={["#7C3AED", "#9333EA", "#C026D3"]}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={s.referralCard}
-        >
-          <View style={s.refBubble1} /><View style={s.refBubble2} />
-          <View style={{ flex: 1 }}>
-            <Text style={s.refTitle}>Invite Friends 🎁</Text>
-            <Text style={s.refBody}>Refer workers and earn rewards when they complete their first shift.</Text>
-          </View>
-          <TouchableOpacity style={s.refBtn} onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)} activeOpacity={0.85}>
-            <Text style={s.refBtnText}>Invite Now</Text>
-          </TouchableOpacity>
-        </LinearGradient>
-      </View>
-    </>
-  );
-}
-
-// ─── Active Worker ─────────────────────────────────────────────────────────────
-function ActiveWorker({ userProfile, accepted, jobs, firstName }: any) {
-  const activeJob = jobs.find((j: any) => j.id === accepted[0]?.jobId) || jobs[0];
-  const [clocked, setClocked] = useState(false);
-
-  return (
-    <>
-      {/* Floating card - active status */}
-      <View style={s.statusCard}>
-        <View style={s.statusBadgeRow}>
-          <View style={[s.statusDot, { backgroundColor: C.green }]} />
-          <Text style={[s.statusBadgeText, { color: C.green }]}>On Assignment</Text>
-        </View>
-        <Text style={s.statusTitle}>Welcome back, {firstName}!</Text>
-        <Text style={s.statusBody}>You have {accepted.length} active assignment{accepted.length > 1 ? "s" : ""}. Keep up the great work!</Text>
-        <View style={s.heroStatsRow}>
-          <StatChip label="Completed" value={String(userProfile?.completedJobs || 0)} color={C.blue} />
-          <StatChip label="Rating"    value={`${userProfile?.rating ?? "—"} ⭐`}      color={C.orange} />
-          <StatChip label="Status"    value="Active"                                  color={C.green} />
-        </View>
-      </View>
-
-      {activeJob && (
-        <Section title="Active Shift" accent={C.green} icon="briefcase">
-          <View style={s.card}>
-            <View style={s.activeJobRow}>
-              <View style={[s.activeJobIcon, { backgroundColor: C.blueLight }]}>
-                <Feather name="briefcase" size={20} color={C.blue} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.activeJobTitle}>{activeJob.title}</Text>
-                <Text style={s.activeJobSub}>{activeJob.location}</Text>
-              </View>
-              <TouchableOpacity
-                style={[s.clockBtn, { backgroundColor: clocked ? C.green : C.blue }]}
-                onPress={() => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); setClocked(!clocked); }}
-                activeOpacity={0.85}
-              >
-                <Feather name={clocked ? "log-out" : "clock"} size={14} color="#fff" />
-                <Text style={s.clockBtnText}>{clocked ? "Clock Out" : "Clock In"}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Section>
-      )}
-
-      <Section title="Quick Actions" accent={C.orange} icon="zap">
-        <View style={s.qaGrid}>
-          {QUICK_ACTIONS.map((a) => <ActionCard key={a.label} {...a} />)}
-        </View>
-      </Section>
-    </>
-  );
-}
-
-// ─── Employer Dashboard ────────────────────────────────────────────────────────
-function EmployerDashboard({ myJobs, jobs }: any) {
-  return (
-    <>
-      <View style={s.statusCard}>
-        <View style={s.statusBadgeRow}>
-          <View style={[s.statusDot, { backgroundColor: C.blue }]} />
-          <Text style={[s.statusBadgeText, { color: C.blue }]}>Employer Account</Text>
-        </View>
-        <Text style={s.statusTitle}>Manage Your Jobs</Text>
-        <Text style={s.statusBody}>You have {myJobs.length} active job post{myJobs.length !== 1 ? "s" : ""}. Post new positions to find qualified workers instantly.</Text>
-        <TouchableOpacity style={s.statusBtnPrimary} onPress={() => router.push("/post-job")} activeOpacity={0.85}>
-          <LinearGradient colors={[C.blue, "#3B82F6"]} style={s.statusBtnGrad}>
-            <Feather name="plus" size={14} color="#fff" />
-            <Text style={s.statusBtnPrimaryText}>Post a Job</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
-
-      <Section title="My Job Posts" accent={C.blue} icon="briefcase">
-        <View style={s.card}>
-          {myJobs.length === 0 ? (
-            <View style={s.emptyState}>
-              <View style={[s.emptyIcon, { backgroundColor: C.blueLight }]}>
-                <Feather name="briefcase" size={28} color={C.blue} />
-              </View>
-              <Text style={s.emptyTitle}>Post Your First Job</Text>
-              <Text style={s.emptyBody}>It only takes 2 minutes. Qualified workers will start applying immediately.</Text>
-              <TouchableOpacity style={s.emptyBtn} onPress={() => router.push("/post-job")} activeOpacity={0.85}>
-                <Text style={s.emptyBtnText}>Get Started</Text>
-              </TouchableOpacity>
-            </View>
-          ) : myJobs.map((job: any, i: number) => (
+      <View style={styles.section}>
+        <Text style={[styles.sectionLabel, { color: "#374151" }]}>Quick Actions</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
+          {quickActions.map((a) => (
             <TouchableOpacity
-              key={job.id}
-              style={[s.jobRow, i < myJobs.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderLight }]}
-              onPress={() => router.push(`/job/${job.id}`)}
-              activeOpacity={0.8}
+              key={a.label}
+              style={[styles.quickCard, { backgroundColor: "#fff" }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (a.route) router.push(a.route as any);
+              }}
+              activeOpacity={0.82}
             >
-              <View style={[s.jobRowIcon, { backgroundColor: C.blueLight }]}>
-                <Feather name="briefcase" size={17} color={C.blue} />
+              <View style={styles.quickIconWrap}>
+                <View style={[styles.quickIcon, { backgroundColor: a.bg }]}>
+                  <Feather name={a.icon as any} size={16} color={a.color} />
+                </View>
+                {a.badge != null && (
+                  <View style={styles.quickBadge}>
+                    <Text style={styles.quickBadgeText}>{a.badge}</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={[styles.quickLabel, { color: "#111827" }]}>{a.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* ── JOB INVITATIONS ── */}
+      {!isEmployer && (
+        <View style={styles.section}>
+          <View style={styles.sectionRow}>
+            <Text style={[styles.sectionLabel, { color: "#374151" }]}>Job Invitations</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/invitations")}>
+              <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all</Text>
+            </TouchableOpacity>
+          </View>
+
+          {SAMPLE_INVITATIONS.slice(0, 2).map((inv) => (
+            <TouchableOpacity
+              key={inv.id}
+              style={styles.upcomingJobRow}
+              activeOpacity={0.85}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/(tabs)/invitations");
+              }}
+            >
+              <View style={[styles.upcomingJobIcon, { backgroundColor: inv.urgent ? "#fef2f2" : "#ede9fe" }]}>
+                <Feather name="mail" size={17} color={inv.urgent ? "#ef4444" : "#7c3aed"} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.jobRowTitle}>{job.title}</Text>
-                <Text style={s.jobRowSub}>{job.applicantsCount} applicants</Text>
+                <Text style={[styles.upcomingJobTitle, { color: "#111827" }]} numberOfLines={1}>{inv.jobTitle}</Text>
+                <Text style={[styles.upcomingJobMeta, { color: "#6b7280" }]}>{inv.company} · {inv.startDate}</Text>
               </View>
-              <View style={s.openPill}>
-                <View style={s.openDot} /><Text style={s.openText}>Open</Text>
+              <View style={styles.upcomingJobRight}>
+                <Text style={[styles.upcomingJobPay, { color: "#2563EB" }]}>${inv.pay}<Text style={[styles.upcomingJobPayType, { color: "#9ca3af" }]}>/{inv.payType}</Text></Text>
+                {inv.urgent && (
+                  <View style={styles.upcomingUrgentTag}>
+                    <Text style={styles.upcomingUrgentText}>Urgent</Text>
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
           ))}
         </View>
-      </Section>
-    </>
-  );
-}
+      )}
 
-// ─── Reusable Components ───────────────────────────────────────────────────────
+      {!isEmployer && UPCOMING_SHIFTS.length > 0 && (() => {
+        const next = UPCOMING_SHIFTS[0];
+        return (
+          <View style={styles.section}>
+            <View style={styles.sectionRow}>
+              <Text style={[styles.sectionLabel, { color: "#374151" }]}>Upcoming Schedule</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push("/upcoming-schedule");
+                }}
+              >
+                <Text style={[styles.seeAllText, { color: "#2563EB" }]}>See all ({UPCOMING_SHIFTS.length})</Text>
+              </TouchableOpacity>
+            </View>
 
-function Section({ title, children, accent, icon }: { title: string; children: React.ReactNode; accent: string; icon: string }) {
-  return (
-    <View style={s.section}>
-      <View style={s.sectionHeader}>
-        <View style={[s.sectionIconBadge, { backgroundColor: accent + "18" }]}>
-          <Feather name={icon as any} size={13} color={accent} />
-        </View>
-        <Text style={s.sectionTitle}>{title}</Text>
-      </View>
-      {children}
-    </View>
-  );
-}
-
-function ActionCard({ label, sub, icon, grad, route }: { label: string; sub: string; icon: string; grad: [string, string]; route: string }) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const onIn  = () => Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true, speed: 30 }).start();
-  const onOut = () => Animated.spring(scaleAnim, { toValue: 1,    useNativeDriver: true, speed: 30 }).start();
-
-  return (
-    <Animated.View style={[s.qaCard, { transform: [{ scale: scaleAnim }] }]}>
-      <TouchableOpacity
-        style={{ flex: 1 }}
-        activeOpacity={1}
-        onPressIn={onIn}
-        onPressOut={onOut}
-        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(route as any); }}
-      >
-        <LinearGradient colors={grad} style={s.qaIconGrad}>
-          <Feather name={icon as any} size={26} color="#fff" />
-        </LinearGradient>
-        <Text style={s.qaLabel}>{label}</Text>
-        <Text style={s.qaSub}>{sub}</Text>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-}
-
-function MatchRow({ icon, label, done, pulse, last }: { icon: string; label: string; done?: boolean; pulse?: Animated.Value; last?: boolean }) {
-  return (
-    <View style={[s.matchRow, !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderLight }]}>
-      <View style={[s.matchIconWrap, { backgroundColor: done ? C.greenBg : pulse ? C.orangeBg : C.slateBg }]}>
-        {pulse ? (
-          <Animated.View style={{ opacity: pulse }}>
-            <Feather name={icon as any} size={17} color={C.orange} />
-          </Animated.View>
-        ) : (
-          <Feather name={icon as any} size={17} color={done ? C.green : C.textMuted} />
-        )}
-      </View>
-      <Text style={[s.matchLabel, !done && !pulse && { color: C.textSub }]}>{label}</Text>
-      {done ? (
-        <Feather name="check-circle" size={20} color={C.green} />
-      ) : pulse ? (
-        <View style={s.pendingPill}><Text style={s.pendingText}>Pending</Text></View>
-      ) : null}
-    </View>
-  );
-}
-
-function SupportBtn({ icon, label, color, bg, onPress }: { icon: string; label: string; color: string; bg: string; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={[s.supBtn, { backgroundColor: bg }]} onPress={onPress} activeOpacity={0.8}>
-      <View style={[s.supIconWrap, { backgroundColor: color + "22" }]}>
-        <Feather name={icon as any} size={20} color={color} />
-      </View>
-      <Text style={[s.supLabel, { color }]}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
-function StatChip({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <View style={[s.statChip, { backgroundColor: color + "12" }]}>
-      <Text style={[s.statValue, { color }]}>{value}</Text>
-      <Text style={s.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-// ─── Premium Timeline ──────────────────────────────────────────────────────────
-function PremiumTimeline() {
-  const ringScale = useRef(new Animated.Value(1)).current;
-  const ringOpacity = useRef(new Animated.Value(0.6)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(ringScale,   { toValue: 1.65, duration: 950, useNativeDriver: true }),
-          Animated.timing(ringOpacity, { toValue: 0,    duration: 950, useNativeDriver: true }),
-        ]),
-        Animated.parallel([
-          Animated.timing(ringScale,   { toValue: 1,   duration: 0,   useNativeDriver: true }),
-          Animated.timing(ringOpacity, { toValue: 0.6, duration: 0,   useNativeDriver: true }),
-        ]),
-      ])
-    ).start();
-  }, []);
-
-  const currentIdx = TIMELINE_STEPS.findIndex((s) => s.status === "current");
-
-  return (
-    <View style={s.card}>
-      {/* ── Step track ── */}
-      <View style={s.tlOuter}>
-        {TIMELINE_STEPS.map((step, i) => {
-          const isDone     = step.status === "done";
-          const isCurrent  = step.status === "current";
-          const isUpcoming = step.status === "upcoming";
-          // line after this step: green if next is done or current, blue if next is current, gray otherwise
-          const lineColor  = isDone ? C.green : isCurrent ? C.blue : C.border;
-          const lineFilled = isDone || isCurrent;
-
-          return (
-            <React.Fragment key={i}>
-              {/* Step column */}
-              <View style={s.tlStepCol}>
-                {/* Pulse ring (current only) */}
-                {isCurrent && (
-                  <Animated.View
-                    style={[
-                      s.tlPulseRing,
-                      { transform: [{ scale: ringScale }], opacity: ringOpacity },
-                    ]}
-                  />
-                )}
-
-                {/* Circle */}
-                <View
-                  style={[
-                    s.tlCircle,
-                    isDone     && { backgroundColor: C.green,  borderColor: C.green  },
-                    isCurrent  && { backgroundColor: C.blue,   borderColor: C.blue   },
-                    isUpcoming && { backgroundColor: C.white,  borderColor: C.border },
-                  ]}
-                >
-                  {isDone ? (
-                    <Feather name="check" size={16} color="#fff" />
-                  ) : (
-                    <Feather
-                      name={step.icon as any}
-                      size={isCurrent ? 16 : 14}
-                      color={isCurrent ? "#fff" : C.textMuted}
-                    />
-                  )}
+            <TouchableOpacity
+              style={styles.upcomingJobRow}
+              activeOpacity={0.85}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/shift/${next.id}`);
+              }}
+            >
+              <View style={[styles.upcomingJobIcon, { backgroundColor: "#dbeafe" }]}>
+                <Feather name="briefcase" size={17} color="#2563eb" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.upcomingJobTitle, { color: "#111827" }]} numberOfLines={1}>{next.jobTitle}</Text>
+                <Text style={[styles.upcomingJobMeta, { color: "#6b7280" }]}>{next.company} · {next.displayDate} · {next.startTime}</Text>
+              </View>
+              <View style={styles.upcomingJobRight}>
+                <Text style={[styles.upcomingJobPay, { color: "#10b981" }]}>${next.estimatedEarnings}</Text>
+                <View style={styles.confirmedBadge}>
+                  <Feather name="check-circle" size={10} color="#10b981" />
+                  <Text style={styles.confirmedBadgeText}>Confirmed</Text>
                 </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+        );
+      })()}
 
-                {/* Label */}
-                <Text
-                  style={[
-                    s.tlLabel,
-                    isDone    && { color: C.green },
-                    isCurrent && { color: C.blue, fontWeight: "700" },
-                  ]}
-                >
-                  {step.label}
-                </Text>
+      {/* ── EMPLOYER: My job posts ── */}
+      {isEmployer && (
+        <View style={styles.section}>
+          <View style={styles.sectionRow}>
+            <Text style={[styles.sectionLabel, { color: "#374151" }]}>My Job Posts</Text>
+            <TouchableOpacity
+              style={styles.newJobBtn}
+              onPress={() => router.push("/post-job")}
+            >
+              <Feather name="plus" size={14} color="#2563EB" />
+              <Text style={[styles.newJobBtnText, { color: "#2563EB" }]}>New</Text>
+            </TouchableOpacity>
+          </View>
+          {myJobs.length === 0 ? (
+            <TouchableOpacity
+              style={styles.emptyPostCard}
+              onPress={() => router.push("/post-job")}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.emptyPostIcon, { backgroundColor: "#dbeafe" }]}>
+                <Feather name="plus-circle" size={26} color="#2563EB" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.emptyPostTitle, { color: "#111827" }]}>Post your first job</Text>
+                <Text style={[styles.emptyPostSub, { color: "#6b7280" }]}>Workers are standing by — takes 2 minutes</Text>
+              </View>
+              <Feather name="arrow-right" size={18} color="#2563EB" />
+            </TouchableOpacity>
+          ) : (
+            myJobs.map((job) => (
+              <TouchableOpacity
+                key={job.id}
+                style={styles.jobPostRow}
+                onPress={() => router.push(`/job/${job.id}`)}
+                activeOpacity={0.85}
+              >
+                <View style={[styles.jobPostIcon, { backgroundColor: "#eff6ff" }]}>
+                  <Feather name="briefcase" size={18} color="#2563EB" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.jobPostTitle, { color: "#111827" }]}>{job.title}</Text>
+                  <Text style={[styles.jobPostMeta, { color: "#6b7280" }]}>
+                    {job.applicantsCount} applicants · {job.startDate}
+                  </Text>
+                </View>
+                <View style={[styles.statusPill, { backgroundColor: "#ecfdf5" }]}>
+                  <View style={[styles.openDot, { backgroundColor: "#10b981" }]} />
+                  <Text style={[styles.statusPillText, { color: "#10b981" }]}>Open</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+      )}
 
-                {/* "Current Step" badge */}
-                {isCurrent && (
-                  <View style={s.tlCurBadge}>
-                    <Text style={s.tlCurText}>Current</Text>
+      {/* ── INSIGHTS / TIP CARD ── */}
+      <View style={[styles.section, { marginBottom: 8 }]}>
+        <View style={styles.insightCard}>
+          <View style={styles.insightLeft}>
+            <View style={[styles.insightIcon, { backgroundColor: "rgba(96,165,250,0.15)" }]}>
+              <Feather name="trending-up" size={20} color="#60a5fa" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.insightTitle}>
+                {isEmployer ? "Boost visibility" : "Improve your profile"}
+              </Text>
+              <Text style={styles.insightBody}>
+                {isEmployer
+                  ? "Jobs with clear pay ranges fill 3× faster. Add salary details to attract top candidates."
+                  : "Workers with verified badges get 2× more callbacks. Complete your verification today."}
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.insightCta}>
+            <Text style={styles.insightCtaText}>
+              {isEmployer ? "Edit Job" : "Verify Now"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+    </ScrollView>
+
+    <NotificationsSheet visible={notifVisible} onClose={() => setNotifVisible(false)} />
+
+    <Modal
+      visible={clockInModalVisible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={() => setClockInModalVisible(false)}
+    >
+      <View style={{ flex: 1 }}>
+        {Platform.OS === "ios" ? (
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setClockInModalVisible(false)}>
+            <BlurView intensity={65} tint="dark" style={StyleSheet.absoluteFill} />
+          </Pressable>
+        ) : (
+          <Pressable
+            style={[
+              modalStyles.backdrop,
+              StyleSheet.absoluteFill,
+              Platform.OS === "web" &&
+                ({ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as any),
+            ]}
+            onPress={() => setClockInModalVisible(false)}
+          />
+        )}
+        <Pressable style={modalStyles.sheetWrap} onPress={() => setClockInModalVisible(false)}>
+          <Pressable style={modalStyles.card} onPress={(e) => e.stopPropagation()}>
+            <View style={modalStyles.handle} />
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>
+              {clockModalMode === "out" ? "Ready to Clock Out?" : "Ready to Clock In?"}
+            </Text>
+            <TouchableOpacity
+              style={modalStyles.closeBtn}
+              onPress={() => setClockInModalVisible(false)}
+              hitSlop={8}
+            >
+              <Feather name="x" size={18} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={modalStyles.body}>
+            <View style={modalStyles.infoCard}>
+              <ModalInfoRow icon="briefcase" label="EVENT" value={activeJobForModal?.title || "Lunch Service"} />
+              <ModalInfoRow icon="clock" label="SHIFT TIME" value="12:03 PM - 8:00 PM" />
+              <ModalInfoRow icon="map-pin" label="LOCATION" value={activeJobForModal?.location || "Manhattan"} />
+            </View>
+
+            {(clockInTime || clockOutTime) && (
+              <View style={modalStyles.timeStampWrap}>
+                {clockInTime && (
+                  <View style={modalStyles.timeStampRow}>
+                    <Feather name="log-in" size={12} color="#10b981" />
+                    <Text style={modalStyles.timeStampLabel}>IN</Text>
+                    <Text style={modalStyles.timeStampValue}>{formatTime(clockInTime)}</Text>
+                  </View>
+                )}
+                {clockOutTime && (
+                  <View style={modalStyles.timeStampRow}>
+                    <Feather name="log-out" size={12} color="#ef4444" />
+                    <Text style={modalStyles.timeStampLabel}>OUT</Text>
+                    <Text style={modalStyles.timeStampValue}>{formatTime(clockOutTime)}</Text>
                   </View>
                 )}
               </View>
+            )}
 
-              {/* Connector line */}
-              {i < TIMELINE_STEPS.length - 1 && (
-                <View style={[s.tlLine, { backgroundColor: lineFilled ? lineColor : C.border }]} />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </View>
+            <View style={modalStyles.totalRow}>
+              <Text style={modalStyles.totalLabel}>Total Time Logged:</Text>
+              <View style={modalStyles.totalPill}>
+                <Text style={modalStyles.totalPillText}>0.0 hours</Text>
+              </View>
+            </View>
 
-      {/* ── Info message ── */}
-      <View style={s.tlMsgRow}>
-        <View style={[s.tlMsgIcon, { backgroundColor: C.blueLight }]}>
-          <Feather name="search" size={13} color={C.blue} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.tlMsgText}>
-            We're matching your profile with available opportunities. You'll receive a notification when a recruiter selects you.
-          </Text>
-          <View style={s.tlTimeBadge}>
-            <Feather name="clock" size={11} color={C.textMuted} />
-            <Text style={s.tlTimeText}>Usually within 24–48 hours</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-// ─── Today's Tip ───────────────────────────────────────────────────────────────
-function TodaysTip() {
-  const [idx, setIdx] = useState(0);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const tip = TIPS[idx];
-
-  const goTo = (next: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Animated.timing(fadeAnim, { toValue: 0, duration: 140, useNativeDriver: true }).start(() => {
-      setIdx(next);
-      Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-    });
-  };
-
-  return (
-    <View style={s.ttCard}>
-      {/* Top bar: gradient icon + counter + nav */}
-      <View style={s.ttTopRow}>
-        <LinearGradient colors={tip.grad} style={s.ttIconGrad}>
-          <Feather name={tip.icon as any} size={24} color="#fff" />
-        </LinearGradient>
-        <View style={{ flex: 1 }} />
-        <Text style={s.ttCounter}>{idx + 1} / {TIPS.length}</Text>
-        <TouchableOpacity
-          style={[s.ttArrowBtn, { opacity: idx === 0 ? 0.3 : 1 }]}
-          onPress={() => idx > 0 && goTo(idx - 1)}
-          activeOpacity={0.7}
-        >
-          <Feather name="chevron-left" size={18} color={C.textSub} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[s.ttArrowBtn, { opacity: idx === TIPS.length - 1 ? 0.3 : 1 }]}
-          onPress={() => idx < TIPS.length - 1 && goTo(idx + 1)}
-          activeOpacity={0.7}
-        >
-          <Feather name="chevron-right" size={18} color={C.textSub} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Animated content */}
-      <Animated.View style={{ opacity: fadeAnim }}>
-        {/* Colored accent stripe */}
-        <View style={[s.ttAccentBar, { backgroundColor: tip.color + "18" }]}>
-          <View style={[s.ttAccentDot, { backgroundColor: tip.color }]} />
-          <Text style={[s.ttAccentLabel, { color: tip.color }]}>Quick tip</Text>
-        </View>
-
-        <Text style={s.ttTitle}>{tip.title}</Text>
-        <Text style={s.ttBody}>{tip.body}</Text>
-
-        {/* Action button */}
-        <TouchableOpacity
-          style={s.ttBtnWrap}
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push(tip.route as any); }}
-          activeOpacity={0.85}
-        >
-          <LinearGradient colors={tip.grad} style={s.ttBtnGrad}>
-            <Text style={s.ttBtnText}>{tip.btnLabel}</Text>
-            <Feather name="arrow-right" size={14} color="#fff" />
-          </LinearGradient>
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* Pagination dots */}
-      <View style={s.ttDots}>
-        {TIPS.map((_, i) => (
-          <TouchableOpacity key={i} onPress={() => goTo(i)} activeOpacity={0.7}>
-            <Animated.View
+            <TouchableOpacity
               style={[
-                s.ttDot,
-                i === idx && { width: 20, backgroundColor: tip.color },
+                modalStyles.confirmBtn,
+                clockModalMode === "out" && { backgroundColor: "#ef4444", shadowColor: "#ef4444" },
               ]}
-            />
-          </TouchableOpacity>
-        ))}
+              activeOpacity={0.9}
+              onPress={() => {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                if (clockModalMode === "out") {
+                  setClockOutTime(new Date());
+                  setIsClockedIn(false);
+                } else {
+                  setClockInTime(new Date());
+                  setClockOutTime(null);
+                  setIsClockedIn(true);
+                }
+                setClockInModalVisible(false);
+              }}
+            >
+              <Feather name={clockModalMode === "out" ? "log-out" : "clock"} size={20} color="#fff" />
+              <Text style={modalStyles.confirmBtnText}>
+                {clockModalMode === "out" ? "Clock Out Now" : "Clock In Now"}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={modalStyles.verifiedRow}>
+              <Feather name="navigation" size={11} color="#9ca3af" />
+              <Text style={modalStyles.verifiedText}>Location verified</Text>
+            </View>
+          </View>
+          </Pressable>
+        </Pressable>
+      </View>
+    </Modal>
+    </View>
+  );
+}
+
+function ModalInfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <View style={modalStyles.infoRow}>
+      <View style={modalStyles.infoIcon}>
+        <Feather name={icon as any} size={16} color="#2563EB" />
+      </View>
+      <View style={{ flex: 1, marginLeft: 4 }}>
+        <Text style={modalStyles.infoLabel}>{label}</Text>
+        <Text style={modalStyles.infoValue}>{value}</Text>
       </View>
     </View>
   );
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────────
-const CARD_W = (SW - 40 - 12) / 2; // 2-col with 20px side padding + 12px gap
-
-const s = StyleSheet.create({
-  root:    { flex: 1, backgroundColor: C.bg },
-  content: { marginTop: -32 }, // pull content up to overlap header
-  ph:      { paddingHorizontal: 20 },
-
-  // ── Header ──
-  header: {
-    paddingHorizontal: 24,
-    paddingBottom: 56, // extra space for floating card overlap
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: "hidden",
-    ...shadow(C.blue, 0.3, 20, 8),
+const modalStyles = StyleSheet.create({
+  backdrop: {
+    backgroundColor: "rgba(2,8,23,0.45)",
   },
-  hCircle1: { position: "absolute", width: 240, height: 240, borderRadius: 120, backgroundColor: "rgba(255,255,255,0.06)", top: -100, right: -60 },
-  hCircle2: { position: "absolute", width: 140, height: 140, borderRadius: 70,  backgroundColor: "rgba(255,255,255,0.05)", top: 20,  right: 80 },
-  hCircle3: { position: "absolute", width: 90,  height: 90,  borderRadius: 45,  backgroundColor: "rgba(255,255,255,0.04)", bottom: 0, left: -20 },
-  hRow:     { flexDirection: "row", alignItems: "flex-start" },
-  hGreeting:{ color: "rgba(255,255,255,0.75)", fontSize: 13,   fontWeight: "500" },
-  hSub:     { color: "rgba(255,255,255,0.9)",  fontSize: 14,   fontWeight: "500", marginTop: 1 },
-  hBrand:   { color: "#fff",                   fontSize: 26,   fontWeight: "900", letterSpacing: -0.8, marginTop: 0 },
-  hTagline: { color: "rgba(255,255,255,0.6)",  fontSize: 11.5, fontStyle: "italic", marginTop: 6, lineHeight: 17 },
-  hRight:   { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 },
-  hIconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,255,255,0.18)", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.22)" },
-  bellDot:  { position: "absolute", top: 9, right: 10, width: 8, height: 8, borderRadius: 4, backgroundColor: "#EF4444", borderWidth: 1.5, borderColor: "#fff" },
-  avatarTouch: {},
-  avatar:   { width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: "rgba(255,255,255,0.5)" },
-  avatarFb: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.22)", justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "rgba(255,255,255,0.4)" },
-  avatarLetter: { color: "#fff", fontSize: 18, fontWeight: "800" },
-
-  // ── Floating Status Card ──
-  statusCard: {
-    marginHorizontal: 20,
-    backgroundColor: C.white,
-    borderRadius: 24,
-    padding: 20,
-    ...shadow("#000", 0.1, 24, 8),
-    zIndex: 10,
+  sheetWrap: {
+    flex: 1,
+    justifyContent: "flex-end",
   },
-  statusBadgeRow: { flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 10 },
-  statusDot:      { width: 8, height: 8, borderRadius: 4, backgroundColor: C.green },
-  statusBadgeText:{ fontSize: 12.5, fontWeight: "700", color: C.green },
-  statusTitle:    { fontSize: 21, fontWeight: "800", color: C.text, letterSpacing: -0.5, marginBottom: 8 },
-  statusBody:     { fontSize: 13.5, color: C.textSub, lineHeight: 21, marginBottom: 16 },
-  statusBtns:     { flexDirection: "row", gap: 10 },
-  statusBtnPrimary: { flex: 1, borderRadius: 14, overflow: "hidden" },
-  statusBtnGrad:    { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingVertical: 13 },
-  statusBtnPrimaryText: { color: "#fff", fontSize: 14, fontWeight: "700" },
-  statusBtnOutline: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, borderWidth: 1.5, borderColor: C.blueLight, borderRadius: 14, paddingVertical: 12, backgroundColor: C.blueLight },
-  statusBtnOutlineText: { color: C.blue, fontSize: 14, fontWeight: "700" },
-
-  heroStatsRow: { flexDirection: "row", gap: 8, marginTop: 4 },
-  statChip:  { flex: 1, borderRadius: 12, padding: 10, alignItems: "center" },
-  statValue: { fontSize: 14, fontWeight: "800" },
-  statLabel: { fontSize: 10, color: C.textMuted, fontWeight: "500", marginTop: 2 },
-
-  // ── Section ──
-  section:        { paddingHorizontal: 20, marginTop: 28 },
-  sectionHeader:  { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 },
-  sectionIconBadge:{ width: 28, height: 28, borderRadius: 8, justifyContent: "center", alignItems: "center" },
-  sectionTitle:   { fontSize: 18, fontWeight: "800", color: C.text, letterSpacing: -0.4 },
-
-  // ── Card ──
   card: {
-    backgroundColor: C.white,
-    borderRadius: 20,
+    width: "100%",
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: C.border,
-    ...shadow("#000", 0.05, 12, 3),
+    paddingTop: 10,
+    paddingBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    elevation: 28,
   },
-
-  // ── 2-Column Quick Actions ──
-  qaGrid:    { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  qaCard:    {
-    width: CARD_W,
-    backgroundColor: C.white,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: C.border,
-    ...shadow("#000", 0.05, 12, 3),
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#e2e8f0",
+    alignSelf: "center",
+    marginBottom: 10,
   },
-  qaIconGrad: { width: 56, height: 56, borderRadius: 18, justifyContent: "center", alignItems: "center", marginBottom: 12 },
-  qaLabel:    { fontSize: 15, fontWeight: "800", color: C.text, marginBottom: 3 },
-  qaSub:      { fontSize: 12, color: C.textMuted, lineHeight: 17 },
-
-  // ── Match Rows ──
-  matchRow:     { flexDirection: "row", alignItems: "center", gap: 13, paddingHorizontal: 16, paddingVertical: 15 },
-  matchIconWrap:{ width: 42, height: 42, borderRadius: 13, justifyContent: "center", alignItems: "center" },
-  matchLabel:   { flex: 1, fontSize: 14, fontWeight: "600", color: C.text },
-  pendingPill:  { backgroundColor: C.orangeBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  pendingText:  { fontSize: 11, fontWeight: "700", color: C.orange },
-
-  // ── Premium Timeline ──
-  tlOuter: {
+  header: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    paddingHorizontal: 16,
-    paddingTop: 22,
-    paddingBottom: 8,
-  },
-  tlStepCol: { alignItems: "center", width: 52, position: "relative" },
-  tlPulseRing: {
-    position: "absolute",
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: C.blue,
-    top: 0,
-    zIndex: 0,
-  },
-  tlCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 2,
-    justifyContent: "center",
     alignItems: "center",
-    zIndex: 1,
-    backgroundColor: C.white,
-    borderColor: C.border,
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
   },
-  tlLabel: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: C.textMuted,
-    textAlign: "center",
-    marginTop: 7,
-    lineHeight: 14,
+  title: { fontSize: 17, fontWeight: "700", color: "#111827" },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  tlCurBadge: {
-    marginTop: 5,
-    backgroundColor: C.blue + "15",
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+  body: { padding: 20, gap: 16 },
+  infoCard: {
+    backgroundColor: "#eff6ff",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#dbeafe",
+    gap: 12,
+  },
+  infoRow: { flexDirection: "row", alignItems: "center" },
+  infoIcon: { width: 32, alignItems: "center" },
+  infoLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#6b7280",
+    letterSpacing: 0.5,
+  },
+  infoValue: { fontSize: 14, fontWeight: "700", color: "#111827", marginTop: 2 },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  totalLabel: { fontSize: 13, color: "#4b5563", fontWeight: "500" },
+  totalPill: {
+    backgroundColor: "#f3f4f6",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: 8,
   },
-  tlCurText:  { fontSize: 9, fontWeight: "800", color: C.blue, letterSpacing: 0.3 },
-  tlLine:     { flex: 1, height: 2, marginTop: 20, borderRadius: 1 },
-  tlMsgRow:   {
+  totalPillText: { fontSize: 13, fontWeight: "700", color: "#111827" },
+  timeStampWrap: {
     flexDirection: "row",
-    gap: 11,
-    alignItems: "flex-start",
-    marginHorizontal: 16,
-    marginBottom: 18,
-    marginTop: 8,
-    backgroundColor: C.blueLight + "60",
-    borderRadius: 14,
-    padding: 13,
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+    backgroundColor: "#f9fafb",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#f3f4f6",
   },
-  tlMsgIcon:  { width: 30, height: 30, borderRadius: 9, justifyContent: "center", alignItems: "center", flexShrink: 0 },
-  tlMsgText:  { fontSize: 12.5, color: C.textMid, lineHeight: 19, marginBottom: 8 },
-  tlTimeBadge:{ flexDirection: "row", alignItems: "center", gap: 5 },
-  tlTimeText: { fontSize: 11, color: C.textMuted, fontWeight: "600" },
+  timeStampRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  timeStampLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#6b7280",
+    letterSpacing: 0.5,
+  },
+  timeStampValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  confirmBtn: {
+    backgroundColor: "#2563EB",
+    paddingVertical: 16,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: "#2563EB",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  confirmBtnText: { color: "#fff", fontSize: 17, fontWeight: "700" },
+  verifiedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  verifiedText: { fontSize: 11, color: "#9ca3af" },
+});
 
-  // ── Today's Tip ──
-  ttCard: {
-    backgroundColor: C.white,
-    borderRadius: 22,
-    padding: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: C.border,
-    ...shadow("#000", 0.07, 16, 4),
+function StatTile({ icon, value, label, accent }: { icon: string; value: string; label: string; accent: string }) {
+  return (
+    <View style={styles.statTile}>
+      <View style={styles.statTileTop}>
+        <Feather name={icon as any} size={13} color={accent} />
+        <Text style={styles.statTileValue}>{value}</Text>
+      </View>
+      <Text style={styles.statTileLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function AppStatusCard({
+  label, count, color, bg, border, icon,
+}: { label: string; count: number; color: string; bg: string; border: string; icon: string }) {
+  return (
+    <View style={[styles.appStatusCard, { backgroundColor: bg, borderColor: border }]}>
+      <Feather name={icon as any} size={18} color={color} />
+      <Text style={[styles.appStatusCount, { color }]}>{count}</Text>
+      <Text style={[styles.appStatusLabel, { color: "#6b7280" }]}>{label}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+
+  // ── HERO ──
+  hero: {
+    backgroundColor: "#0759af",
+    paddingHorizontal: 20,
+    paddingBottom: 28,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    marginBottom: 24,
   },
-  ttTopRow:    { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  ttIconGrad:  { width: 52, height: 52, borderRadius: 16, justifyContent: "center", alignItems: "center" },
-  ttCounter:   { fontSize: 12, fontWeight: "600", color: C.textMuted, marginRight: 6 },
-  ttArrowBtn:  { width: 34, height: 34, borderRadius: 10, backgroundColor: C.slateBg, justifyContent: "center", alignItems: "center" },
-  ttAccentBar: { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 11, paddingVertical: 6, borderRadius: 10, alignSelf: "flex-start", marginBottom: 12 },
-  ttAccentDot: { width: 6, height: 6, borderRadius: 3 },
-  ttAccentLabel:{ fontSize: 11, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" },
-  ttTitle:     { fontSize: 19, fontWeight: "800", color: C.text, letterSpacing: -0.4, marginBottom: 6 },
-  ttBody:      { fontSize: 13.5, color: C.textSub, lineHeight: 21, marginBottom: 18 },
-  ttBtnWrap:   { borderRadius: 15, overflow: "hidden", marginBottom: 20 },
-  ttBtnGrad:   { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14 },
-  ttBtnText:   { color: "#fff", fontSize: 14, fontWeight: "800" },
-  ttDots:      { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7 },
-  ttDot: {
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 14,
+  },
+  heroGreeting: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 13,
+    fontWeight: "500",
+    marginBottom: 3,
+  },
+  heroName: {
+    color: "#fff",
+    fontSize: 30,
+    fontWeight: "800",
+    letterSpacing: -0.6,
+  },
+  heroNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  approvedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(52,211,153,0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(52,211,153,0.35)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: 2,
+  },
+  approvedBadgeText: {
+    color: "#34d399",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
+  topBarRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 4,
+  },
+  notifBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  notifDot: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#ef4444",
+    borderWidth: 1.5,
+    borderColor: "#0f172a",
+  },
+  avatarCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#2563EB",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarLetter: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  rolePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 22,
+  },
+  roleDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: C.border,
-    transition: "all 0.2s",
-  } as any,
-
-  // ── Support ──
-  supportDesc:   { fontSize: 13, color: C.textSub, lineHeight: 20, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14 },
-  supportBtnRow: { flexDirection: "row", gap: 10, paddingHorizontal: 16, paddingBottom: 16 },
-  supBtn:        { flex: 1, borderRadius: 16, paddingVertical: 14, alignItems: "center", gap: 6 },
-  supIconWrap:   { width: 44, height: 44, borderRadius: 14, justifyContent: "center", alignItems: "center" },
-  supLabel:      { fontSize: 12.5, fontWeight: "700" },
-
-  // ── Referral ──
-  referralCard: {
-    borderRadius: 22, padding: 20, overflow: "hidden", flexDirection: "row", alignItems: "center", gap: 14,
-    ...shadow("#7C3AED", 0.3, 14, 6),
-    marginTop: 8,
   },
-  refBubble1: { position: "absolute", width: 140, height: 140, borderRadius: 70, backgroundColor: "rgba(255,255,255,0.07)", top: -35, right: 85  },
-  refBubble2: { position: "absolute", width: 80,  height: 80,  borderRadius: 40, backgroundColor: "rgba(255,255,255,0.05)", bottom: -20, left: -10 },
-  refTitle:   { color: "#fff", fontSize: 17, fontWeight: "800", marginBottom: 5 },
-  refBody:    { color: "rgba(255,255,255,0.8)", fontSize: 12, lineHeight: 18 },
-  refBtn:     { backgroundColor: "#fff", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, alignSelf: "flex-start" },
-  refBtnText: { color: "#7C3AED", fontSize: 13, fontWeight: "800" },
+  rolePillText: {
+    color: "rgba(255,255,255,0.65)",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  verifiedPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(96,165,250,0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    marginLeft: 4,
+  },
+  verifiedPillText: {
+    color: "#60a5fa",
+    fontSize: 11,
+    fontWeight: "600",
+  },
 
-  // ── Active job ──
-  activeJobRow:  { flexDirection: "row", alignItems: "center", gap: 13, padding: 16 },
-  activeJobIcon: { width: 46, height: 46, borderRadius: 14, justifyContent: "center", alignItems: "center" },
-  activeJobTitle:{ fontSize: 15, fontWeight: "700", color: C.text },
-  activeJobSub:  { fontSize: 12, color: C.textMuted, marginTop: 2 },
-  clockBtn:      { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 12 },
-  clockBtnText:  { color: "#fff", fontSize: 12, fontWeight: "700" },
+  // ── STAT TILES ──
+  statTiles: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  statTile: {
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    gap: 3,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  statTileTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  statTileValue: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+  },
+  statTileLabel: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 10,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
 
-  // ── Employer ──
-  emptyState: { padding: 28, alignItems: "center" },
-  emptyIcon:  { width: 72, height: 72, borderRadius: 22, justifyContent: "center", alignItems: "center", marginBottom: 14 },
-  emptyTitle: { fontSize: 17, fontWeight: "800", color: C.text, marginBottom: 6 },
-  emptyBody:  { fontSize: 13.5, color: C.textSub, textAlign: "center", lineHeight: 21, marginBottom: 16 },
-  emptyBtn:   { backgroundColor: C.blue, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 },
-  emptyBtnText:{ color: "#fff", fontSize: 14, fontWeight: "700" },
-  jobRow:     { flexDirection: "row", alignItems: "center", gap: 13, padding: 16 },
-  jobRowIcon: { width: 44, height: 44, borderRadius: 13, justifyContent: "center", alignItems: "center" },
-  jobRowTitle:{ flex: 1, fontSize: 14, fontWeight: "700", color: C.text },
-  jobRowSub:  { fontSize: 12, color: C.textMuted, marginTop: 2 },
-  openPill:   { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: C.greenBg, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 12 },
-  openDot:    { width: 5, height: 5, borderRadius: 3, backgroundColor: C.green },
-  openText:   { fontSize: 11, fontWeight: "700", color: "#16A34A" },
+  // ── SECTIONS ──
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 22,
+  },
+  sectionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+  },
+  sectionSub: {
+    fontSize: 13,
+  },
+
+  // ── ACTIVE JOB CARD ──
+  activeJobSection: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  activeJobCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1.5,
+    borderColor: "#2563EB",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    ...Platform.select({
+      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6 },
+      android: { elevation: 2 },
+    }),
+  },
+  activeJobLeft: {
+    flex: 1,
+    gap: 3,
+  },
+  activeJobRight: {
+    alignItems: "center",
+    gap: 5,
+  },
+  activeJobPayBelow: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#6b7280",
+    textAlign: "center",
+  },
+  activeJobHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#10b981",
+  },
+  activeJobBadge: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#2563EB",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  activeJobTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.2,
+  },
+  activeJobLocation: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  activeJobLocationText: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "500",
+  },
+  activeJobPayRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 1,
+    marginTop: 1,
+  },
+  activeJobPay: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.3,
+  },
+  activeJobPayUnit: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "500",
+  },
+  clockInBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    ...Platform.select({
+      ios: { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 5 },
+      android: { elevation: 3 },
+    }),
+  },
+  clockInText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#fff",
+    letterSpacing: 0.4,
+  },
+  // ── QUICK ACTIONS ──
+  quickGrid: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  quickCard: {
+    width: 90,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    gap: 7,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3 },
+      android: { elevation: 1 },
+    }),
+  },
+  quickIconWrap: {
+    position: "relative",
+  },
+  quickIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  quickBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#ef4444",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: "#f0f4f8",
+  },
+  quickBadgeText: {
+    color: "#fff",
+    fontSize: 9,
+    fontWeight: "700",
+  },
+  quickLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  availabilityStatus: {
+    fontSize: 9,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+
+  // ── CATEGORY GRID ──
+  categoryGrid: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  upcomingJobRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 13,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
+      android: { elevation: 1 },
+    }),
+  },
+  upcomingJobIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  upcomingJobTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 3,
+  },
+  upcomingJobMeta: {
+    fontSize: 12,
+  },
+  upcomingJobRight: {
+    alignItems: "flex-end",
+    gap: 4,
+  },
+  upcomingJobPay: {
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  upcomingJobPayType: {
+    fontSize: 11,
+    fontWeight: "400",
+  },
+  upcomingUrgentTag: {
+    backgroundColor: "#fef2f2",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  upcomingUrgentText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#ef4444",
+  },
+
+  // ── JOB INVITATIONS ──
+  inviteBadgeCount: {
+    backgroundColor: "#7c3aed",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 5,
+  },
+  inviteBadgeCountText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#fff",
+  },
+  inviteCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    gap: 10,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: { shadowColor: "#7c3aed", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8 },
+      android: { elevation: 2 },
+    }),
+  },
+  inviteCardUrgent: {
+    borderColor: "#fecaca",
+    borderLeftWidth: 3,
+    borderLeftColor: "#ef4444",
+  },
+  inviteUrgentRibbon: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#ef4444",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 10,
+  },
+  inviteUrgentRibbonText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#fff",
+    letterSpacing: 0.5,
+  },
+  inviteTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  inviteIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  inviteTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.1,
+  },
+  inviteCompany: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "500",
+    marginTop: 1,
+  },
+  invitePayBox: {
+    alignItems: "flex-end",
+  },
+  invitePayValue: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.3,
+  },
+  invitePayType: {
+    fontSize: 11,
+    color: "#9ca3af",
+    fontWeight: "500",
+  },
+  inviteMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#f3f4f6",
+  },
+  inviteMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  inviteMetaText: {
+    fontSize: 12,
+    color: "#4b5563",
+    fontWeight: "500",
+  },
+  inviteMetaDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "#d1d5db",
+  },
+  inviteActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  inviteDeclineBtn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 9,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#f9fafb",
+  },
+  inviteDeclineBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#6b7280",
+  },
+  inviteAcceptBtn: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: "#2563eb",
+    ...Platform.select({
+      ios: { shadowColor: "#2563eb", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 5 },
+      android: { elevation: 3 },
+    }),
+  },
+  inviteAcceptBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#fff",
+  },
+
+  // ── UPCOMING SCHEDULE CARD ──
+  upcomingCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e0e7ff",
+    overflow: "hidden",
+    ...Platform.select({
+      ios: { shadowColor: "#4f46e5", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8 },
+      android: { elevation: 3 },
+    }),
+  },
+  upcomingCardInner: {
+    padding: 13,
+    gap: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: "#2563eb",
+    borderRadius: 16,
+  },
+  upcomingCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  upcomingIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#dbeafe",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  upcomingCardTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.1,
+  },
+  upcomingCardCompany: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "500",
+    marginTop: 1,
+  },
+  upcomingEarningsBadge: {
+    backgroundColor: "#ecfdf5",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+  },
+  upcomingEarningsValue: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#10b981",
+  },
+  upcomingDetailsGrid: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  upcomingDetailItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  upcomingDetailText: {
+    fontSize: 12,
+    color: "#4b5563",
+    fontWeight: "500",
+  },
+  upcomingDetailDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "#d1d5db",
+  },
+  upcomingCardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+  },
+  confirmedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#ecfdf5",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  confirmedBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#10b981",
+  },
+  seeScheduleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  seeScheduleBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2563eb",
+  },
+
+  // ── APP STATUS ──
+  appStatusRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 14,
+  },
+  appStatusCard: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    alignItems: "flex-start",
+    gap: 5,
+  },
+  appStatusCount: {
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+  appStatusLabel: {
+    fontSize: 11,
+    fontWeight: "500",
+  },
+
+  // ── RECENT APPS ──
+  recentApps: {
+    gap: 8,
+  },
+  recentAppRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 14,
+    borderRadius: 14,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
+      android: { elevation: 1 },
+    }),
+  },
+  recentAppDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  recentAppTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  recentAppSub: {
+    fontSize: 12,
+  },
+  statusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  statusPillText: {
+    fontSize: 11,
+    fontWeight: "600",
+    textTransform: "capitalize",
+  },
+
+  // ── EMPLOYER: JOB POSTS ──
+  newJobBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#eff6ff",
+    borderRadius: 20,
+  },
+  newJobBtnText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  emptyPostCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: "#fff",
+    padding: 18,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#bfdbfe",
+    borderStyle: "dashed",
+  },
+  emptyPostIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyPostTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 3,
+  },
+  emptyPostSub: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  jobPostRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 8,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
+      android: { elevation: 1 },
+    }),
+  },
+  jobPostIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  jobPostTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 3,
+  },
+  jobPostMeta: {
+    fontSize: 12,
+  },
+  openDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  // ── URGENT JOBS ──
+  urgentTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#ef4444",
+  },
+  seeAllText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  urgentJobRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 8,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
+      android: { elevation: 1 },
+    }),
+  },
+  urgentCategoryDot: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  urgentJobTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  urgentJobMeta: {
+    fontSize: 12,
+  },
+  urgentPayBox: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 1,
+  },
+  urgentPay: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  urgentPayType: {
+    fontSize: 11,
+  },
+
+  // ── INSIGHT CARD ──
+  insightCard: {
+    backgroundColor: "#0f172a",
+    borderRadius: 18,
+    padding: 18,
+    gap: 12,
+  },
+  insightLeft: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "flex-start",
+  },
+  insightIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  insightTitle: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  insightBody: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  insightCta: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(96,165,250,0.18)",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginLeft: 52,
+  },
+  insightCtaText: {
+    color: "#60a5fa",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
 });
