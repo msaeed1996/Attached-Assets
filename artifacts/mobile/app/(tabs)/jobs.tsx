@@ -59,24 +59,6 @@ export default function JobsScreen() {
       >
         <Text style={styles.headerTitle}>Available Jobs</Text>
 
-        {/* Summary strip */}
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{filtered.length}</Text>
-            <Text style={styles.summaryLabel}>Jobs</Text>
-          </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{urgentCount}</Text>
-            <Text style={styles.summaryLabel}>Urgent</Text>
-          </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>${(totalPotential / 1000).toFixed(1)}k</Text>
-            <Text style={styles.summaryLabel}>Est. Pool</Text>
-          </View>
-        </View>
-
         {/* Filter chips */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
           {FILTERS.map((f) => (
