@@ -66,7 +66,7 @@ export default function UpcomingScheduleScreen() {
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <Feather name="arrow-left" size={20} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Upcoming Schedule</Text>
+          <Text style={styles.headerTitle}>Accepted Jobs</Text>
           <View style={{ width: 38 }} />
         </View>
 
