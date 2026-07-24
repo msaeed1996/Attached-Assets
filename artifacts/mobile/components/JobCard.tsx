@@ -69,12 +69,6 @@ export function JobCard({ job, onPress, onSave, isSaved, compact }: Props) {
       <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={2}>
         {job.title}
       </Text>
-      <View style={styles.companyRow}>
-        <Text style={[styles.company, { color: colors.mutedForeground }]}>{job.company}</Text>
-        {job.verified && (
-          <Feather name="check-circle" size={13} color={colors.primary} style={{ marginLeft: 4 }} />
-        )}
-      </View>
 
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
@@ -89,11 +83,11 @@ export function JobCard({ job, onPress, onSave, isSaved, compact }: Props) {
 
       {!compact && (
         <View style={styles.footer}>
-          <View style={styles.payBox}>
-            <Text style={[styles.payAmount, { color: colors.primary }]}>
-              ${job.pay}
+          <View style={styles.payBadge}>
+            <Text style={styles.payBadgeAmount}>${job.pay}</Text>
+            <Text style={styles.payBadgeRate}>
+              ${job.pay}.00 / {job.payType}
             </Text>
-            <Text style={[styles.payType, { color: colors.mutedForeground }]}>/{job.payType}</Text>
           </View>
           <TouchableOpacity
             style={[styles.applyBtn, { backgroundColor: colors.primary }]}
@@ -106,9 +100,10 @@ export function JobCard({ job, onPress, onSave, isSaved, compact }: Props) {
       )}
 
       {compact && (
-        <Text style={[styles.payCompact, { color: colors.primary }]}>
-          ${job.pay}/{job.payType}
-        </Text>
+        <View style={styles.payBadgeCompact}>
+          <Text style={styles.payBadgeAmount}>${job.pay}</Text>
+          <Text style={styles.payBadgeRate}>${job.pay}.00 / {job.payType}</Text>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -164,15 +159,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 22,
   },
-  companyRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  company: {
-    fontSize: 13,
-    fontWeight: "500",
-  },
   metaRow: {
     flexDirection: "row",
     gap: 14,
@@ -194,17 +180,31 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#f1f5f9",
   },
-  payBox: {
-    flexDirection: "row",
-    alignItems: "baseline",
+  payBadge: {
+    backgroundColor: "#DCFCE7",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    alignItems: "center",
   },
-  payAmount: {
-    fontSize: 20,
-    fontWeight: "700",
+  payBadgeCompact: {
+    backgroundColor: "#DCFCE7",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignSelf: "flex-start",
+    marginTop: 6,
   },
-  payType: {
-    fontSize: 13,
-    marginLeft: 2,
+  payBadgeAmount: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#16A34A",
+  },
+  payBadgeRate: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: "#16A34A",
+    marginTop: 1,
   },
   applyBtn: {
     paddingHorizontal: 14,
@@ -215,10 +215,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 13,
     fontWeight: "700",
-  },
-  payCompact: {
-    fontSize: 15,
-    fontWeight: "700",
-    marginTop: 6,
   },
 });

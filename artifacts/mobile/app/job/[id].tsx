@@ -128,15 +128,6 @@ export default function JobDetailScreen() {
             </View>
           </View>
 
-          {/* Company */}
-          <View style={s.companyRow}>
-            <Feather name="briefcase" size={13} color={BLUE} />
-            <Text style={s.companyTxt}>{job.company}</Text>
-            {job.verified && (
-              <Feather name="check-circle" size={13} color={BLUE} style={{ marginLeft: 3 }} />
-            )}
-          </View>
-
           <View style={s.divider} />
 
           {/* Date */}
@@ -328,8 +319,6 @@ const s = StyleSheet.create({
   payBadge:   { backgroundColor: GREEN_BG, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, alignItems: "center", minWidth: 74 },
   payTotal:   { fontSize: 20, fontWeight: "800", color: GREEN },
   payRate:    { fontSize: 11, color: GREEN, fontWeight: "500", marginTop: 2 },
-  companyRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 14 },
-  companyTxt: { fontSize: 14, fontWeight: "600", color: BLUE },
   divider:    { height: 1, backgroundColor: BORDER, marginBottom: 14 },
 
   /* shared info row */
