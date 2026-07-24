@@ -16,12 +16,26 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Running the App
+
+Two workflows run the project:
+
+- **API Server** — `PORT=8080 pnpm --filter @workspace/api-server run dev`
+  Builds with esbuild then starts Express on port 8080.
+- **Mobile App** — `PORT=18115 pnpm --filter @workspace/mobile run dev`
+  Starts the Expo/Metro bundler. Scan the QR code in the console with **Expo Go** (Android) or the Camera app (iOS) to open the app on a device.
+
+### pnpm-workspace.yaml overrides (package firewall)
+The Replit package firewall blocks certain tar versions. The workspace pins `tar: "7.5.21"` and `shell-quote: "1.10.0"` as overrides to work around this.
+
 ## Structure
 
 ```text
 artifacts-monorepo/
 ├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
+│   ├── api-server/         # Express API server
+│   ├── mobile/             # Expo React Native app (TrueGigs)
+│   └── truegigs/           # React/Vite web redirect to Expo domain
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks

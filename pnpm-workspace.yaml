@@ -154,6 +154,10 @@ overrides:
   "@expo/ngrok-bin>@expo/ngrok-bin-sunos-x64": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-win32-ia32": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-win32-x64": "-"
+  # tar@7.5.13 and 6.2.1 are blocked by the package firewall; use 6.1.15
+  tar: "7.5.21"
+  # shell-quote@1.8.3 is blocked by the package firewall; pin to latest
+  shell-quote: "1.10.0"
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
