@@ -5,162 +5,180 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Platform,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors } from "@/hooks/useColors";
+import { LinearGradient } from "expo-linear-gradient";
 import { useJobs } from "@/context/JobsContext";
-import { JobCard } from "@/components/JobCard";
 import * as Haptics from "expo-haptics";
 
-const JOB_TYPES = ["All Types", "full-day", "part-time", "weekend", "evening", "contract"];
-const SORT_OPTIONS = ["Newest", "Pay: High-Low", "Urgency"];
+const CATEGORY_COLORS: Record<string, { icon: string; color: string; bg: string }> = {
+  Warehouse:    { icon: "package",      color: "#2563eb", bg: "#dbeafe" },
+  Hospitality:  { icon: "coffee",       color: "#7c3aed", bg: "#ede9fe" },
+  Admin:        { icon: "monitor",      color: "#0891b2", bg: "#cffafe" },
+  Events:       { icon: "star",         color: "#d97706", bg: "#fef3c7" },
+  Retail:       { icon: "shopping-bag", color: "#059669", bg: "#d1fae5" },
+  Cleaning:     { icon: "wind",         color: "#0891b2", bg: "#ecfeff" },
+  Construction: { icon: "tool",         color: "#ea580c", bg: "#ffedd5" },
+  Default:      { icon: "briefcase",    color: "#2563eb", bg: "#dbeafe" },
+};
+
+function getCategoryStyle(category: string) {
+  return CATEGORY_COLORS[category] ?? CATEGORY_COLORS.Default;
+}
+
+const FILTERS = ["All", "Urgent", "High Pay", "Today"];
 
 export default function JobsScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { jobs } = useJobs();
-  const [search, setSearch] = useState("");
-  const [selectedType, setSelectedType] = useState("All Types");
-  const [sortBy, setSortBy] = useState("Newest");
-  const [showFilters, setShowFilters] = useState(false);
-  const [minPay, setMinPay] = useState(0);
+  const { jobs, applications, applyToJob } = useJobs();
+  const [activeFilter, setActiveFilter] = useState("All");
 
   const topPadding = Platform.OS === "web" ? insets.top + 67 : insets.top;
 
-  let filtered = jobs.filter((j) => {
-    const matchType = selectedType === "All Types" || j.type === selectedType;
-    const matchSearch =
-      !search ||
-      j.title.toLowerCase().includes(search.toLowerCase()) ||
-      j.company.toLowerCase().includes(search.toLowerCase());
-    const matchPay = j.pay >= minPay;
-    return matchType && matchSearch && matchPay;
+  const filtered = jobs.filter((j) => {
+    if (activeFilter === "Urgent") return j.urgency === "urgent";
+    if (activeFilter === "High Pay") return j.pay >= 25;
+    if (activeFilter === "Today") return j.startDate === "Today" || j.startDate === "Tomorrow";
+    return true;
   });
 
-  if (sortBy === "Pay: High-Low") filtered = [...filtered].sort((a, b) => b.pay - a.pay);
-  else if (sortBy === "Urgency") {
-    filtered = [...filtered].sort((a) => (a.urgency === "urgent" ? -1 : 1));
-  }
+  const totalPotential = filtered.reduce((s, j) => s + j.pay * 8, 0);
+  const urgentCount = filtered.filter((j) => j.urgency === "urgent").length;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Blue hero header */}
-      <View style={[styles.hero, { paddingTop: topPadding + 16 }]}>
-        <Text style={styles.title}>Available Jobs</Text>
-        <View style={styles.searchRow}>
-          <Feather name="search" size={18} color="rgba(255,255,255,0.6)" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search jobs..."
-            placeholderTextColor="rgba(255,255,255,0.5)"
-            value={search}
-            onChangeText={setSearch}
-          />
-          <TouchableOpacity
-            style={[styles.filterToggle, { backgroundColor: showFilters ? "#fff" : "rgba(255,255,255,0.15)" }]}
-            onPress={() => {
-              Haptics.selectionAsync();
-              setShowFilters(!showFilters);
-            }}
-          >
-            <Feather name="sliders" size={15} color={showFilters ? "#0759af" : "#fff"} />
-          </TouchableOpacity>
+    <View style={styles.root}>
+      {/* ── HEADER ── */}
+      <LinearGradient
+        colors={["#0a47a9", "#1e63d0"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: topPadding + 14 }]}
+      >
+        <Text style={styles.headerTitle}>Available Jobs</Text>
+
+        {/* Summary strip */}
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryValue}>{filtered.length}</Text>
+            <Text style={styles.summaryLabel}>Jobs</Text>
+          </View>
+          <View style={styles.summaryDivider} />
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryValue}>{urgentCount}</Text>
+            <Text style={styles.summaryLabel}>Urgent</Text>
+          </View>
+          <View style={styles.summaryDivider} />
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryValue}>${(totalPotential / 1000).toFixed(1)}k</Text>
+            <Text style={styles.summaryLabel}>Est. Pool</Text>
+          </View>
         </View>
 
-        {/* Sort */}
+        {/* Filter chips */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-          {SORT_OPTIONS.map((opt) => (
+          {FILTERS.map((f) => (
             <TouchableOpacity
-              key={opt}
-              style={[
-                styles.sortChip,
-                { backgroundColor: sortBy === opt ? "#fff" : "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.2)" },
-              ]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setSortBy(opt);
-              }}
+              key={f}
+              style={[styles.chip, activeFilter === f && styles.chipActive]}
+              onPress={() => { Haptics.selectionAsync(); setActiveFilter(f); }}
             >
-              <Text style={[styles.sortChipText, { color: sortBy === opt ? "#0759af" : "#fff" }]}>
-                {opt}
-              </Text>
+              <Text style={[styles.chipText, activeFilter === f && styles.chipTextActive]}>{f}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
+      </LinearGradient>
 
-        {/* Filter panel */}
-        {showFilters && (
-          <View style={[styles.filterPanel, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.filterLabel, { color: colors.foreground }]}>Job Type</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
-              {JOB_TYPES.map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  style={[
-                    styles.typeChip,
-                    { backgroundColor: selectedType === t ? colors.primary : colors.muted, borderColor: colors.border },
-                  ]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setSelectedType(t);
-                  }}
-                >
-                  <Text style={[styles.typeChipText, { color: selectedType === t ? "#fff" : colors.foreground }]}>
-                    {t}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
-              <Text style={[styles.filterLabel, { color: colors.foreground }]}>
-                Min Pay: ${minPay}/hr
-              </Text>
-              <View style={{ flexDirection: "row", gap: 8 }}>
-                {[0, 15, 20, 25].map((v) => (
-                  <TouchableOpacity
-                    key={v}
-                    style={[styles.payBtn, { backgroundColor: minPay === v ? colors.primary : colors.muted }]}
-                    onPress={() => setMinPay(v)}
-                  >
-                    <Text style={[styles.payBtnText, { color: minPay === v ? "#fff" : colors.foreground }]}>
-                      ${v}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* Results */}
+      {/* ── LIST ── */}
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 100 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.resultsCount, { color: colors.mutedForeground }]}>
-          {filtered.length} job{filtered.length !== 1 ? "s" : ""} available
-        </Text>
         {filtered.length === 0 ? (
           <View style={styles.emptyState}>
-            <Feather name="search" size={40} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No results found</Text>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              Adjust your filters or search for something else
-            </Text>
+            <View style={styles.emptyIconWrap}>
+              <Feather name="briefcase" size={30} color="#2563eb" />
+            </View>
+            <Text style={styles.emptyTitle}>No jobs found</Text>
+            <Text style={styles.emptyBody}>Try a different filter</Text>
           </View>
         ) : (
-          filtered.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              onPress={() => router.push(`/job/${job.id}`)}
-            />
-          ))
+          filtered.map((job) => {
+            const cat = getCategoryStyle(job.category);
+            const hasApplied = applications.some((a) => a.jobId === job.id);
+            const estEarnings = job.pay * 8;
+
+            return (
+              <TouchableOpacity
+                key={job.id}
+                style={styles.card}
+                onPress={() => router.push(`/job/${job.id}`)}
+                activeOpacity={0.88}
+              >
+                {/* Top row: icon + title/company + price */}
+                <View style={styles.cardTop}>
+                  <View style={[styles.iconWrap, { backgroundColor: cat.bg }]}>
+                    <Feather name={cat.icon as any} size={20} color={cat.color} />
+                  </View>
+                  <View style={styles.cardTitleCol}>
+                    <Text style={styles.cardTitle} numberOfLines={1}>{job.title}</Text>
+                    <Text style={styles.cardCompany}>{job.company}</Text>
+                  </View>
+                  <View style={styles.priceCol}>
+                    <Text style={styles.priceAmount}>${estEarnings}</Text>
+                    <Text style={styles.priceLabel}>est.</Text>
+                  </View>
+                </View>
+
+                {/* Detail rows */}
+                <View style={styles.detailBox}>
+                  <View style={styles.detailRow}>
+                    <Feather name="calendar" size={13} color="#6b7280" />
+                    <Text style={styles.detailText}>{job.startDate}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Feather name="map-pin" size={13} color="#6b7280" />
+                    <Text style={styles.detailText}>{job.location}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Feather name="zap" size={13} color="#6b7280" />
+                    <Text style={styles.detailText}>
+                      {job.duration} · ${job.pay}/{job.payType}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Bottom row: urgency + apply/applied badge */}
+                <View style={styles.cardFooter}>
+                  {job.urgency === "urgent" ? (
+                    <View style={styles.urgentBadge}>
+                      <View style={styles.urgentDot} />
+                      <Text style={styles.urgentText}>Urgent</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.openText}>Open</Text>
+                  )}
+
+                  {hasApplied ? (
+                    <View style={styles.appliedBadge}>
+                      <Feather name="check-circle" size={13} color="#10b981" />
+                      <Text style={styles.appliedText}>Applied</Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.applyBtn}
+                      onPress={() => { Haptics.impactAsync(); applyToJob(job.id); }}
+                    >
+                      <Text style={styles.applyBtnText}>Apply Now</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })
         )}
       </ScrollView>
     </View>
@@ -168,71 +186,114 @@ export default function JobsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  hero: {
-    backgroundColor: "#0759af",
+  root: { flex: 1, backgroundColor: "#f3f4f6" },
+
+  /* header */
+  header: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 18,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
-    marginBottom: 8,
+    gap: 14,
   },
-  title: {
-    fontSize: 28,
+  headerTitle: {
+    fontSize: 22,
     fontWeight: "800",
-    letterSpacing: -0.5,
-    marginBottom: 14,
     color: "#fff",
+    textAlign: "center",
+    letterSpacing: -0.3,
   },
-  searchRow: {
+
+  /* summary strip */
+  summaryRow: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    paddingHorizontal: 14,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 16,
     paddingVertical: 12,
-    borderRadius: 14,
+  },
+  summaryItem: { flex: 1, alignItems: "center" },
+  summaryValue: { fontSize: 18, fontWeight: "800", color: "#fff" },
+  summaryLabel: { fontSize: 11, color: "rgba(255,255,255,0.75)", marginTop: 2, textTransform: "uppercase", letterSpacing: 0.5 },
+  summaryDivider: { width: 1, backgroundColor: "rgba(255,255,255,0.25)", marginVertical: 4 },
+
+  /* filter chips */
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.15)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.2)",
-    backgroundColor: "rgba(255,255,255,0.12)",
-    gap: 10,
   },
-  searchInput: { flex: 1, fontSize: 15, color: "#fff" },
-  filterToggle: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
+  chipActive: { backgroundColor: "#fff" },
+  chipText: { fontSize: 13, fontWeight: "600", color: "#fff" },
+  chipTextActive: { color: "#0a47a9" },
+
+  /* list */
+  list: { padding: 16, gap: 14 },
+
+  /* card */
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 16,
+    gap: 12,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 10 },
+      android: { elevation: 3 },
+      default: { boxShadow: "0 2px 10px rgba(0,0,0,0.07)" },
+    }),
   },
-  sortChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  sortChipText: { fontSize: 13, fontWeight: "600" },
-  filterPanel: {
-    marginTop: 12,
-    padding: 14,
+  cardTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  iconWrap: { width: 44, height: 44, borderRadius: 14, justifyContent: "center", alignItems: "center" },
+  cardTitleCol: { flex: 1 },
+  cardTitle: { fontSize: 15, fontWeight: "700", color: "#111827" },
+  cardCompany: { fontSize: 12, color: "#6b7280", marginTop: 2 },
+  priceCol: { alignItems: "flex-end" },
+  priceAmount: { fontSize: 17, fontWeight: "800", color: "#2563eb" },
+  priceLabel: { fontSize: 11, color: "#9ca3af" },
+
+  /* detail box */
+  detailBox: {
+    backgroundColor: "#f9fafb",
     borderRadius: 12,
-    borderWidth: 1,
+    padding: 12,
+    gap: 7,
   },
-  filterLabel: { fontSize: 13, fontWeight: "600", marginBottom: 8 },
-  typeChip: {
+  detailRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  detailText: { fontSize: 13, color: "#374151", flex: 1 },
+
+  /* footer */
+  cardFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  urgentBadge: { flexDirection: "row", alignItems: "center", gap: 5 },
+  urgentDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#ef4444" },
+  urgentText: { fontSize: 13, fontWeight: "600", color: "#ef4444" },
+  openText: { fontSize: 13, fontWeight: "600", color: "#6366f1" },
+
+  appliedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#ecfdf5",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
+    borderColor: "#a7f3d0",
   },
-  typeChipText: { fontSize: 12, fontWeight: "500" },
-  payBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+  appliedText: { fontSize: 12, fontWeight: "700", color: "#10b981" },
+
+  applyBtn: {
+    backgroundColor: "#2563eb",
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
   },
-  payBtnText: { fontSize: 12, fontWeight: "600" },
-  resultsCount: { fontSize: 13, marginBottom: 12, marginTop: 8 },
-  emptyState: { alignItems: "center", paddingVertical: 60, gap: 8 },
-  emptyTitle: { fontSize: 18, fontWeight: "600", marginTop: 8 },
-  emptyText: { fontSize: 14, textAlign: "center" },
+  applyBtnText: { fontSize: 13, fontWeight: "700", color: "#fff" },
+
+  /* empty */
+  emptyState: { alignItems: "center", paddingVertical: 64, gap: 10 },
+  emptyIconWrap: { width: 72, height: 72, borderRadius: 24, backgroundColor: "#dbeafe", justifyContent: "center", alignItems: "center" },
+  emptyTitle: { fontSize: 17, fontWeight: "800", color: "#1e40af" },
+  emptyBody: { fontSize: 14, color: "#6b7280" },
 });
