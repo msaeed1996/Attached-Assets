@@ -304,7 +304,7 @@ export default function HomeScreen() {
         return (
           <View style={styles.section}>
             <View style={styles.sectionRow}>
-              <Text style={[styles.sectionLabel, { color: "#374151" }]}>Upcoming Schedule</Text>
+              <Text style={[styles.sectionLabel, { color: "#374151" }]}>Accepted Jobs</Text>
               <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
