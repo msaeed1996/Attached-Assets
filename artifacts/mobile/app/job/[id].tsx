@@ -128,7 +128,7 @@ export default function JobDetailScreen() {
           </View>
         </View>
 
-        {/* ── Card 2: Date ── */}
+        {/* ── Card 2: Date & Time ── */}
         <View style={s.card}>
           <View style={s.fieldCard}>
             <View style={[s.fieldIconWrap, { backgroundColor: "#EFF6FF" }]}>
@@ -139,10 +139,7 @@ export default function JobDetailScreen() {
               <Text style={s.fieldValue}>{job.startDate}</Text>
             </View>
           </View>
-        </View>
-
-        {/* ── Card 3: Time ── */}
-        <View style={s.card}>
+          <View style={s.fieldDivider} />
           <View style={s.fieldCard}>
             <View style={[s.fieldIconWrap, { backgroundColor: "#F0FDF4" }]}>
               <Feather name="clock" size={18} color="#16A34A" />
@@ -319,6 +316,7 @@ const s = StyleSheet.create({
   /* field card row */
   fieldCard:     { flexDirection: "row", alignItems: "center", gap: 14 },
   fieldIconWrap: { width: 44, height: 44, borderRadius: 14, justifyContent: "center", alignItems: "center" },
+  fieldDivider:  { height: 1, backgroundColor: BORDER, marginVertical: 14 },
 
   /* Card 1 */
   titleRow:   { flexDirection: "row", alignItems: "flex-start" },
