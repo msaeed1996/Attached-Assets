@@ -117,9 +117,8 @@ export default function JobDetailScreen() {
         contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 120 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Card 1: Job Info ── */}
+        {/* ── Card 1: Title + Pay ── */}
         <View style={s.card}>
-          {/* Title + pay badge */}
           <View style={s.titleRow}>
             <Text style={s.title} numberOfLines={2}>{job.title}</Text>
             <View style={s.payBadge}>
@@ -127,21 +126,27 @@ export default function JobDetailScreen() {
               <Text style={s.payRate}>{rate}</Text>
             </View>
           </View>
+        </View>
 
-          <View style={s.divider} />
-
-          {/* Date */}
-          <View style={s.infoRow}>
-            <Feather name="calendar" size={17} color={BLUE} style={s.infoIcon} />
+        {/* ── Card 2: Date ── */}
+        <View style={s.card}>
+          <View style={s.fieldCard}>
+            <View style={[s.fieldIconWrap, { backgroundColor: "#EFF6FF" }]}>
+              <Feather name="calendar" size={18} color={BLUE} />
+            </View>
             <View>
               <Text style={s.fieldLabel}>DATE</Text>
               <Text style={s.fieldValue}>{job.startDate}</Text>
             </View>
           </View>
+        </View>
 
-          {/* Duration / time */}
-          <View style={[s.infoRow, { marginBottom: 0 }]}>
-            <Feather name="clock" size={17} color={BLUE} style={s.infoIcon} />
+        {/* ── Card 3: Time ── */}
+        <View style={s.card}>
+          <View style={s.fieldCard}>
+            <View style={[s.fieldIconWrap, { backgroundColor: "#F0FDF4" }]}>
+              <Feather name="clock" size={18} color="#16A34A" />
+            </View>
             <View>
               <Text style={s.fieldLabel}>TIME ({hrs}H)</Text>
               <Text style={s.fieldValue}>{job.duration}</Text>
@@ -149,21 +154,17 @@ export default function JobDetailScreen() {
           </View>
         </View>
 
-        {/* ── Card 2: Location & Contact ── */}
+        {/* ── Card 4: Location ── */}
         <View style={s.card}>
-          <Text style={s.sectionTitle}>Location &amp; Contact</Text>
-          <View style={s.sectionDivider} />
-
-          {/* Address */}
-          <View style={s.infoRow}>
-            <Feather name="map-pin" size={17} color={BLUE} style={s.infoIcon} />
+          <View style={s.fieldCard}>
+            <View style={[s.fieldIconWrap, { backgroundColor: "#FEF3C7" }]}>
+              <Feather name="map-pin" size={18} color="#D97706" />
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={s.fieldLabel}>ADDRESS</Text>
               <Text style={s.fieldValue}>{job.location}</Text>
             </View>
           </View>
-
-          {/* Directions */}
           <TouchableOpacity
             style={s.directionsBtn}
             onPress={openDirections}
@@ -172,12 +173,14 @@ export default function JobDetailScreen() {
             <Feather name="navigation" size={15} color={BLUE} />
             <Text style={s.directionsTxt}>Get Directions</Text>
           </TouchableOpacity>
+        </View>
 
-          <View style={s.sectionDivider} />
-
-          {/* Report to */}
-          <View style={[s.infoRow, { marginBottom: 0, marginTop: 14 }]}>
-            <Feather name="user" size={17} color={BLUE} style={s.infoIcon} />
+        {/* ── Card 5: Report To ── */}
+        <View style={s.card}>
+          <View style={s.fieldCard}>
+            <View style={[s.fieldIconWrap, { backgroundColor: "#F5F3FF" }]}>
+              <Feather name="user" size={18} color="#7C3AED" />
+            </View>
             <View>
               <Text style={s.fieldLabel}>REPORT TO</Text>
               <Text style={s.fieldValue}>Hiring Manager</Text>
@@ -185,9 +188,9 @@ export default function JobDetailScreen() {
           </View>
         </View>
 
-        {/* ── Card 3: Job Overview ── */}
+        {/* ── Card 6: Job Description ── */}
         <View style={s.card}>
-          <Text style={s.sectionTitle}>Job Overview</Text>
+          <Text style={s.sectionTitle}>Job Description</Text>
           <View style={s.sectionDivider} />
           <Text style={s.description}>{job.description}</Text>
           {job.requirements.map((r, i) => (
@@ -313,8 +316,12 @@ const s = StyleSheet.create({
     elevation: 3,
   },
 
+  /* field card row */
+  fieldCard:     { flexDirection: "row", alignItems: "center", gap: 14 },
+  fieldIconWrap: { width: 44, height: 44, borderRadius: 14, justifyContent: "center", alignItems: "center" },
+
   /* Card 1 */
-  titleRow:   { flexDirection: "row", alignItems: "flex-start", marginBottom: 10 },
+  titleRow:   { flexDirection: "row", alignItems: "flex-start" },
   title:      { flex: 1, fontSize: 22, fontWeight: "800", color: DARK, letterSpacing: -0.3, paddingRight: 10 },
   payBadge:   { backgroundColor: GREEN_BG, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, alignItems: "center", minWidth: 74 },
   payTotal:   { fontSize: 20, fontWeight: "800", color: GREEN },
