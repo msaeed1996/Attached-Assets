@@ -341,7 +341,7 @@ const s = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
     borderWidth: 1.5, borderColor: "#BFDBFE",
     borderRadius: 12, paddingVertical: 12,
-    marginLeft: 27, marginBottom: 4,
+    marginTop: 14,
     backgroundColor: "#EFF6FF",
   },
   directionsTxt: { fontSize: 14, fontWeight: "700", color: BLUE },
