@@ -226,7 +226,7 @@ export default function JobBoardScreen() {
           <Feather name="arrow-left" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Job Board</Text>
+          <Text style={styles.headerTitle}>Available Jobs</Text>
           <Text style={styles.headerSub}>
             {pendingCount > 0 ? `${pendingCount} pending response${pendingCount > 1 ? "s" : ""}` : "All caught up!"}
           </Text>

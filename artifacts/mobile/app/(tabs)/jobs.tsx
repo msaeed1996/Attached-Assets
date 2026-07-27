@@ -57,7 +57,7 @@ export default function JobsScreen() {
         end={{ x: 1, y: 1 }}
         style={[styles.header, { paddingTop: topPadding + 14 }]}
       >
-        <Text style={styles.headerTitle}>Available Jobs</Text>
+        <Text style={styles.headerTitle}>Job Board</Text>
 
         {/* Filter chips */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
