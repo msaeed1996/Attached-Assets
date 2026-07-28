@@ -172,39 +172,6 @@ export default function InvitationDetailScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Personal message */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Message from Employer</Text>
-          <View style={styles.messageBox}>
-            <Feather name="message-square" size={16} color="#2563eb" />
-            <Text style={styles.messageText}>"{inv.message}"</Text>
-          </View>
-          {inv.hiringManager && (
-            <View style={styles.signature}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {inv.hiringManager
-                    .split(" ")
-                    .map((n) => n[0])
-                    .slice(0, 2)
-                    .join("")}
-                </Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.signName}>{inv.hiringManager}</Text>
-                <Text style={styles.signMeta}>Hiring Manager · Sent {inv.sentAt}</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.msgBtn}
-                onPress={messageEmployer}
-                activeOpacity={0.85}
-              >
-                <Feather name="send" size={14} color="#2563eb" />
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
         {/* About the role */}
         {inv.description && (
           <View style={styles.card}>
