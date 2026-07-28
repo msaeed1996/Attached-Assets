@@ -13,7 +13,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { SAMPLE_INVITATIONS, InvitationStatus } from "@/data/invitations";
+import { SAMPLE_INVITATIONS, InvitationStatus, ScheduleDay } from "@/data/invitations";
 
 export default function InvitationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -148,6 +148,16 @@ export default function InvitationDetailScreen() {
 
           <View style={styles.summaryRows}>
             <InfoRow icon="calendar" label="Start Date" value={inv.startDate} />
+            {inv.endDate && (
+              <InfoRow icon="calendar" label="End Date" value={inv.endDate} />
+            )}
+            {inv.schedule && inv.schedule.length > 0 && (
+              <InfoRow
+                icon="clock"
+                label="Job Timing"
+                value={`${inv.schedule[0].startTime} – ${inv.schedule[0].endTime}`}
+              />
+            )}
             <InfoRow icon="clock" label="Duration" value={inv.duration} />
             <InfoRow icon="map-pin" label="Location" value={inv.location} />
           </View>
@@ -433,6 +443,79 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "#dbeafe",
+  },
+
+  scheduleHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingBottom: 10,
+  },
+  scheduleHeaderTitle: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#111827",
+  },
+  scheduleDaysBadge: {
+    backgroundColor: "#eff6ff",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: "#dbeafe",
+  },
+  scheduleDaysBadgeText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#2563eb",
+  },
+  scheduleDateRange: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 10,
+  },
+  scheduleDateRangeText: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "600",
+  },
+  scheduleDivider: {
+    height: 1,
+    backgroundColor: "#f3f4f6",
+    marginBottom: 10,
+  },
+  scheduleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+  },
+  scheduleRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+  },
+  scheduleDate: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#374151",
+  },
+  scheduleTimeWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#f0fdf4",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+  },
+  scheduleTime: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#166534",
   },
 
   bodyText: { fontSize: 14, color: "#4b5563", lineHeight: 21 },

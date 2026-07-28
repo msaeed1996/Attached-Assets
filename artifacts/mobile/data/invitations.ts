@@ -1,5 +1,11 @@
 export type InvitationStatus = "pending" | "accepted" | "declined";
 
+export interface ScheduleDay {
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface Invitation {
   id: string;
   jobTitle: string;
@@ -9,6 +15,7 @@ export interface Invitation {
   pay: number;
   payType: "hourly" | "daily" | "fixed";
   startDate: string;
+  endDate?: string;
   duration: string;
   type: string;
   message: string;
@@ -21,6 +28,7 @@ export interface Invitation {
   description?: string;
   responsibilities?: string[];
   requirements?: string[];
+  schedule?: ScheduleDay[];
 }
 
 export const SAMPLE_INVITATIONS: Invitation[] = [
@@ -32,9 +40,17 @@ export const SAMPLE_INVITATIONS: Invitation[] = [
     location: "Austin, TX",
     pay: 28,
     payType: "hourly",
-    startDate: "Tomorrow",
+    startDate: "Mon, 07/28/2026",
+    endDate: "Fri, 08/01/2026",
     duration: "1 week",
     type: "full-day",
+    schedule: [
+      { date: "Mon, 07/28/2026", startTime: "7:00 AM", endTime: "3:00 PM" },
+      { date: "Tue, 07/29/2026", startTime: "7:00 AM", endTime: "3:00 PM" },
+      { date: "Wed, 07/30/2026", startTime: "7:00 AM", endTime: "3:00 PM" },
+      { date: "Thu, 07/31/2026", startTime: "7:00 AM", endTime: "3:00 PM" },
+      { date: "Fri, 08/01/2026", startTime: "7:00 AM", endTime: "3:00 PM" },
+    ],
     message:
       "We reviewed your profile and think you'd be a great fit for this role. Your previous warehouse experience stands out!",
     sentAt: "30 min ago",
@@ -64,9 +80,14 @@ export const SAMPLE_INVITATIONS: Invitation[] = [
     location: "Houston, TX",
     pay: 280,
     payType: "daily",
-    startDate: "Saturday",
+    startDate: "Fri, 07/24/2026",
+    endDate: "Sat, 07/25/2026",
     duration: "2 days",
     type: "weekend",
+    schedule: [
+      { date: "Fri, 07/24/2026", startTime: "8:00 AM", endTime: "5:00 PM" },
+      { date: "Sat, 07/25/2026", startTime: "8:00 AM", endTime: "5:00 PM" },
+    ],
     message:
       "Hi! We're looking for reliable staff for an upcoming gala. Your hospitality background is exactly what we need.",
     sentAt: "2 hours ago",
@@ -96,9 +117,15 @@ export const SAMPLE_INVITATIONS: Invitation[] = [
     location: "Dallas, TX",
     pay: 19,
     payType: "hourly",
-    startDate: "Monday",
+    startDate: "Mon, 07/28/2026",
+    endDate: "Wed, 07/30/2026",
     duration: "3 days",
     type: "part-time",
+    schedule: [
+      { date: "Mon, 07/28/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Tue, 07/29/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Wed, 07/30/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+    ],
     message:
       "Your retail experience makes you an ideal candidate. We'd love to have you on the team for our upcoming sale event.",
     sentAt: "Yesterday",
@@ -127,9 +154,22 @@ export const SAMPLE_INVITATIONS: Invitation[] = [
     location: "Austin, TX",
     pay: 18,
     payType: "hourly",
-    startDate: "Next Week",
+    startDate: "Mon, 08/04/2026",
+    endDate: "Fri, 08/15/2026",
     duration: "2 weeks",
     type: "contract",
+    schedule: [
+      { date: "Mon, 08/04/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Tue, 08/05/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Wed, 08/06/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Thu, 08/07/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Fri, 08/08/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Mon, 08/11/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Tue, 08/12/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Wed, 08/13/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Thu, 08/14/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { date: "Fri, 08/15/2026", startTime: "9:00 AM", endTime: "5:00 PM" },
+    ],
     message:
       "We came across your profile and believe your admin skills match our requirements perfectly.",
     sentAt: "2 days ago",
