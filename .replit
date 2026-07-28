@@ -30,6 +30,10 @@ args = "API Server"
 task = "workflow.run"
 args = "Mobile App"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "TrueGigs Web"
+
 [[workflows.workflow]]
 name = "API Server"
 author = "agent"
@@ -52,6 +56,18 @@ args = "PORT=18115 pnpm --filter @workspace/mobile run dev"
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow]]
+name = "TrueGigs Web"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=21361 BASE_PATH=/ pnpm --filter @workspace/truegigs run dev"
+waitForPort = 21361
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [agent]
 stack = "PNPM_WORKSPACE"
