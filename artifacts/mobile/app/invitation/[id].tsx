@@ -147,19 +147,57 @@ export default function InvitationDetailScreen() {
           </View>
 
           <View style={styles.summaryRows}>
-            <InfoRow icon="calendar" label="Start Date" value={inv.startDate} />
-            {inv.endDate && (
-              <InfoRow icon="calendar" label="End Date" value={inv.endDate} />
-            )}
+            {/* Date row — start & end side by side */}
+            <View style={styles.dateGrid}>
+              <View style={styles.dateCell}>
+                <View style={[styles.iconBox, { backgroundColor: "#EFF6FF" }]}>
+                  <Feather name="calendar" size={15} color="#2563eb" />
+                </View>
+                <Text style={styles.fieldLabel}>START DATE</Text>
+                <Text style={styles.fieldValue}>{inv.startDate}</Text>
+              </View>
+              {inv.endDate && (
+                <>
+                  <View style={styles.dateDivider} />
+                  <View style={styles.dateCell}>
+                    <View style={[styles.iconBox, { backgroundColor: "#F0FDF4" }]}>
+                      <Feather name="calendar" size={15} color="#16a34a" />
+                    </View>
+                    <Text style={styles.fieldLabel}>END DATE</Text>
+                    <Text style={styles.fieldValue}>{inv.endDate}</Text>
+                  </View>
+                </>
+              )}
+            </View>
+
+            {/* Job Timing */}
             {inv.schedule && inv.schedule.length > 0 && (
-              <InfoRow
-                icon="clock"
-                label="Job Timing"
-                value={`${inv.schedule[0].startTime} – ${inv.schedule[0].endTime}`}
-              />
+              <View style={styles.timingRow}>
+                <View style={[styles.iconBox, { backgroundColor: "#FEF3C7" }]}>
+                  <Feather name="clock" size={15} color="#d97706" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>JOB TIMING</Text>
+                  <Text style={styles.fieldValue}>
+                    {inv.schedule[0].startTime} – {inv.schedule[0].endTime}
+                  </Text>
+                </View>
+                <View style={styles.timingBadge}>
+                  <Text style={styles.timingBadgeText}>{inv.duration}</Text>
+                </View>
+              </View>
             )}
-            <InfoRow icon="clock" label="Duration" value={inv.duration} />
-            <InfoRow icon="map-pin" label="Location" value={inv.location} />
+
+            {/* Location */}
+            <View style={styles.locationRow}>
+              <View style={[styles.iconBox, { backgroundColor: "#FEF2F2" }]}>
+                <Feather name="map-pin" size={15} color="#dc2626" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldLabel}>LOCATION</Text>
+                <Text style={styles.fieldValue}>{inv.location}</Text>
+              </View>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -333,7 +371,68 @@ const styles = StyleSheet.create({
   payAmount: { fontSize: 15, fontWeight: "900", color: "#166534" },
   payRate: { fontSize: 10, fontWeight: "800", color: "#6b7280", marginTop: 4, letterSpacing: 0.6 },
 
-  summaryRows: { marginTop: 12, gap: 12 },
+  summaryRows: { marginTop: 14, gap: 10 },
+
+  dateGrid: {
+    flexDirection: "row",
+    backgroundColor: "#f8faff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e8effd",
+    overflow: "hidden",
+  },
+  dateCell: {
+    flex: 1,
+    padding: 12,
+    gap: 4,
+  },
+  dateDivider: {
+    width: 1,
+    backgroundColor: "#e8effd",
+  },
+
+  iconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
+  },
+
+  timingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fffbeb",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#fde68a",
+    padding: 12,
+  },
+  timingBadge: {
+    backgroundColor: "#d97706",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  timingBadgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fff5f5",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    padding: 12,
+  },
 
   cardTitle: {
     fontSize: 13,
