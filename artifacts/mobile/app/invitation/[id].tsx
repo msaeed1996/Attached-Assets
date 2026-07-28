@@ -198,6 +198,19 @@ export default function InvitationDetailScreen() {
                 <Text style={styles.fieldValue}>{inv.location}</Text>
               </View>
             </View>
+
+            {/* Report To */}
+            <View style={styles.reportRow}>
+              <View style={[styles.iconBox, { backgroundColor: "#F5F3FF" }]}>
+                <Feather name="user" size={15} color="#7c3aed" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldLabel}>REPORT TO</Text>
+                <Text style={styles.fieldValue}>
+                  {inv.hiringManager ?? "Hiring Manager"}
+                </Text>
+              </View>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -431,6 +444,16 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#fecaca",
+    padding: 12,
+  },
+  reportRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#faf5ff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e9d5ff",
     padding: 12,
   },
 
