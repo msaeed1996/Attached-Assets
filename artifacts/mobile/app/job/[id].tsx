@@ -250,7 +250,12 @@ export default function JobDetailScreen() {
 
         {/* ── Card 6: Job Description ── */}
         <View style={s.card}>
-          <Text style={s.sectionTitle}>Job Description</Text>
+          <View style={s.cardHeader}>
+            <View style={[s.cardHeaderIcon, { backgroundColor: "#EFF6FF" }]}>
+              <Feather name="file-text" size={16} color="#2563EB" />
+            </View>
+            <Text style={s.cardHeaderTitle}>Job Description</Text>
+          </View>
           <View style={s.sectionDivider} />
           <Text style={s.description}>{job.description}</Text>
           {job.requirements.map((r, i) => (
