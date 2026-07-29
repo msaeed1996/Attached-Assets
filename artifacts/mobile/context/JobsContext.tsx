@@ -25,6 +25,8 @@ export interface Job {
   description: string;
   requirements: string[];
   urgency: "urgent" | "normal" | "flexible";
+  uniform?: string[];
+  instructions?: string[];
   applicantsCount: number;
   postedAt: string;
   employerId: string;
@@ -79,6 +81,8 @@ const SAMPLE_JOBS: Job[] = [
     description:
       "Pick, pack and ship customer orders in a fast-paced fulfillment center. You'll work on a team ensuring accurate order fulfillment with great attention to detail.",
     requirements: ["Able to lift 50 lbs", "Steel-toed boots required", "Background check"],
+    uniform: ["High-visibility vest (provided)", "Steel-toed boots", "Long pants required"],
+    instructions: ["Check in at Gate B with your ID", "Pick up your badge from the supervisor", "Do not use personal phones on the floor"],
     urgency: "urgent",
     applicantsCount: 8,
     postedAt: "2 hours ago",
@@ -103,6 +107,8 @@ const SAMPLE_JOBS: Job[] = [
     description:
       "Join our team for a high-profile corporate gala. Serve drinks, manage coat check, and ensure VIP guests have an exceptional evening.",
     requirements: ["TABC certification preferred", "Smart attire", "18+"],
+    uniform: ["Black dress shirt & trousers", "Non-slip shoes", "Name badge provided on arrival"],
+    instructions: ["Arrive 30 min early for briefing", "Park at Lot C — do not use guest parking", "Report to event coordinator Sarah on arrival"],
     urgency: "normal",
     applicantsCount: 14,
     postedAt: "4 hours ago",
@@ -134,6 +140,8 @@ const SAMPLE_JOBS: Job[] = [
     description:
       "Cover front desk duties for a prestigious law firm while their permanent receptionist is on leave. Answer calls, greet clients, manage mail and supplies.",
     requirements: ["Professional appearance", "MS Office skills", "2+ years admin exp"],
+    uniform: ["Business casual attire", "Closed-toe shoes", "No visible tattoos or piercings"],
+    instructions: ["Sign in at the front desk each morning", "Use extension 200 to reach your supervisor", "Lunch break is 12:00 PM – 1:00 PM"],
     urgency: "normal",
     applicantsCount: 5,
     postedAt: "1 day ago",
@@ -164,6 +172,8 @@ const SAMPLE_JOBS: Job[] = [
     description:
       "Operate forklifts in a temperature-controlled food distribution warehouse. Load/unload trucks and manage inventory locations.",
     requirements: ["Valid forklift cert", "2+ years exp", "Drug test required"],
+    uniform: ["High-visibility vest (provided)", "Steel-toed boots", "Hard hat required on dock"],
+    instructions: ["Present forklift cert to supervisor on Day 1", "Complete safety walkthrough before operating", "Report any damage to equipment immediately"],
     urgency: "urgent",
     applicantsCount: 3,
     postedAt: "3 hours ago",
@@ -188,6 +198,8 @@ const SAMPLE_JOBS: Job[] = [
     description:
       "Help customers find products during our weekend sale event. Assist with fitting rooms, cash register, and floor stocking.",
     requirements: ["Friendly personality", "Retail exp preferred", "Comfortable standing 8 hrs"],
+    uniform: ["All-black clothing", "Comfortable closed-toe shoes", "Name badge provided at store"],
+    instructions: ["Clock in at the back office", "Greet every customer within 10 seconds", "Refer returns to the service desk — do not process yourself"],
     urgency: "normal",
     applicantsCount: 20,
     postedAt: "6 hours ago",
@@ -212,6 +224,8 @@ const SAMPLE_JOBS: Job[] = [
     description:
       "Deep clean commercial office space after hours. Tasks include vacuuming, mopping, restroom sanitation, and trash removal.",
     requirements: ["Own transportation", "Background check", "Physical stamina"],
+    uniform: ["Company t-shirt (provided)", "Dark work trousers", "Non-slip shoes required"],
+    instructions: ["Pick up supplies from the van before entering", "Follow the cleaning checklist on the clipboard", "Lock all doors and drop keys in the lockbox when done"],
     urgency: "urgent",
     applicantsCount: 2,
     postedAt: "1 hour ago",

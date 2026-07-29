@@ -261,19 +261,43 @@ export default function JobDetailScreen() {
           ))}
         </View>
 
-        {/* ── Trust strip ── */}
-        <View style={s.trustStrip}>
-          {[
-            { icon: "shield" as const,  txt: "Background Checked" },
-            { icon: "zap"    as const,  txt: "Fast Payment"       },
-            { icon: "repeat" as const,  txt: "Flexible Hours"     },
-          ].map((t) => (
-            <View key={t.txt} style={s.trustItem}>
-              <Feather name={t.icon} size={13} color={GREEN} />
-              <Text style={s.trustTxt}>{t.txt}</Text>
+        {/* ── Card: Uniform ── */}
+        {job.uniform && job.uniform.length > 0 && (
+          <View style={s.card}>
+            <View style={s.cardHeader}>
+              <View style={[s.cardHeaderIcon, { backgroundColor: "#F5F3FF" }]}>
+                <Feather name="tag" size={16} color="#7C3AED" />
+              </View>
+              <Text style={s.cardHeaderTitle}>Uniform</Text>
             </View>
-          ))}
-        </View>
+            <View style={s.sectionDivider} />
+            {job.uniform.map((item, i) => (
+              <View key={i} style={s.checkRow}>
+                <View style={[s.checkDot, { backgroundColor: "#7C3AED" }]} />
+                <Text style={s.checkTxt}>{item}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* ── Card: Instructions ── */}
+        {job.instructions && job.instructions.length > 0 && (
+          <View style={s.card}>
+            <View style={s.cardHeader}>
+              <View style={[s.cardHeaderIcon, { backgroundColor: "#FFF7ED" }]}>
+                <Feather name="clipboard" size={16} color="#D97706" />
+              </View>
+              <Text style={s.cardHeaderTitle}>Instructions</Text>
+            </View>
+            <View style={s.sectionDivider} />
+            {job.instructions.map((item, i) => (
+              <View key={i} style={s.checkRow}>
+                <View style={[s.checkDot, { backgroundColor: "#D97706" }]} />
+                <Text style={s.checkTxt}>{item}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         <Text style={s.postedTxt}>Posted {job.postedAt}</Text>
       </ScrollView>
@@ -489,14 +513,13 @@ const s = StyleSheet.create({
   bulletDot:  { fontSize: 14, color: MID, lineHeight: 20 },
   bulletTxt:  { flex: 1, fontSize: 14, lineHeight: 20, color: MID },
 
-  /* trust strip */
-  trustStrip: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  trustItem:  {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: "#F0FDF4", borderRadius: 20,
-    paddingHorizontal: 10, paddingVertical: 6,
-  },
-  trustTxt:   { fontSize: 12, fontWeight: "600", color: GREEN },
+  /* uniform / instructions cards */
+  cardHeader:     { flexDirection: "row", alignItems: "center", gap: 10 },
+  cardHeaderIcon: { width: 36, height: 36, borderRadius: 11, justifyContent: "center", alignItems: "center" },
+  cardHeaderTitle:{ fontSize: 16, fontWeight: "700", color: DARK },
+  checkRow:  { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 10 },
+  checkDot:  { width: 7, height: 7, borderRadius: 4, marginTop: 6, flexShrink: 0 },
+  checkTxt:  { flex: 1, fontSize: 14, lineHeight: 21, color: MID },
 
   postedTxt: { textAlign: "center", fontSize: 12, color: LABEL },
 
