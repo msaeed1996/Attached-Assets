@@ -57,9 +57,10 @@ export default function JobDetailScreen() {
   const { getJobById, applyToJob, applications } = useJobs();
   const { userRole } = useApp();
 
-  const [showModal, setShowModal] = useState(false);
-  const [coverNote, setCoverNote] = useState("");
-  const [applied, setApplied]     = useState(false);
+  const [showModal, setShowModal]         = useState(false);
+  const [coverNote, setCoverNote]         = useState("");
+  const [applied, setApplied]             = useState(false);
+  const [showAllSchedule, setShowAllSchedule] = useState(false);
 
   const job        = getJobById(id);
   const hasApplied = applied || applications.some((a) => a.jobId === id && a.workerId === "me");
@@ -173,12 +174,12 @@ export default function JobDetailScreen() {
             {/* per-day schedule rows */}
             {job.weeklySchedule && job.weeklySchedule.length > 0 && (
               <View style={s.weeklyWrap}>
-                {job.weeklySchedule.map((item, i) => (
+                {(showAllSchedule ? job.weeklySchedule : job.weeklySchedule.slice(0, 3)).map((item, i, arr) => (
                   <View
                     key={i}
                     style={[
                       s.weeklyRow,
-                      i < job.weeklySchedule!.length - 1 && s.weeklyRowBorder,
+                      i < arr.length - 1 && s.weeklyRowBorder,
                     ]}
                   >
                     <View style={s.weeklyDayPill}>
@@ -189,6 +190,25 @@ export default function JobDetailScreen() {
                     </Text>
                   </View>
                 ))}
+
+                {job.weeklySchedule.length > 3 && (
+                  <TouchableOpacity
+                    style={s.seeMoreBtn}
+                    onPress={() => setShowAllSchedule((v) => !v)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={s.seeMoreTxt}>
+                      {showAllSchedule
+                        ? "Show less"
+                        : `See ${job.weeklySchedule.length - 3} more days`}
+                    </Text>
+                    <Feather
+                      name={showAllSchedule ? "chevron-up" : "chevron-down"}
+                      size={13}
+                      color="#D97706"
+                    />
+                  </TouchableOpacity>
+                )}
               </View>
             )}
           </View>
@@ -425,6 +445,17 @@ const s = StyleSheet.create({
   },
   weeklyDayTxt: { fontSize: 12, fontWeight: "800", color: "#c2410c" },
   weeklyTime:   { fontSize: 13, fontWeight: "700", color: DARK },
+  seeMoreBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#fde68a",
+    marginTop: 2,
+  },
+  seeMoreTxt: { fontSize: 13, fontWeight: "700", color: "#D97706" },
 
   /* Card 1 */
   titleRow:   { flexDirection: "row", alignItems: "flex-start" },
