@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useJobs } from "@/context/JobsContext";
+import type { WeeklyScheduleDay } from "@/context/JobsContext";
 import { useApp } from "@/context/AppContext";
 import * as Haptics from "expo-haptics";
 
@@ -130,25 +131,64 @@ export default function JobDetailScreen() {
 
         {/* ── Card 2: Date & Time ── */}
         <View style={s.card}>
-          <View style={s.fieldCard}>
-            <View style={[s.fieldIconWrap, { backgroundColor: "#EFF6FF" }]}>
-              <Feather name="calendar" size={18} color={BLUE} />
-            </View>
-            <View>
-              <Text style={s.fieldLabel}>DATE</Text>
+          {/* Start / End date side by side */}
+          <View style={s.dateGrid}>
+            <View style={s.dateCell}>
+              <View style={[s.dateIconBox, { backgroundColor: "#EFF6FF" }]}>
+                <Feather name="calendar" size={15} color={BLUE} />
+              </View>
+              <Text style={s.fieldLabel}>START DATE</Text>
               <Text style={s.fieldValue}>{job.startDate}</Text>
             </View>
+            {job.endDate && (
+              <>
+                <View style={s.dateCellDivider} />
+                <View style={s.dateCell}>
+                  <View style={[s.dateIconBox, { backgroundColor: "#F0FDF4" }]}>
+                    <Feather name="calendar" size={15} color="#16A34A" />
+                  </View>
+                  <Text style={s.fieldLabel}>END DATE</Text>
+                  <Text style={s.fieldValue}>{job.endDate}</Text>
+                </View>
+              </>
+            )}
           </View>
-          <View style={s.fieldDivider} />
-          <View style={s.fieldCard}>
-            <View style={[s.fieldIconWrap, { backgroundColor: "#F0FDF4" }]}>
-              <Feather name="clock" size={18} color="#16A34A" />
+
+          {/* Job Timing */}
+          <View style={s.timingRow}>
+            <View style={[s.dateIconBox, { backgroundColor: "#FEF3C7" }]}>
+              <Feather name="clock" size={15} color="#D97706" />
             </View>
-            <View>
-              <Text style={s.fieldLabel}>TIME ({hrs}H)</Text>
-              <Text style={s.fieldValue}>{job.duration}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.fieldLabel}>JOB TIMING ({hrs}H)</Text>
+              <Text style={s.fieldValue}>{job.timing ?? job.duration}</Text>
+            </View>
+            <View style={s.durationBadge}>
+              <Text style={s.durationBadgeTxt}>{job.duration}</Text>
             </View>
           </View>
+
+          {/* Weekly schedule */}
+          {job.weeklySchedule && job.weeklySchedule.length > 0 && (
+            <View style={s.weeklyWrap}>
+              {job.weeklySchedule.map((item, i) => (
+                <View
+                  key={i}
+                  style={[
+                    s.weeklyRow,
+                    i < job.weeklySchedule!.length - 1 && s.weeklyRowBorder,
+                  ]}
+                >
+                  <View style={s.weeklyDayPill}>
+                    <Text style={s.weeklyDayTxt}>{item.day}</Text>
+                  </View>
+                  <Text style={s.weeklyTime}>
+                    {item.startTime} – {item.endTime}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* ── Card 4: Location ── */}
@@ -317,6 +357,69 @@ const s = StyleSheet.create({
   fieldCard:     { flexDirection: "row", alignItems: "center", gap: 14 },
   fieldIconWrap: { width: 44, height: 44, borderRadius: 14, justifyContent: "center", alignItems: "center" },
   fieldDivider:  { height: 1, backgroundColor: BORDER, marginVertical: 14 },
+
+  /* date grid */
+  dateGrid: {
+    flexDirection: "row",
+    backgroundColor: "#f8faff",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e8effd",
+    overflow: "hidden",
+    marginBottom: 10,
+  },
+  dateCell:        { flex: 1, padding: 12, gap: 4 },
+  dateCellDivider: { width: 1, backgroundColor: "#e8effd" },
+  dateIconBox: {
+    width: 32, height: 32, borderRadius: 10,
+    alignItems: "center", justifyContent: "center", marginBottom: 6,
+  },
+
+  /* timing row */
+  timingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fffbeb",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#fde68a",
+    padding: 12,
+  },
+  durationBadge: {
+    backgroundColor: "#D97706",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  durationBadgeTxt: { color: "#fff", fontSize: 11, fontWeight: "800" },
+
+  /* weekly schedule */
+  weeklyWrap: {
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#fde68a",
+    paddingTop: 10,
+  },
+  weeklyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+  },
+  weeklyRowBorder: { borderBottomWidth: 1, borderBottomColor: "#f3f4f6" },
+  weeklyDayPill: {
+    backgroundColor: "#fff7ed",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "#fed7aa",
+    minWidth: 52,
+    alignItems: "center",
+  },
+  weeklyDayTxt: { fontSize: 12, fontWeight: "800", color: "#c2410c" },
+  weeklyTime:   { fontSize: 13, fontWeight: "700", color: DARK },
 
   /* Card 1 */
   titleRow:   { flexDirection: "row", alignItems: "flex-start" },

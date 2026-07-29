@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+export interface WeeklyScheduleDay {
+  day: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface Job {
   id: string;
   title: string;
@@ -12,6 +18,9 @@ export interface Job {
   pay: number;
   payType: "hourly" | "daily" | "fixed";
   startDate: string;
+  endDate?: string;
+  timing?: string;
+  weeklySchedule?: WeeklyScheduleDay[];
   duration: string;
   description: string;
   requirements: string[];
@@ -56,7 +65,16 @@ const SAMPLE_JOBS: Job[] = [
     category: "Warehouse",
     pay: 22,
     payType: "hourly",
-    startDate: "Tomorrow",
+    startDate: "Mon, 07/28/2026",
+    endDate: "Fri, 08/01/2026",
+    timing: "7:00 AM – 3:00 PM",
+    weeklySchedule: [
+      { day: "Mon", startTime: "7:00 AM", endTime: "3:00 PM" },
+      { day: "Tue", startTime: "7:00 AM", endTime: "3:00 PM" },
+      { day: "Wed", startTime: "7:00 AM", endTime: "3:00 PM" },
+      { day: "Thu", startTime: "7:00 AM", endTime: "3:00 PM" },
+      { day: "Fri", startTime: "7:00 AM", endTime: "3:00 PM" },
+    ],
     duration: "5 days",
     description:
       "Pick, pack and ship customer orders in a fast-paced fulfillment center. You'll work on a team ensuring accurate order fulfillment with great attention to detail.",
@@ -78,7 +96,9 @@ const SAMPLE_JOBS: Job[] = [
     category: "Hospitality",
     pay: 250,
     payType: "daily",
-    startDate: "Saturday",
+    startDate: "Sat, 07/26/2026",
+    endDate: "Sat, 07/26/2026",
+    timing: "6:00 PM – 12:00 AM",
     duration: "1 day",
     description:
       "Join our team for a high-profile corporate gala. Serve drinks, manage coat check, and ensure VIP guests have an exceptional evening.",
@@ -100,7 +120,16 @@ const SAMPLE_JOBS: Job[] = [
     category: "Admin",
     pay: 18,
     payType: "hourly",
-    startDate: "Monday",
+    startDate: "Mon, 08/04/2026",
+    endDate: "Fri, 08/15/2026",
+    timing: "9:00 AM – 5:00 PM",
+    weeklySchedule: [
+      { day: "Mon", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { day: "Tue", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { day: "Wed", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { day: "Thu", startTime: "9:00 AM", endTime: "5:00 PM" },
+      { day: "Fri", startTime: "9:00 AM", endTime: "5:00 PM" },
+    ],
     duration: "2 weeks",
     description:
       "Cover front desk duties for a prestigious law firm while their permanent receptionist is on leave. Answer calls, greet clients, manage mail and supplies.",
@@ -122,7 +151,15 @@ const SAMPLE_JOBS: Job[] = [
     category: "Warehouse",
     pay: 26,
     payType: "hourly",
-    startDate: "ASAP",
+    startDate: "Mon, 07/28/2026",
+    timing: "6:00 AM – 2:00 PM",
+    weeklySchedule: [
+      { day: "Mon", startTime: "6:00 AM", endTime: "2:00 PM" },
+      { day: "Tue", startTime: "6:00 AM", endTime: "2:00 PM" },
+      { day: "Wed", startTime: "6:00 AM", endTime: "2:00 PM" },
+      { day: "Thu", startTime: "6:00 AM", endTime: "2:00 PM" },
+      { day: "Fri", startTime: "6:00 AM", endTime: "2:00 PM" },
+    ],
     duration: "Ongoing",
     description:
       "Operate forklifts in a temperature-controlled food distribution warehouse. Load/unload trucks and manage inventory locations.",
@@ -144,7 +181,9 @@ const SAMPLE_JOBS: Job[] = [
     category: "Retail",
     pay: 16,
     payType: "hourly",
-    startDate: "This Weekend",
+    startDate: "Sat, 07/26/2026",
+    endDate: "Sun, 07/27/2026",
+    timing: "10:00 AM – 6:00 PM",
     duration: "2 days",
     description:
       "Help customers find products during our weekend sale event. Assist with fitting rooms, cash register, and floor stocking.",
@@ -166,7 +205,9 @@ const SAMPLE_JOBS: Job[] = [
     category: "Cleaning",
     pay: 19,
     payType: "hourly",
-    startDate: "Tonight",
+    startDate: "Mon, 07/28/2026",
+    endDate: "Wed, 07/30/2026",
+    timing: "10:00 PM – 6:00 AM",
     duration: "3 nights",
     description:
       "Deep clean commercial office space after hours. Tasks include vacuuming, mopping, restroom sanitation, and trash removal.",
