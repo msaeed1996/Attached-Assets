@@ -154,41 +154,44 @@ export default function JobDetailScreen() {
             )}
           </View>
 
-          {/* Job Timing */}
-          <View style={s.timingRow}>
-            <View style={[s.dateIconBox, { backgroundColor: "#FEF3C7" }]}>
-              <Feather name="clock" size={15} color="#D97706" />
+          {/* Job Timing + Weekly schedule inside one amber card */}
+          <View style={s.timingCard}>
+            {/* header row */}
+            <View style={s.timingHeaderRow}>
+              <View style={[s.dateIconBox, { backgroundColor: "#FEF3C7" }]}>
+                <Feather name="clock" size={15} color="#D97706" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.fieldLabel}>JOB TIMING ({hrs}H)</Text>
+                <Text style={s.fieldValue}>{job.timing ?? job.duration}</Text>
+              </View>
+              <View style={s.durationBadge}>
+                <Text style={s.durationBadgeTxt}>{job.duration}</Text>
+              </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.fieldLabel}>JOB TIMING ({hrs}H)</Text>
-              <Text style={s.fieldValue}>{job.timing ?? job.duration}</Text>
-            </View>
-            <View style={s.durationBadge}>
-              <Text style={s.durationBadgeTxt}>{job.duration}</Text>
-            </View>
-          </View>
 
-          {/* Weekly schedule */}
-          {job.weeklySchedule && job.weeklySchedule.length > 0 && (
-            <View style={s.weeklyWrap}>
-              {job.weeklySchedule.map((item, i) => (
-                <View
-                  key={i}
-                  style={[
-                    s.weeklyRow,
-                    i < job.weeklySchedule!.length - 1 && s.weeklyRowBorder,
-                  ]}
-                >
-                  <View style={s.weeklyDayPill}>
-                    <Text style={s.weeklyDayTxt}>{item.day}</Text>
+            {/* per-day schedule rows */}
+            {job.weeklySchedule && job.weeklySchedule.length > 0 && (
+              <View style={s.weeklyWrap}>
+                {job.weeklySchedule.map((item, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      s.weeklyRow,
+                      i < job.weeklySchedule!.length - 1 && s.weeklyRowBorder,
+                    ]}
+                  >
+                    <View style={s.weeklyDayPill}>
+                      <Text style={s.weeklyDayTxt}>{item.day}</Text>
+                    </View>
+                    <Text style={s.weeklyTime}>
+                      {item.startTime} – {item.endTime}
+                    </Text>
                   </View>
-                  <Text style={s.weeklyTime}>
-                    {item.startTime} – {item.endTime}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
+                ))}
+              </View>
+            )}
+          </View>
         </View>
 
         {/* ── Card 4: Location ── */}
@@ -375,16 +378,18 @@ const s = StyleSheet.create({
     alignItems: "center", justifyContent: "center", marginBottom: 6,
   },
 
-  /* timing row */
-  timingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+  /* timing card (wraps header + schedule) */
+  timingCard: {
     backgroundColor: "#fffbeb",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#fde68a",
     padding: 12,
+  },
+  timingHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
   durationBadge: {
     backgroundColor: "#D97706",
