@@ -445,46 +445,47 @@ const s = StyleSheet.create({
 
   /* hero */
   hero: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: 18,
+    paddingBottom: 14,
   },
   navRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 12,
   },
-  backBtn:  { width: 38, height: 38, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.15)", justifyContent: "center", alignItems: "center" },
+  backBtn:  { width: 34, height: 34, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.15)", justifyContent: "center", alignItems: "center" },
   urgentPill: {
     flexDirection: "row", alignItems: "center", gap: 5,
     backgroundColor: "rgba(255,255,255,0.18)",
-    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20,
-    marginLeft: 10,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
+    marginLeft: 8,
   },
-  urgentDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#FCA5A5" },
-  urgentTxt: { fontSize: 12, fontWeight: "700", color: "#fff" },
-  shareBtn:  { width: 38, height: 38, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.12)", justifyContent: "center", alignItems: "center", marginLeft: "auto" },
+  urgentDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: "#FCA5A5" },
+  urgentTxt: { fontSize: 11, fontWeight: "700", color: "#fff" },
+  shareBtn:  { width: 34, height: 34, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.12)", justifyContent: "center", alignItems: "center", marginLeft: "auto" },
 
-  heroBody:    { marginBottom: 20 },
-  heroTitle:   { fontSize: 26, fontWeight: "800", color: "#fff", letterSpacing: -0.5, lineHeight: 32, marginBottom: 8 },
-  heroMeta:    { flexDirection: "row", alignItems: "center", gap: 6 },
-  heroMetaTxt: { fontSize: 14, color: "rgba(255,255,255,0.78)", fontWeight: "500" },
+  heroBody:    { marginBottom: 12 },
+  heroTitle:   { fontSize: 20, fontWeight: "800", color: "#fff", letterSpacing: -0.3, lineHeight: 26, marginBottom: 5 },
+  heroMeta:    { flexDirection: "row", alignItems: "center", gap: 5 },
+  heroMetaTxt: { fontSize: 13, color: "rgba(255,255,255,0.78)", fontWeight: "500" },
 
   /* pay chip */
   payChip: {
     flexDirection: "row",
     backgroundColor: "rgba(255,255,255,0.15)",
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.22)",
-    padding: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     alignItems: "center",
   },
   payChipLeft:    { flex: 1, alignItems: "center" },
   payChipRight:   { flex: 1, alignItems: "center" },
-  payChipDivider: { width: 1, height: 36, backgroundColor: "rgba(255,255,255,0.25)", marginHorizontal: 8 },
-  payChipTotal:   { fontSize: 24, fontWeight: "800", color: "#fff" },
-  payChipRate:    { fontSize: 18, fontWeight: "700", color: "#fff" },
-  payChipLabel:   { fontSize: 11, color: "rgba(255,255,255,0.65)", fontWeight: "500", marginTop: 2 },
+  payChipDivider: { width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.25)", marginHorizontal: 8 },
+  payChipTotal:   { fontSize: 20, fontWeight: "800", color: "#fff" },
+  payChipRate:    { fontSize: 15, fontWeight: "700", color: "#fff" },
+  payChipLabel:   { fontSize: 10, color: "rgba(255,255,255,0.65)", fontWeight: "500", marginTop: 1 },
 
   /* quick chips */
   chipsRow: {
