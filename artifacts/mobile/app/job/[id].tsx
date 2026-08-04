@@ -147,15 +147,11 @@ export default function JobDetailScreen() {
 
         {/* Pay chip */}
         <View style={s.payChip}>
-          <View style={s.payChipLeft}>
-            <Text style={s.payChipTotal}>{total}</Text>
-            <Text style={s.payChipLabel}>total est. pay</Text>
-          </View>
+          <Text style={s.payChipTotal}>{total}</Text>
           <View style={s.payChipDivider} />
-          <View style={s.payChipRight}>
-            <Text style={s.payChipRate}>{rate}</Text>
-            <Text style={s.payChipLabel}>{hrs}h total</Text>
-          </View>
+          <Text style={s.payChipRate}>{rate}</Text>
+          <View style={[s.payChipDivider, { opacity: 0.4 }]} />
+          <Text style={s.payChipLabel}>{hrs}h</Text>
         </View>
       </LinearGradient>
 
@@ -472,20 +468,22 @@ const s = StyleSheet.create({
   /* pay chip */
   payChip: {
     flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.15)",
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.22)",
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 14,
-    alignItems: "center",
+    gap: 10,
+    alignSelf: "flex-start",
   },
-  payChipLeft:    { flex: 1, alignItems: "center" },
-  payChipRight:   { flex: 1, alignItems: "center" },
-  payChipDivider: { width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.25)", marginHorizontal: 8 },
-  payChipTotal:   { fontSize: 20, fontWeight: "800", color: "#fff" },
-  payChipRate:    { fontSize: 15, fontWeight: "700", color: "#fff" },
-  payChipLabel:   { fontSize: 10, color: "rgba(255,255,255,0.65)", fontWeight: "500", marginTop: 1 },
+  payChipLeft:    {},
+  payChipRight:   {},
+  payChipDivider: { width: 1, height: 18, backgroundColor: "rgba(255,255,255,0.35)" },
+  payChipTotal:   { fontSize: 17, fontWeight: "800", color: "#fff" },
+  payChipRate:    { fontSize: 14, fontWeight: "700", color: "#fff" },
+  payChipLabel:   { fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: "500" },
 
   /* quick chips */
   chipsRow: {
