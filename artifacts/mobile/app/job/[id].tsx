@@ -147,11 +147,20 @@ export default function JobDetailScreen() {
 
         {/* Pay chip */}
         <View style={s.payChip}>
-          <Text style={s.payChipTotal}>{total}</Text>
+          <View style={s.payChipCell}>
+            <Text style={s.payChipTotal}>{total}</Text>
+            <Text style={s.payChipSub}>total pay</Text>
+          </View>
           <View style={s.payChipDivider} />
-          <Text style={s.payChipRate}>{rate}</Text>
-          <View style={[s.payChipDivider, { opacity: 0.4 }]} />
-          <Text style={s.payChipLabel}>{hrs}h</Text>
+          <View style={s.payChipCell}>
+            <Text style={s.payChipRate}>{rate}</Text>
+            <Text style={s.payChipSub}>rate</Text>
+          </View>
+          <View style={s.payChipDivider} />
+          <View style={s.payChipCell}>
+            <Text style={s.payChipRate}>{hrs}h</Text>
+            <Text style={s.payChipSub}>duration</Text>
+          </View>
         </View>
       </LinearGradient>
 
@@ -473,16 +482,15 @@ const s = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.22)",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    gap: 10,
-    alignSelf: "stretch",
+    paddingVertical: 9,
   },
+  payChipCell:    { flex: 1, alignItems: "center" },
   payChipLeft:    {},
   payChipRight:   {},
-  payChipDivider: { width: 1, height: 18, backgroundColor: "rgba(255,255,255,0.35)" },
-  payChipTotal:   { fontSize: 17, fontWeight: "800", color: "#fff" },
+  payChipDivider: { width: 1, height: 22, backgroundColor: "rgba(255,255,255,0.3)" },
+  payChipTotal:   { fontSize: 16, fontWeight: "800", color: "#fff" },
   payChipRate:    { fontSize: 14, fontWeight: "700", color: "#fff" },
+  payChipSub:     { fontSize: 10, color: "rgba(255,255,255,0.6)", fontWeight: "500", marginTop: 1 },
   payChipLabel:   { fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: "500" },
 
   /* quick chips */
