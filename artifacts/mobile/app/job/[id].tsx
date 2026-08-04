@@ -476,7 +476,7 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
     gap: 10,
-    alignSelf: "flex-start",
+    alignSelf: "stretch",
   },
   payChipLeft:    {},
   payChipRight:   {},
