@@ -212,7 +212,7 @@ export default function JobDetailScreen() {
           {job.weeklySchedule && job.weeklySchedule.length > 0 && (
             <View style={s.scheduleWrap}>
               <Text style={s.scheduleHeading}>Weekly Schedule</Text>
-              {(showAllSchedule ? job.weeklySchedule : job.weeklySchedule.slice(0, 3)).map(
+              {(showAllSchedule ? job.weeklySchedule : job.weeklySchedule.slice(0, 2)).map(
                 (item: WeeklyScheduleDay, i: number) => {
                   const dayColor = DAY_COLOR[item.day] ?? BLUE;
                   return (
@@ -229,7 +229,7 @@ export default function JobDetailScreen() {
                   );
                 }
               )}
-              {job.weeklySchedule.length > 3 && (
+              {job.weeklySchedule.length > 2 && (
                 <TouchableOpacity
                   style={s.seeMoreBtn}
                   onPress={() => setShowAllSchedule((v) => !v)}
