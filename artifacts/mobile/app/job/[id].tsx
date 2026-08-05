@@ -131,9 +131,6 @@ export default function JobDetailScreen() {
               <Text style={s.urgentTxt}>Urgent Hire</Text>
             </View>
           )}
-          <TouchableOpacity style={s.shareBtn} hitSlop={12}>
-            <Feather name="share-2" size={18} color="rgba(255,255,255,0.85)" />
-          </TouchableOpacity>
         </View>
 
         {/* Title + company */}
