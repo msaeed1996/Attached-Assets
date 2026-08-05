@@ -212,25 +212,6 @@ export default function JobDetailScreen() {
             </View>
           )}
         </View>
-
-        {/* ── pay block ── */}
-        <View style={s.payBlock}>
-          <View style={s.payMain}>
-            <Text style={s.payNum}>${job.pay}</Text>
-            <Text style={s.payUnit}>{payUnit(job.payType)}</Text>
-          </View>
-          <View style={s.paySubRow}>
-            <Text style={s.paySub}>{total} estimated</Text>
-            <View style={s.paySubDot} />
-            <Text style={s.paySub}>{hrs}h total</Text>
-            {job.startDate && (
-              <>
-                <View style={s.paySubDot} />
-                <Text style={s.paySub}>{job.startDate}</Text>
-              </>
-            )}
-          </View>
-        </View>
       </LinearGradient>
 
       {/* ── FLOATING NAV (overlays hero, scroll-aware) ── */}
