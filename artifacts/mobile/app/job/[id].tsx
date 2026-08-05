@@ -263,15 +263,21 @@ export default function JobDetailScreen() {
           {/* ── STATS STRIP ── */}
           <Animated.View style={[s.statsStrip, useFade(0)]}>
             <View style={s.statItem}>
-              <Feather name="calendar" size={16} color={BLUE} />
-              <Text style={s.statVal}>{job.duration}</Text>
-              <Label>Duration</Label>
+              <Feather name="dollar-sign" size={16} color={BLUE} />
+              <Text style={s.statVal}>${job.pay}{payUnit(job.payType)}</Text>
+              <Label>Rate</Label>
             </View>
             <View style={s.statDivider} />
             <View style={s.statItem}>
-              <Feather name="clock" size={16} color={GREEN} />
-              <Text style={s.statVal}>{job.timing ? job.timing.split("–")[0].trim() : "Flexible"}</Text>
-              <Label>Start Time</Label>
+              <Feather name="clock" size={16} color={PURPLE} />
+              <Text style={s.statVal}>{hrs}h</Text>
+              <Label>Total Hours</Label>
+            </View>
+            <View style={s.statDivider} />
+            <View style={s.statItem}>
+              <Feather name="trending-up" size={16} color={GREEN} />
+              <Text style={s.statVal}>{total}</Text>
+              <Label>Estimated</Label>
             </View>
           </Animated.View>
 
