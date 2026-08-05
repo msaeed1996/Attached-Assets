@@ -1,15 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Linking,
-  Platform,
-  Modal,
-  Animated,
+  View, Text, StyleSheet, ScrollView,
+  TouchableOpacity, TextInput, Linking,
+  Platform, Modal, Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
@@ -32,453 +25,367 @@ function totalPay(pay: number, payType: string, duration: string): string {
   if (payType === "hourly") return `$${(pay * extractHours(duration)).toLocaleString()}`;
   return `$${pay.toLocaleString()}`;
 }
-function rateLabel(pay: number, payType: string) {
-  if (payType === "hourly") return `$${pay} / hr`;
-  if (payType === "daily") return `$${pay} / day`;
-  return `$${pay} fixed`;
-}
-function rateNumber(pay: number, payType: string) {
-  return `$${pay}`;
-}
 function rateUnit(payType: string) {
-  if (payType === "hourly") return "/ hr";
-  if (payType === "daily") return "/ day";
-  return "fixed";
+  return payType === "hourly" ? "/hr" : payType === "daily" ? "/day" : "fixed";
 }
 
-// ─── palette ──────────────────────────────────────────────────────────────────
-const PRIMARY    = "#2F5BFF";
-const PRIMARY_LT = "#4D73FF";
-const BG         = "#F6F8FC";
-const CARD       = "#FFFFFF";
-const DARK       = "#111827";
-const MID        = "#667085";
-const BORDER     = "#E8EDF5";
-const SUCCESS    = "#12B76A";
-const WARNING    = "#F79009";
-const ERROR      = "#F04438";
-const LABEL      = "#9CA3AF";
+// ─── tokens ───────────────────────────────────────────────────────────────────
+const P     = "#2F5BFF";   // primary blue
+const P2    = "#4D73FF";   // lighter blue (gradient start)
+const BG    = "#F4F6FB";   // page background
+const CARD  = "#FFFFFF";
+const INK   = "#0D1117";   // text primary
+const SUB   = "#6B7280";   // text secondary
+const BORD  = "#EAECF2";   // border
+const OK    = "#12B76A";   // success green
+const WARN  = "#F79009";   // warning amber
+const ERR   = "#F04438";   // error red
 
-const DAY_COLORS: Record<string, string> = {
+const DAY_HUE: Record<string, string> = {
   Mon: "#2F5BFF", Tue: "#7C3AED", Wed: "#0891B2",
   Thu: "#059669", Fri: "#D97706", Sat: "#DC2626", Sun: "#DB2777",
 };
 
-// ─── Animated card wrapper ────────────────────────────────────────────────────
-function AnimCard({ children, delay = 0, style }: { children: React.ReactNode; delay?: number; style?: any }) {
-  const opacity   = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(18)).current;
+// ─── FadeSlide card ───────────────────────────────────────────────────────────
+function FadeSlide({ children, delay = 0, style }: { children: React.ReactNode; delay?: number; style?: any }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const ty      = useRef(new Animated.Value(20)).current;
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(opacity,    { toValue: 1, duration: 380, delay, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 380, delay, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
+      Animated.timing(ty,      { toValue: 0, duration: 400, delay, useNativeDriver: true }),
     ]).start();
   }, []);
-  return (
-    <Animated.View style={[{ opacity, transform: [{ translateY }] }, style]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[{ opacity, transform: [{ translateY: ty }] }, style]}>{children}</Animated.View>;
 }
 
-// ─── component ────────────────────────────────────────────────────────────────
+// ─── PressBtn ─────────────────────────────────────────────────────────────────
+function PressBtn({ onPress, style, children }: any) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const press = () => { Animated.sequence([Animated.timing(scale, { toValue: 0.96, duration: 80, useNativeDriver: true }), Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true })]).start(); onPress?.(); };
+  return <Animated.View style={{ transform: [{ scale }] }}><TouchableOpacity onPress={press} style={style} activeOpacity={1}>{children}</TouchableOpacity></Animated.View>;
+}
+
+// ─── Section heading ──────────────────────────────────────────────────────────
+function SectionHead({ title }: { title: string }) {
+  return <Text style={s.sectionHead}>{title}</Text>;
+}
+
+// ─── Divider ──────────────────────────────────────────────────────────────────
+function Div() { return <View style={s.div} />; }
+
+// ─── Main screen ─────────────────────────────────────────────────────────────
 export default function JobDetailScreen() {
   const { id }   = useLocalSearchParams<{ id: string }>();
   const insets   = useSafeAreaInsets();
   const { getJobById, applyToJob, applications } = useJobs();
   const { userRole } = useApp();
 
-  const [showModal, setShowModal]             = useState(false);
-  const [coverNote, setCoverNote]             = useState("");
-  const [applied, setApplied]                 = useState(false);
-  const [showAllSchedule, setShowAllSchedule] = useState(false);
-  const [saved, setSaved]                     = useState(false);
-
-  const footerShadow = useRef(new Animated.Value(4)).current;
+  const [modal, setModal]   = useState(false);
+  const [note, setNote]     = useState("");
+  const [applied, setApplied] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [saved, setSaved]   = useState(false);
 
   const job        = getJobById(id);
-  const hasApplied = applied || applications.some((a) => a.jobId === id && a.workerId === "me");
+  const hasApplied = applied || applications.some(a => a.jobId === id && a.workerId === "me");
   const isWorker   = userRole !== "employer";
   const topPad     = Platform.OS === "web" ? insets.top + 67 : insets.top;
 
-  if (!job) {
-    return (
-      <View style={s.notFound}>
-        <View style={s.notFoundIcon}><Feather name="briefcase" size={32} color={MID} /></View>
-        <Text style={s.notFoundTitle}>Job not found</Text>
-        <Text style={s.notFoundSub}>This listing may have been removed</Text>
-        <TouchableOpacity style={s.notFoundBtn} onPress={() => router.back()}>
-          <Text style={s.notFoundBtnTxt}>Browse Jobs</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  if (!job) return (
+    <View style={s.empty}>
+      <View style={s.emptyIcon}><Feather name="briefcase" size={28} color={SUB} /></View>
+      <Text style={s.emptyTitle}>Job not found</Text>
+      <Text style={s.emptySub}>This listing may have been removed.</Text>
+      <TouchableOpacity style={s.emptyBtn} onPress={() => router.back()}>
+        <Text style={s.emptyBtnTxt}>Go Back</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
-  function submitApplication() {
-    applyToJob(id, coverNote);
+  function submit() {
+    applyToJob(id, note);
     setApplied(true);
-    setShowModal(false);
+    setModal(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }
 
-  function openDirections() {
+  function directions() {
     const q = encodeURIComponent(job.location);
-    Linking.openURL(
-      Platform.OS === "ios"
-        ? `maps://maps.apple.com/?q=${q}`
-        : `https://maps.google.com/?q=${q}`
-    ).catch(() => {});
+    Linking.openURL(Platform.OS === "ios" ? `maps://maps.apple.com/?q=${q}` : `https://maps.google.com/?q=${q}`).catch(() => {});
   }
 
-  const total = totalPay(job.pay, job.payType, job.duration);
-  const hrs   = extractHours(job.duration);
-
-  const highlights = [
-    { icon: "📅", label: job.weeklySchedule && job.weeklySchedule.length > 0 ? `Mon–Fri` : job.duration },
-    { icon: "⏰", label: job.timing ?? job.duration },
-    { icon: "💰", label: "Weekly Pay" },
-    { icon: "⚡", label: "Immediate Start" },
-  ];
-
-  const scheduleVisible = showAllSchedule
-    ? job.weeklySchedule ?? []
-    : (job.weeklySchedule ?? []).slice(0, 2);
+  const total  = totalPay(job.pay, job.payType, job.duration);
+  const hrs    = extractHours(job.duration);
+  const sched  = job.weeklySchedule ?? [];
+  const shown  = showAll ? sched : sched.slice(0, 2);
 
   return (
     <View style={s.root}>
 
-      {/* ══════════════════════════════════════════════
-          1. HERO
-      ══════════════════════════════════════════════ */}
+      {/* ── HERO ─────────────────────────────────── */}
       <LinearGradient
-        colors={[PRIMARY_LT, PRIMARY, "#1A3FCC"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1.2 }}
-        style={[s.hero, { paddingTop: topPad + 12 }]}
+        colors={[P2, P, "#1E40AF"]}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={[s.hero, { paddingTop: topPad + 10 }]}
       >
         {/* nav */}
-        <View style={s.navRow}>
-          <TouchableOpacity
-            style={s.iconBtn}
-            onPress={() => router.back()}
-            hitSlop={12}
-            activeOpacity={0.7}
-          >
+        <View style={s.nav}>
+          <TouchableOpacity style={s.navBtn} onPress={() => router.back()} hitSlop={12} activeOpacity={0.75}>
             <Feather name="arrow-left" size={20} color="#fff" />
           </TouchableOpacity>
-
-          <View style={s.navCenter}>
-            {job.urgency === "urgent" && (
-              <View style={s.urgentBadge}>
-                <View style={s.urgentDot} />
-                <Text style={s.urgentTxt}>Urgent Hire</Text>
-              </View>
-            )}
-          </View>
-
+          {job.urgency === "urgent" && (
+            <View style={s.urgentBadge}>
+              <View style={s.urgentDot} />
+              <Text style={s.urgentTxt}>Urgent Hire</Text>
+            </View>
+          )}
           <TouchableOpacity
-            style={s.iconBtn}
-            onPress={() => { setSaved(v => !v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            style={s.navBtn}
             hitSlop={12}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
+            onPress={() => { setSaved(v => !v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
           >
-            <Feather name={saved ? "bookmark" : "bookmark"} size={20} color={saved ? "#FBBF24" : "#fff"} />
+            <Feather name="bookmark" size={19} color={saved ? "#FBBF24" : "#fff"} />
           </TouchableOpacity>
         </View>
 
-        {/* title block */}
-        <View style={s.heroTitleBlock}>
-          <Text style={s.heroTitle}>{job.title}</Text>
-          <Text style={s.heroCompany}>TrueGigs Employer</Text>
-          <View style={s.heroLocationRow}>
-            <Feather name="map-pin" size={13} color="rgba(255,255,255,0.7)" />
-            <Text style={s.heroLocationTxt}>{job.location}</Text>
-          </View>
-        </View>
+        {/* title */}
+        <Text style={s.heroTitle} numberOfLines={2}>{job.title}</Text>
+        <Text style={s.heroCompany}>TrueGigs Employer · {job.location}</Text>
 
-        {/* salary dominates */}
-        <View style={s.salaryBlock}>
-          <View style={s.salaryRow}>
-            <Text style={s.salaryBig}>{rateNumber(job.pay, job.payType)}</Text>
-            <Text style={s.salaryUnit}>{rateUnit(job.payType)}</Text>
-          </View>
-          <View style={s.salaryMeta}>
-            <Text style={s.salaryMetaItem}>{total} Total</Text>
-            <Text style={s.salaryMetaDot}>·</Text>
-            <Text style={s.salaryMetaItem}>{hrs}h</Text>
-            {job.startDate ? (
-              <>
-                <Text style={s.salaryMetaDot}>·</Text>
-                <Text style={s.salaryMetaItem}>{job.startDate}{job.endDate ? ` – ${job.endDate}` : ""}</Text>
-              </>
-            ) : null}
-          </View>
-          {job.timing ? (
-            <Text style={s.salaryTiming}>{job.timing}</Text>
-          ) : null}
+        {/* pay */}
+        <View style={s.payRow}>
+          <Text style={s.payBig}>${job.pay}</Text>
+          <Text style={s.payUnit}>{rateUnit(job.payType)}</Text>
+        </View>
+        <View style={s.payMeta}>
+          <View style={s.payMetaChip}><Text style={s.payMetaTxt}>{total} total</Text></View>
+          <View style={s.payMetaChip}><Text style={s.payMetaTxt}>{hrs}h</Text></View>
+          {job.startDate ? <View style={s.payMetaChip}><Text style={s.payMetaTxt}>{job.startDate}{job.endDate ? ` – ${job.endDate}` : ""}</Text></View> : null}
+          {job.timing    ? <View style={s.payMetaChip}><Text style={s.payMetaTxt}>{job.timing}</Text></View> : null}
         </View>
       </LinearGradient>
 
+      {/* ── SCROLL ───────────────────────────────── */}
       <ScrollView
         contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 110 }]}
         showsVerticalScrollIndicator={false}
-        onScroll={({ nativeEvent }) => {
-          const elevated = nativeEvent.contentOffset.y > 20;
-          Animated.timing(footerShadow, { toValue: elevated ? 14 : 4, duration: 200, useNativeDriver: false }).start();
-        }}
-        scrollEventThrottle={16}
       >
 
-        {/* ══════════════════════════════════════════════
-            2. QUICK HIGHLIGHTS
-        ══════════════════════════════════════════════ */}
-        <AnimCard delay={60}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chipsScroll} contentContainerStyle={s.chipsContent}>
-            {highlights.map((h, i) => (
+        {/* quick chips */}
+        <FadeSlide delay={50}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips}>
+            {[
+              { icon: "calendar" as const, txt: job.duration },
+              { icon: "clock"    as const, txt: job.timing ?? "Flexible" },
+              { icon: "repeat"   as const, txt: `${sched.length > 0 ? sched.length : "?"} days/wk` },
+              { icon: "zap"      as const, txt: "Immediate Start" },
+              { icon: "dollar-sign" as const, txt: "Weekly Pay" },
+            ].map((c, i) => (
               <View key={i} style={s.chip}>
-                <Text style={s.chipIcon}>{h.icon}</Text>
-                <Text style={s.chipTxt}>{h.label}</Text>
+                <Feather name={c.icon} size={12} color={P} />
+                <Text style={s.chipTxt}>{c.txt}</Text>
               </View>
             ))}
           </ScrollView>
-        </AnimCard>
+        </FadeSlide>
 
-        {/* ══════════════════════════════════════════════
-            3. JOB SNAPSHOT
-        ══════════════════════════════════════════════ */}
-        <AnimCard delay={100} style={s.card}>
-          <Text style={s.sectionHeading}>Job Snapshot</Text>
-          <View style={s.snapshotGrid}>
-            {[
-              { icon: "dollar-sign", color: SUCCESS,  label: "Pay",      value: rateLabel(job.pay, job.payType) },
-              { icon: "clock",       color: PRIMARY,   label: "Duration", value: job.duration },
-              { icon: "sun",         color: WARNING,   label: "Shift",    value: job.timing ?? "See schedule" },
-              { icon: "map-pin",     color: "#7C3AED", label: "Location", value: job.location },
-              { icon: "briefcase",   color: "#0891B2", label: "Type",     value: "Temporary" },
-              { icon: "zap",         color: ERROR,     label: "Urgency",  value: job.urgency === "urgent" ? "Urgent" : "Standard" },
-            ].map((item, i) => (
-              <View key={i} style={s.snapshotItem}>
-                <View style={[s.snapshotIconWrap, { backgroundColor: item.color + "15" }]}>
-                  <Feather name={item.icon as any} size={15} color={item.color} />
-                </View>
-                <Text style={s.snapshotLabel}>{item.label}</Text>
-                <Text style={s.snapshotValue} numberOfLines={1}>{item.value}</Text>
-              </View>
-            ))}
-          </View>
-        </AnimCard>
-
-        {/* ══════════════════════════════════════════════
-            4. SCHEDULE
-        ══════════════════════════════════════════════ */}
-        {job.weeklySchedule && job.weeklySchedule.length > 0 && (
-          <AnimCard delay={140} style={s.card}>
-            <Text style={s.sectionHeading}>Weekly Schedule</Text>
-            <View style={s.scheduleWrap}>
-              {scheduleVisible.map((item: WeeklyScheduleDay, i: number) => {
-                const color = DAY_COLORS[item.day] ?? PRIMARY;
-                return (
-                  <View key={i} style={s.scheduleRow}>
-                    <View style={[s.dayBadge, { backgroundColor: color }]}>
-                      <Text style={s.dayBadgeTxt}>{item.day.toUpperCase()}</Text>
-                    </View>
-                    <View style={s.scheduleDots}>
-                      {Array.from({ length: 18 }).map((_, d) => (
-                        <View key={d} style={[s.dot, { backgroundColor: color + "40" }]} />
-                      ))}
-                    </View>
-                    <View style={s.timeBlock}>
-                      <Text style={s.timeFrom}>{item.startTime}</Text>
-                      <Feather name="arrow-right" size={11} color={MID} style={{ marginHorizontal: 3 }} />
-                      <Text style={s.timeTo}>{item.endTime}</Text>
-                    </View>
+        {/* ── SCHEDULE ──────────────────────────── */}
+        {sched.length > 0 && (
+          <FadeSlide delay={80} style={s.card}>
+            <SectionHead title="Schedule" />
+            {/* date range */}
+            {(job.startDate || job.endDate) && (
+              <>
+                <View style={s.dateRow}>
+                  <View style={s.dateBox}>
+                    <Text style={s.dateLabel}>START</Text>
+                    <Text style={s.dateVal}>{job.startDate ?? "—"}</Text>
                   </View>
-                );
-              })}
-            </View>
-            {job.weeklySchedule.length > 2 && (
-              <TouchableOpacity
-                style={s.seeMoreBtn}
-                onPress={() => setShowAllSchedule(v => !v)}
-                activeOpacity={0.7}
-              >
-                <Text style={s.seeMoreTxt}>
-                  {showAllSchedule ? "Show less" : `Show ${job.weeklySchedule.length - 2} more days`}
-                </Text>
-                <Feather name={showAllSchedule ? "chevron-up" : "chevron-down"} size={14} color={PRIMARY} />
+                  <Feather name="arrow-right" size={16} color={BORD} />
+                  <View style={[s.dateBox, { alignItems: "flex-end" }]}>
+                    <Text style={s.dateLabel}>END</Text>
+                    <Text style={s.dateVal}>{job.endDate ?? "Ongoing"}</Text>
+                  </View>
+                </View>
+                <Div />
+              </>
+            )}
+            {/* rows */}
+            {shown.map((item: WeeklyScheduleDay, i: number) => {
+              const col = DAY_HUE[item.day] ?? P;
+              return (
+                <View key={i} style={[s.schedRow, i < shown.length - 1 && s.schedRowBorder]}>
+                  <View style={[s.dayTag, { backgroundColor: col + "18", borderColor: col + "40" }]}>
+                    <Text style={[s.dayTagTxt, { color: col }]}>{item.day.slice(0,3).toUpperCase()}</Text>
+                  </View>
+                  <View style={s.schedDots}>
+                    {Array.from({ length: 16 }).map((_, d) => <View key={d} style={[s.dotPx, { backgroundColor: col + "30" }]} />)}
+                  </View>
+                  <View style={s.schedTime}>
+                    <Text style={s.schedTimeTxt}>{item.startTime}</Text>
+                    <Text style={s.schedTimeSep}> – </Text>
+                    <Text style={s.schedTimeTxt}>{item.endTime}</Text>
+                  </View>
+                </View>
+              );
+            })}
+            {sched.length > 2 && (
+              <TouchableOpacity style={s.seeMore} onPress={() => setShowAll(v => !v)} activeOpacity={0.7}>
+                <Text style={s.seeMoreTxt}>{showAll ? "Show less" : `Show ${sched.length - 2} more days`}</Text>
+                <Feather name={showAll ? "chevron-up" : "chevron-down"} size={14} color={P} />
               </TouchableOpacity>
             )}
-          </AnimCard>
+          </FadeSlide>
         )}
 
-        {/* ══════════════════════════════════════════════
-            5. LOCATION
-        ══════════════════════════════════════════════ */}
-        <AnimCard delay={180} style={s.card}>
-          <Text style={s.sectionHeading}>Location</Text>
-          {/* Map placeholder */}
-          <View style={s.mapPlaceholder}>
-            <LinearGradient colors={["#E8EDF5", "#D1D9EC"]} style={s.mapGrad}>
-              <View style={s.mapPin}>
-                <Feather name="map-pin" size={22} color={PRIMARY} />
-              </View>
-              <Text style={s.mapPlaceholderTxt}>Map Preview</Text>
-            </LinearGradient>
+        {/* ── LOCATION ──────────────────────────── */}
+        <FadeSlide delay={100} style={s.card}>
+          <SectionHead title="Location" />
+          {/* map placeholder */}
+          <View style={s.mapBox}>
+            <View style={s.mapPinCircle}>
+              <Feather name="map-pin" size={20} color={P} />
+            </View>
+            <Text style={s.mapHint}>Map Preview</Text>
           </View>
-          <View style={s.locationInfo}>
-            <View style={s.locationLeft}>
-              <Text style={s.locationValue}>{job.location}</Text>
-              <Text style={s.locationSub}>📍 ~2.4 miles away</Text>
+          <View style={s.locationRow}>
+            <View style={s.locationIcon}>
+              <Feather name="map-pin" size={16} color={P} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.locationName}>{job.location}</Text>
+              <Text style={s.locationSub}>2.4 miles away</Text>
             </View>
           </View>
-          <TouchableOpacity style={s.directionsBtn} onPress={openDirections} activeOpacity={0.85}>
-            <LinearGradient colors={[PRIMARY_LT, PRIMARY]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.directionsBtnGrad}>
+          <PressBtn onPress={directions} style={s.dirBtn}>
+            <LinearGradient colors={[P2, P]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.dirBtnGrad}>
               <Feather name="navigation" size={15} color="#fff" />
-              <Text style={s.directionsTxt}>Get Directions</Text>
+              <Text style={s.dirBtnTxt}>Get Directions</Text>
             </LinearGradient>
-          </TouchableOpacity>
-        </AnimCard>
+          </PressBtn>
+        </FadeSlide>
 
-        {/* ══════════════════════════════════════════════
-            6. HIRING MANAGER
-        ══════════════════════════════════════════════ */}
-        <AnimCard delay={200} style={s.card}>
-          <Text style={s.sectionHeading}>Report To</Text>
+        {/* ── REPORT TO ─────────────────────────── */}
+        <FadeSlide delay={120} style={s.card}>
+          <SectionHead title="Report To" />
           <View style={s.managerRow}>
-            <LinearGradient colors={[PRIMARY_LT, PRIMARY]} style={s.managerAvatar}>
-              <Text style={s.managerInitials}>HM</Text>
+            <LinearGradient colors={[P2, P]} style={s.avatar}>
+              <Text style={s.avatarTxt}>HM</Text>
             </LinearGradient>
             <View style={{ flex: 1 }}>
               <Text style={s.managerName}>Hiring Manager</Text>
               <Text style={s.managerRole}>On-site Supervisor</Text>
             </View>
-            <TouchableOpacity style={s.managerIconBtn} activeOpacity={0.7}>
-              <Feather name="message-circle" size={18} color={PRIMARY} />
+            <TouchableOpacity style={s.iconCircle} activeOpacity={0.7}>
+              <Feather name="message-circle" size={17} color={P} />
             </TouchableOpacity>
-            <TouchableOpacity style={[s.managerIconBtn, { marginLeft: 8 }]} activeOpacity={0.7}>
-              <Feather name="phone" size={18} color={SUCCESS} />
+            <TouchableOpacity style={[s.iconCircle, { marginLeft: 8, backgroundColor: OK + "12" }]} activeOpacity={0.7}>
+              <Feather name="phone" size={17} color={OK} />
             </TouchableOpacity>
           </View>
-        </AnimCard>
+        </FadeSlide>
 
-        {/* ══════════════════════════════════════════════
-            7. ABOUT JOB (icon rows)
-        ══════════════════════════════════════════════ */}
-        <AnimCard delay={220} style={s.card}>
-          <Text style={s.sectionHeading}>About This Job</Text>
+        {/* ── ABOUT JOB ─────────────────────────── */}
+        <FadeSlide delay={140} style={s.card}>
+          <SectionHead title="About This Job" />
           <Text style={s.bodyTxt}>{job.description}</Text>
-          {job.requirements.map((r, i) => (
-            <View key={i} style={s.iconRow}>
-              <View style={s.iconRowBadge}>
-                <Text style={s.iconRowEmoji}>
-                  {["📦", "🚚", "📋", "⚙️", "🔧", "📊"][i % 6]}
-                </Text>
-              </View>
-              <Text style={s.iconRowTxt}>{r}</Text>
-            </View>
-          ))}
-        </AnimCard>
+          {job.requirements.length > 0 && (
+            <>
+              <Div />
+              {job.requirements.map((r, i) => (
+                <View key={i} style={s.aboutRow}>
+                  <View style={s.aboutDot} />
+                  <Text style={s.aboutTxt}>{r}</Text>
+                </View>
+              ))}
+            </>
+          )}
+        </FadeSlide>
 
-        {/* ══════════════════════════════════════════════
-            8. REQUIREMENTS (card rows)
-        ══════════════════════════════════════════════ */}
+        {/* ── REQUIREMENTS ──────────────────────── */}
         {job.requirements.length > 0 && (
-          <AnimCard delay={240} style={s.card}>
-            <Text style={s.sectionHeading}>Requirements</Text>
-            {job.requirements.map((r, i) => (
-              <View key={i} style={s.requireCard}>
-                <Text style={s.requireEmoji}>
-                  {["🥾", "🏋", "🛂", "📋", "⚙️", "🔖"][i % 6]}
-                </Text>
-                <Text style={s.requireTxt}>{r}</Text>
-                <Feather name="check-circle" size={16} color={SUCCESS} />
-              </View>
-            ))}
-          </AnimCard>
-        )}
-
-        {/* ══════════════════════════════════════════════
-            9. UNIFORM (horizontal checklist)
-        ══════════════════════════════════════════════ */}
-        {job.uniform && job.uniform.length > 0 && (
-          <AnimCard delay={260} style={s.card}>
-            <Text style={s.sectionHeading}>Uniform Required</Text>
-            <View style={s.uniformWrap}>
-              {job.uniform.map((item, i) => (
-                <View key={i} style={s.uniformChip}>
-                  <Feather name="check-circle" size={14} color={SUCCESS} />
-                  <Text style={s.uniformTxt}>{item}</Text>
+          <FadeSlide delay={160} style={s.card}>
+            <SectionHead title="Requirements" />
+            <View style={s.reqWrap}>
+              {job.requirements.map((r, i) => (
+                <View key={i} style={s.reqChip}>
+                  <Feather name="check-circle" size={13} color={P} />
+                  <Text style={s.reqTxt}>{r}</Text>
                 </View>
               ))}
             </View>
-          </AnimCard>
+          </FadeSlide>
         )}
 
-        {/* ══════════════════════════════════════════════
-            10. INSTRUCTIONS (Before You Arrive)
-        ══════════════════════════════════════════════ */}
-        {job.instructions && job.instructions.length > 0 && (
-          <AnimCard delay={280}>
-            <LinearGradient
-              colors={["#ECFDF5", "#D1FAE5"]}
-              style={[s.card, s.instructionsCard]}
-            >
-              <View style={s.instructionsHeader}>
-                <View style={s.instructionsIconWrap}>
-                  <Feather name="clipboard" size={18} color={SUCCESS} />
+        {/* ── UNIFORM ───────────────────────────── */}
+        {job.uniform && job.uniform.length > 0 && (
+          <FadeSlide delay={180} style={s.card}>
+            <SectionHead title="Uniform Required" />
+            <View style={s.reqWrap}>
+              {job.uniform.map((item, i) => (
+                <View key={i} style={[s.reqChip, { backgroundColor: OK + "10", borderColor: OK + "30" }]}>
+                  <Feather name="check-circle" size={13} color={OK} />
+                  <Text style={[s.reqTxt, { color: "#065F46" }]}>{item}</Text>
                 </View>
-                <Text style={[s.sectionHeading, { color: "#065F46" }]}>Before You Arrive</Text>
+              ))}
+            </View>
+          </FadeSlide>
+        )}
+
+        {/* ── INSTRUCTIONS ──────────────────────── */}
+        {job.instructions && job.instructions.length > 0 && (
+          <FadeSlide delay={200}>
+            <View style={[s.card, s.instrCard]}>
+              <View style={s.instrHeader}>
+                <View style={s.instrIconBox}>
+                  <Feather name="info" size={15} color={P} />
+                </View>
+                <Text style={[s.sectionHead, { marginBottom: 0, color: "#1E3A8A" }]}>Before You Arrive</Text>
               </View>
               {job.instructions.map((item, i) => (
-                <View key={i} style={s.instructionRow}>
-                  <View style={s.instructionCheck}>
-                    <Feather name="check" size={12} color="#fff" />
-                  </View>
-                  <Text style={s.instructionTxt}>{item}</Text>
+                <View key={i} style={s.instrRow}>
+                  <View style={s.instrCheck}><Feather name="check" size={11} color="#fff" /></View>
+                  <Text style={s.instrTxt}>{item}</Text>
                 </View>
               ))}
-            </LinearGradient>
-          </AnimCard>
+            </View>
+          </FadeSlide>
         )}
 
-        {/* ══════════════════════════════════════════════
-            11. COMPANY
-        ══════════════════════════════════════════════ */}
-        <AnimCard delay={300} style={s.card}>
+        {/* ── COMPANY ───────────────────────────── */}
+        <FadeSlide delay={220} style={s.card}>
           <View style={s.companyRow}>
-            <LinearGradient colors={["#EFF6FF", "#DBEAFE"]} style={s.companyLogo}>
+            <View style={s.companyLogo}>
               <Text style={s.companyLogoTxt}>TG</Text>
-            </LinearGradient>
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={s.companyName}>TrueGigs Employer</Text>
-              <View style={s.companyMeta}>
-                <View style={s.starsRow}>
-                  {[1,2,3,4,5].map(n => (
-                    <Feather key={n} name="star" size={11} color={n <= 4 ? WARNING : "#E5E7EB"} />
-                  ))}
-                </View>
-                <Text style={s.companyMetaTxt}>4.0  ·  200–500 employees</Text>
+              <View style={s.starsRow}>
+                {[1,2,3,4,5].map(n => (
+                  <Feather key={n} name="star" size={11} color={n <= 4 ? WARN : BORD} />
+                ))}
+                <Text style={s.companyMeta}>  4.0 · 200–500 employees</Text>
               </View>
             </View>
-            <TouchableOpacity style={s.viewCompanyBtn} activeOpacity={0.7}>
-              <Text style={s.viewCompanyTxt}>View</Text>
-              <Feather name="arrow-right" size={13} color={PRIMARY} />
+            <TouchableOpacity style={s.viewBtn} activeOpacity={0.7}>
+              <Text style={s.viewBtnTxt}>View</Text>
+              <Feather name="arrow-right" size={13} color={P} />
             </TouchableOpacity>
           </View>
-        </AnimCard>
+        </FadeSlide>
 
         <Text style={s.postedTxt}>Posted {job.postedAt}</Text>
       </ScrollView>
 
-      {/* ══════════════════════════════════════════════
-          12. STICKY BOTTOM CTA
-      ══════════════════════════════════════════════ */}
-      <Animated.View style={[s.footer, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 10), shadowRadius: footerShadow }]}>
+      {/* ── STICKY CTA ───────────────────────────── */}
+      <View style={[s.footer, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 10) }]}>
         {isWorker ? (
           hasApplied ? (
-            <View style={s.appliedState}>
+            <View style={s.appliedWrap}>
               <View style={s.appliedRow}>
-                <Feather name="check-circle" size={20} color={SUCCESS} />
+                <Feather name="check-circle" size={18} color={OK} />
                 <Text style={s.appliedTxt}>Application Submitted</Text>
               </View>
               <TouchableOpacity activeOpacity={0.7}>
@@ -486,312 +393,226 @@ export default function JobDetailScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity
-              style={s.applyBtn}
-              onPress={() => setShowModal(true)}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={[PRIMARY_LT, PRIMARY]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={s.applyBtnGrad}
-              >
-                <View style={s.applyBtnInner}>
-                  <Text style={s.applyBtnSub}>Ready to start?</Text>
-                  <Text style={s.applyBtnMain}>Apply Now</Text>
+            <PressBtn onPress={() => setShowModal(true)} style={s.cta}>
+              <LinearGradient colors={[P2, P]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.ctaGrad}>
+                <View style={s.ctaLeft}>
+                  <Text style={s.ctaSub}>Ready to start?</Text>
+                  <Text style={s.ctaMain}>Apply Now</Text>
                 </View>
-                <View style={s.applyBtnArrow}>
+                <View style={s.ctaArrow}>
                   <Feather name="send" size={20} color="#fff" />
                 </View>
               </LinearGradient>
-            </TouchableOpacity>
+            </PressBtn>
           )
         ) : (
-          <TouchableOpacity style={s.applyBtn} activeOpacity={0.85}>
-            <LinearGradient
-              colors={[PRIMARY_LT, PRIMARY]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={s.applyBtnGrad}
-            >
-              <View style={s.applyBtnInner}>
-                <Text style={s.applyBtnSub}>Manage this listing</Text>
-                <Text style={s.applyBtnMain}>View Applicants</Text>
+          <PressBtn onPress={() => {}} style={s.cta}>
+            <LinearGradient colors={[P2, P]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.ctaGrad}>
+              <View style={s.ctaLeft}>
+                <Text style={s.ctaSub}>Manage this listing</Text>
+                <Text style={s.ctaMain}>View Applicants</Text>
               </View>
-              <View style={s.applyBtnArrow}>
+              <View style={s.ctaArrow}>
                 <Feather name="users" size={20} color="#fff" />
               </View>
             </LinearGradient>
-          </TouchableOpacity>
+          </PressBtn>
         )}
-      </Animated.View>
+      </View>
 
-      {/* ── Apply modal ── */}
-      <Modal visible={showModal} animationType="slide" transparent>
+      {/* ── APPLY MODAL ──────────────────────────── */}
+      <Modal visible={modal} animationType="slide" transparent>
         <View style={s.overlay}>
           <View style={s.sheet}>
             <View style={s.sheetHandle} />
-            <View style={s.sheetHeader}>
+            <View style={s.sheetTop}>
               <View>
                 <Text style={s.sheetTitle}>Apply Now</Text>
                 <Text style={s.sheetSub}>{job.title}</Text>
               </View>
-              <TouchableOpacity style={s.sheetClose} onPress={() => setShowModal(false)}>
-                <Feather name="x" size={18} color={MID} />
+              <TouchableOpacity style={s.sheetClose} onPress={() => setModal(false)}>
+                <Feather name="x" size={17} color={SUB} />
               </TouchableOpacity>
             </View>
-            <Text style={s.sheetPrompt}>Add an optional note to stand out from other applicants</Text>
+            <Text style={s.sheetPrompt}>Add an optional note to stand out</Text>
             <TextInput
               style={s.noteInput}
               placeholder="Tell them why you're a great fit…"
-              placeholderTextColor={LABEL}
-              multiline
-              numberOfLines={4}
-              value={coverNote}
-              onChangeText={setCoverNote}
+              placeholderTextColor="#C0C8D8"
+              multiline numberOfLines={4}
+              value={note} onChangeText={setNote}
             />
-            <TouchableOpacity style={s.submitBtn} onPress={submitApplication} activeOpacity={0.85}>
-              <LinearGradient
-                colors={[PRIMARY_LT, PRIMARY]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={s.submitBtnGrad}
-              >
-                <Feather name="check-circle" size={18} color="#fff" />
+            <PressBtn onPress={submit} style={s.submitBtn}>
+              <LinearGradient colors={[P2, P]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.submitGrad}>
+                <Feather name="check-circle" size={17} color="#fff" />
                 <Text style={s.submitTxt}>Submit Application</Text>
               </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity style={s.sheetCancelBtn} onPress={() => setShowModal(false)}>
-              <Text style={s.sheetCancelTxt}>Maybe later</Text>
+            </PressBtn>
+            <TouchableOpacity style={s.cancelBtn} onPress={() => setModal(false)}>
+              <Text style={s.cancelBtnTxt}>Maybe later</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
     </View>
   );
+
+  function setShowModal(v: boolean) { setModal(v); }
 }
 
 // ─── styles ───────────────────────────────────────────────────────────────────
-const CARD_RADIUS = 22;
-const CARD_PAD    = 22;
+const R = 20; // card radius
+const P_= 20; // card padding
 
 const s = StyleSheet.create({
-  root:    { flex: 1, backgroundColor: BG },
-  notFound:{ flex: 1, justifyContent: "center", alignItems: "center", gap: 12, backgroundColor: BG, padding: 32 },
-  notFoundIcon:   { width: 80, height: 80, borderRadius: 40, backgroundColor: "#F1F5F9", justifyContent: "center", alignItems: "center" },
-  notFoundTitle:  { fontSize: 20, fontWeight: "700", color: DARK },
-  notFoundSub:    { fontSize: 15, color: MID, textAlign: "center" },
-  notFoundBtn:    { backgroundColor: PRIMARY, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14, marginTop: 8 },
-  notFoundBtnTxt: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  root: { flex: 1, backgroundColor: BG },
 
-  // ── hero ──
-  hero: { paddingHorizontal: 20, paddingBottom: 28 },
-  navRow: { flexDirection: "row", alignItems: "center", marginBottom: 22 },
-  navCenter: { flex: 1, alignItems: "center" },
-  iconBtn: {
-    width: 40, height: 40, borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.18)",
-    justifyContent: "center", alignItems: "center",
-  },
-  urgentBadge: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20,
-  },
+  /* empty state */
+  empty:       { flex: 1, justifyContent: "center", alignItems: "center", gap: 10, padding: 32, backgroundColor: BG },
+  emptyIcon:   { width: 72, height: 72, borderRadius: 36, backgroundColor: "#EEF0F6", justifyContent: "center", alignItems: "center" },
+  emptyTitle:  { fontSize: 19, fontWeight: "700", color: INK },
+  emptySub:    { fontSize: 14, color: SUB, textAlign: "center" },
+  emptyBtn:    { marginTop: 8, backgroundColor: P, paddingHorizontal: 26, paddingVertical: 13, borderRadius: 12 },
+  emptyBtnTxt: { color: "#fff", fontWeight: "700", fontSize: 15 },
+
+  /* hero */
+  hero:      { paddingHorizontal: 20, paddingBottom: 26 },
+  nav:       { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 },
+  navBtn:    { width: 38, height: 38, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.18)", justifyContent: "center", alignItems: "center" },
+  urgentBadge:{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,0.18)", paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
   urgentDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#FCA5A5" },
   urgentTxt: { fontSize: 12, fontWeight: "700", color: "#fff" },
+  heroTitle:  { fontSize: 28, fontWeight: "800", color: "#fff", letterSpacing: -0.4, lineHeight: 34, marginBottom: 5 },
+  heroCompany:{ fontSize: 14, color: "rgba(255,255,255,0.72)", fontWeight: "500", marginBottom: 18 },
+  payRow:    { flexDirection: "row", alignItems: "flex-end", gap: 6, marginBottom: 12 },
+  payBig:    { fontSize: 52, fontWeight: "800", color: "#fff", lineHeight: 56 },
+  payUnit:   { fontSize: 20, fontWeight: "600", color: "rgba(255,255,255,0.75)", marginBottom: 8 },
+  payMeta:   { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  payMetaChip:{ backgroundColor: "rgba(255,255,255,0.18)", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  payMetaTxt: { fontSize: 12, fontWeight: "600", color: "rgba(255,255,255,0.9)" },
 
-  heroTitleBlock: { marginBottom: 20 },
-  heroTitle:      { fontSize: 30, fontWeight: "800", color: "#fff", letterSpacing: -0.5, lineHeight: 36, marginBottom: 6 },
-  heroCompany:    { fontSize: 15, color: "rgba(255,255,255,0.75)", fontWeight: "500", marginBottom: 5 },
-  heroLocationRow:{ flexDirection: "row", alignItems: "center", gap: 5 },
-  heroLocationTxt:{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: "500" },
+  /* scroll */
+  scroll: { paddingHorizontal: 16, paddingTop: 14, gap: 12 },
 
-  salaryBlock:  { gap: 6 },
-  salaryRow:    { flexDirection: "row", alignItems: "flex-end", gap: 8 },
-  salaryBig:    { fontSize: 48, fontWeight: "800", color: "#fff", lineHeight: 52 },
-  salaryUnit:   { fontSize: 20, fontWeight: "600", color: "rgba(255,255,255,0.8)", marginBottom: 7 },
-  salaryMeta:   { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
-  salaryMetaItem:{ fontSize: 14, color: "rgba(255,255,255,0.78)", fontWeight: "600" },
-  salaryMetaDot: { fontSize: 14, color: "rgba(255,255,255,0.45)" },
-  salaryTiming:  { fontSize: 13, color: "rgba(255,255,255,0.65)", fontWeight: "500" },
+  /* chips */
+  chips: { paddingRight: 16, gap: 8 },
+  chip:  { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#EEF2FF", paddingHorizontal: 12, paddingVertical: 7, borderRadius: 30, borderWidth: 1, borderColor: "#DBEAFE" },
+  chipTxt: { fontSize: 12, fontWeight: "600", color: P },
 
-  // ── scroll ──
-  scroll: { paddingHorizontal: 16, paddingTop: 12, gap: 14 },
-
-  // ── card ──
+  /* card */
   card: {
-    backgroundColor: CARD,
-    borderRadius: CARD_RADIUS,
-    padding: CARD_PAD,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 3,
+    backgroundColor: CARD, borderRadius: R, padding: P_,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
-  sectionHeading: { fontSize: 20, fontWeight: "700", color: DARK, marginBottom: 16 },
+  sectionHead: { fontSize: 17, fontWeight: "700", color: INK, marginBottom: 14 },
+  div:         { height: 1, backgroundColor: BORD, marginVertical: 14 },
 
-  // ── chips ──
-  chipsScroll:   { marginHorizontal: -16 },
-  chipsContent:  { paddingHorizontal: 16, gap: 8 },
-  chip: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#EEF2FF",
-    paddingHorizontal: 14, paddingVertical: 9,
-    borderRadius: 30,
-    shadowColor: PRIMARY, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4,
-    elevation: 2,
+  /* dates */
+  dateRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
+  dateBox: { gap: 3 },
+  dateLabel:{ fontSize: 10, fontWeight: "700", color: SUB, letterSpacing: 0.8 },
+  dateVal:  { fontSize: 15, fontWeight: "700", color: INK },
+
+  /* schedule */
+  schedRow:       { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
+  schedRowBorder: { borderBottomWidth: 1, borderBottomColor: BORD },
+  dayTag:         { borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5, minWidth: 48, alignItems: "center" },
+  dayTagTxt:      { fontSize: 11, fontWeight: "800", letterSpacing: 0.5 },
+  schedDots:      { flex: 1, flexDirection: "row", gap: 3, alignItems: "center", overflow: "hidden", marginHorizontal: 10 },
+  dotPx:          { width: 3, height: 3, borderRadius: 2 },
+  schedTime:      { flexDirection: "row", alignItems: "center" },
+  schedTimeTxt:   { fontSize: 13, fontWeight: "700", color: INK },
+  schedTimeSep:   { fontSize: 13, color: SUB },
+  seeMore:        { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 10 },
+  seeMoreTxt:     { fontSize: 13, fontWeight: "600", color: P },
+
+  /* location */
+  mapBox: {
+    height: 110, borderRadius: 14, backgroundColor: "#EEF2FF",
+    justifyContent: "center", alignItems: "center", gap: 8, marginBottom: 14,
+    borderWidth: 1, borderColor: "#DBEAFE",
   },
-  chipIcon: { fontSize: 14 },
-  chipTxt:  { fontSize: 13, fontWeight: "600", color: PRIMARY },
+  mapPinCircle: { width: 42, height: 42, borderRadius: 21, backgroundColor: "#fff", justifyContent: "center", alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  mapHint:      { fontSize: 12, color: SUB },
+  locationRow:  { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 14 },
+  locationIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: "#EEF2FF", justifyContent: "center", alignItems: "center" },
+  locationName: { fontSize: 15, fontWeight: "700", color: INK },
+  locationSub:  { fontSize: 13, color: SUB, marginTop: 2 },
+  dirBtn:       { borderRadius: 14, overflow: "hidden" },
+  dirBtnGrad:   { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 13 },
+  dirBtnTxt:    { fontSize: 14, fontWeight: "700", color: "#fff" },
 
-  // ── snapshot ──
-  snapshotGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  snapshotItem: {
-    width: "30%",
-    flexGrow: 1,
-    backgroundColor: "#F8FAFF",
-    borderRadius: 14,
-    padding: 12,
-    gap: 4,
-  },
-  snapshotIconWrap: { width: 32, height: 32, borderRadius: 10, justifyContent: "center", alignItems: "center", marginBottom: 2 },
-  snapshotLabel:    { fontSize: 11, fontWeight: "600", color: LABEL },
-  snapshotValue:    { fontSize: 13, fontWeight: "700", color: DARK },
+  /* report to */
+  managerRow:  { flexDirection: "row", alignItems: "center", gap: 12 },
+  avatar:      { width: 48, height: 48, borderRadius: 24, justifyContent: "center", alignItems: "center" },
+  avatarTxt:   { fontSize: 16, fontWeight: "800", color: "#fff" },
+  managerName: { fontSize: 15, fontWeight: "700", color: INK },
+  managerRole: { fontSize: 13, color: SUB, marginTop: 2 },
+  iconCircle:  { width: 38, height: 38, borderRadius: 19, backgroundColor: P + "12", justifyContent: "center", alignItems: "center" },
 
-  // ── schedule ──
-  scheduleWrap: { gap: 10 },
-  scheduleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F8FAFF",
-    borderRadius: 14,
-    padding: 12,
-    gap: 10,
-  },
-  dayBadge:    { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, minWidth: 52, alignItems: "center" },
-  dayBadgeTxt: { fontSize: 11, fontWeight: "800", color: "#fff", letterSpacing: 0.5 },
-  scheduleDots:{ flex: 1, flexDirection: "row", gap: 3, alignItems: "center", overflow: "hidden" },
-  dot:         { width: 3, height: 3, borderRadius: 2 },
-  timeBlock:   { flexDirection: "row", alignItems: "center" },
-  timeFrom:    { fontSize: 13, fontWeight: "700", color: DARK },
-  timeTo:      { fontSize: 13, fontWeight: "700", color: DARK },
-  seeMoreBtn:  { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, marginTop: 6 },
-  seeMoreTxt:  { fontSize: 14, fontWeight: "600", color: PRIMARY },
+  /* about */
+  bodyTxt:  { fontSize: 14, lineHeight: 22, color: SUB },
+  aboutRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 8 },
+  aboutDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: P, marginTop: 7, flexShrink: 0 },
+  aboutTxt: { flex: 1, fontSize: 14, lineHeight: 21, color: INK, fontWeight: "500" },
 
-  // ── location ──
-  mapPlaceholder: { borderRadius: 16, overflow: "hidden", marginBottom: 14, height: 120 },
-  mapGrad:        { flex: 1, justifyContent: "center", alignItems: "center", gap: 6 },
-  mapPin:         { width: 44, height: 44, borderRadius: 22, backgroundColor: "#fff", justifyContent: "center", alignItems: "center", shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 6, elevation: 4 },
-  mapPlaceholderTxt: { fontSize: 12, color: MID, fontWeight: "500" },
-  locationInfo:   { flexDirection: "row", alignItems: "center", marginBottom: 14 },
-  locationLeft:   { flex: 1 },
-  locationValue:  { fontSize: 17, fontWeight: "700", color: DARK },
-  locationSub:    { fontSize: 13, color: MID, marginTop: 3 },
-  directionsBtn:  { borderRadius: 14, overflow: "hidden" },
-  directionsBtnGrad: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14 },
-  directionsTxt:  { fontSize: 15, fontWeight: "700", color: "#fff" },
+  /* requirements / uniform chips */
+  reqWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  reqChip: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#EEF2FF", borderWidth: 1, borderColor: "#DBEAFE", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
+  reqTxt:  { fontSize: 13, fontWeight: "600", color: "#1E3A8A" },
 
-  // ── manager ──
-  managerRow:      { flexDirection: "row", alignItems: "center", gap: 14 },
-  managerAvatar:   { width: 52, height: 52, borderRadius: 26, justifyContent: "center", alignItems: "center" },
-  managerInitials: { fontSize: 18, fontWeight: "800", color: "#fff" },
-  managerName:     { fontSize: 17, fontWeight: "700", color: DARK },
-  managerRole:     { fontSize: 13, color: MID, marginTop: 2 },
-  managerIconBtn:  { width: 40, height: 40, borderRadius: 20, backgroundColor: "#F1F5F9", justifyContent: "center", alignItems: "center" },
+  /* instructions */
+  instrCard:   { backgroundColor: "#EFF6FF", borderWidth: 1, borderColor: "#BFDBFE" },
+  instrHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 14 },
+  instrIconBox:{ width: 30, height: 30, borderRadius: 9, backgroundColor: "#DBEAFE", justifyContent: "center", alignItems: "center" },
+  instrRow:    { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
+  instrCheck:  { width: 20, height: 20, borderRadius: 10, backgroundColor: OK, justifyContent: "center", alignItems: "center" },
+  instrTxt:    { fontSize: 14, fontWeight: "500", color: "#1E3A8A", flex: 1 },
 
-  // ── about / icon rows ──
-  bodyTxt:      { fontSize: 15, lineHeight: 24, color: MID, marginBottom: 14 },
-  iconRow:      { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: BORDER },
-  iconRowBadge: { width: 36, height: 36, borderRadius: 10, backgroundColor: "#EEF2FF", justifyContent: "center", alignItems: "center" },
-  iconRowEmoji: { fontSize: 17 },
-  iconRowTxt:   { flex: 1, fontSize: 15, color: DARK, fontWeight: "500" },
+  /* company */
+  companyRow:    { flexDirection: "row", alignItems: "center", gap: 12 },
+  companyLogo:   { width: 48, height: 48, borderRadius: 14, backgroundColor: "#EEF2FF", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: BORD },
+  companyLogoTxt:{ fontSize: 15, fontWeight: "800", color: P },
+  companyName:   { fontSize: 15, fontWeight: "700", color: INK, marginBottom: 4 },
+  starsRow:      { flexDirection: "row", alignItems: "center", gap: 2 },
+  companyMeta:   { fontSize: 12, color: SUB },
+  viewBtn:       { flexDirection: "row", alignItems: "center", gap: 3 },
+  viewBtnTxt:    { fontSize: 13, fontWeight: "700", color: P },
 
-  // ── requirements ──
-  requireCard: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    backgroundColor: "#F8FAFF",
-    borderRadius: 14, padding: 14, marginBottom: 8,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
-  },
-  requireEmoji: { fontSize: 20 },
-  requireTxt:   { flex: 1, fontSize: 15, fontWeight: "500", color: DARK },
+  postedTxt: { textAlign: "center", fontSize: 12, color: "#C0C8D8", marginVertical: 4 },
 
-  // ── uniform ──
-  uniformWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  uniformChip: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#ECFDF5",
-    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8,
-    borderWidth: 1, borderColor: "#A7F3D0",
-  },
-  uniformTxt: { fontSize: 13, fontWeight: "600", color: "#065F46" },
-
-  // ── instructions ──
-  instructionsCard:   { borderWidth: 0 },
-  instructionsHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  instructionsIconWrap:{ width: 36, height: 36, borderRadius: 10, backgroundColor: "#D1FAE5", justifyContent: "center", alignItems: "center" },
-  instructionRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
-  instructionCheck: {
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: SUCCESS,
-    justifyContent: "center", alignItems: "center",
-  },
-  instructionTxt: { fontSize: 15, fontWeight: "500", color: "#064E3B" },
-
-  // ── company ──
-  companyRow:     { flexDirection: "row", alignItems: "center", gap: 14 },
-  companyLogo:    { width: 52, height: 52, borderRadius: 14, justifyContent: "center", alignItems: "center" },
-  companyLogoTxt: { fontSize: 16, fontWeight: "800", color: PRIMARY },
-  companyName:    { fontSize: 17, fontWeight: "700", color: DARK, marginBottom: 4 },
-  companyMeta:    { flexDirection: "row", alignItems: "center", gap: 5 },
-  starsRow:       { flexDirection: "row", gap: 1 },
-  companyMetaTxt: { fontSize: 12, color: MID },
-  viewCompanyBtn: { flexDirection: "row", alignItems: "center", gap: 3 },
-  viewCompanyTxt: { fontSize: 13, fontWeight: "700", color: PRIMARY },
-
-  postedTxt: { textAlign: "center", fontSize: 13, color: LABEL, marginTop: 4 },
-
-  // ── footer ──
+  /* footer */
   footer: {
     position: "absolute", bottom: 0, left: 0, right: 0,
-    backgroundColor: CARD,
-    borderTopWidth: 1, borderTopColor: BORDER,
-    paddingHorizontal: 20, paddingTop: 14,
-    shadowColor: "#000", shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.08,
-    elevation: 12,
+    backgroundColor: CARD, borderTopWidth: 1, borderTopColor: BORD,
+    paddingHorizontal: 20, paddingTop: 12,
+    shadowColor: "#000", shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.07, shadowRadius: 10, elevation: 14,
   },
-  applyBtn:     { borderRadius: 18, overflow: "hidden", height: 60 },
-  applyBtnGrad: { flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 20 },
-  applyBtnInner:{ flex: 1 },
-  applyBtnSub:  { fontSize: 12, color: "rgba(255,255,255,0.75)", fontWeight: "500" },
-  applyBtnMain: { fontSize: 19, fontWeight: "800", color: "#fff" },
-  applyBtnArrow:{ width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", justifyContent: "center", alignItems: "center" },
+  cta:     { borderRadius: 18, overflow: "hidden", height: 60 },
+  ctaGrad: { flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 20 },
+  ctaLeft: { flex: 1 },
+  ctaSub:  { fontSize: 12, color: "rgba(255,255,255,0.72)", fontWeight: "500" },
+  ctaMain: { fontSize: 19, fontWeight: "800", color: "#fff" },
+  ctaArrow:{ width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,255,255,0.2)", justifyContent: "center", alignItems: "center" },
 
-  appliedState: { alignItems: "center", gap: 6 },
-  appliedRow:   { flexDirection: "row", alignItems: "center", gap: 8 },
-  appliedTxt:   { fontSize: 16, fontWeight: "700", color: SUCCESS },
-  cancelTxt:    { fontSize: 13, color: ERROR, fontWeight: "600" },
+  appliedWrap: { alignItems: "center", gap: 6 },
+  appliedRow:  { flexDirection: "row", alignItems: "center", gap: 8 },
+  appliedTxt:  { fontSize: 16, fontWeight: "700", color: OK },
+  cancelTxt:   { fontSize: 13, color: ERR, fontWeight: "600" },
 
-  // ── modal ──
-  overlay:  { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  sheet:    { backgroundColor: CARD, borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 24, paddingTop: 12 },
-  sheetHandle:   { width: 40, height: 4, backgroundColor: BORDER, borderRadius: 2, alignSelf: "center", marginBottom: 22 },
-  sheetHeader:   { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 },
-  sheetClose:    { width: 36, height: 36, borderRadius: 18, backgroundColor: BG, justifyContent: "center", alignItems: "center" },
-  sheetTitle:    { fontSize: 22, fontWeight: "800", color: DARK },
-  sheetSub:      { fontSize: 14, color: MID, marginTop: 2 },
-  sheetPrompt:   { fontSize: 14, color: MID, marginBottom: 14 },
-  noteInput:     {
-    borderWidth: 1.5, borderColor: BORDER, borderRadius: 14,
-    padding: 14, fontSize: 15, color: DARK, backgroundColor: BG,
-    minHeight: 100, textAlignVertical: "top", marginBottom: 16,
-  },
-  submitBtn:     { borderRadius: 16, overflow: "hidden", height: 56, marginBottom: 10 },
-  submitBtnGrad: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  submitTxt:     { color: "#fff", fontSize: 16, fontWeight: "700" },
-  sheetCancelBtn:{ paddingVertical: 14, alignItems: "center" },
-  sheetCancelTxt:{ fontSize: 15, color: MID, fontWeight: "500" },
+  /* modal */
+  overlay:    { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
+  sheet:      { backgroundColor: CARD, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingTop: 12 },
+  sheetHandle:{ width: 40, height: 4, backgroundColor: BORD, borderRadius: 2, alignSelf: "center", marginBottom: 20 },
+  sheetTop:   { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 },
+  sheetClose: { width: 34, height: 34, borderRadius: 17, backgroundColor: BG, justifyContent: "center", alignItems: "center" },
+  sheetTitle: { fontSize: 20, fontWeight: "800", color: INK },
+  sheetSub:   { fontSize: 14, color: SUB, marginTop: 2 },
+  sheetPrompt:{ fontSize: 14, color: SUB, marginBottom: 12 },
+  noteInput:  { borderWidth: 1.5, borderColor: BORD, borderRadius: 14, padding: 14, fontSize: 14, color: INK, backgroundColor: BG, minHeight: 96, textAlignVertical: "top", marginBottom: 14 },
+  submitBtn:  { borderRadius: 16, overflow: "hidden", height: 54, marginBottom: 10 },
+  submitGrad: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  submitTxt:  { color: "#fff", fontSize: 16, fontWeight: "700" },
+  cancelBtn:  { paddingVertical: 12, alignItems: "center" },
+  cancelBtnTxt:{ fontSize: 15, color: SUB, fontWeight: "500" },
 });
