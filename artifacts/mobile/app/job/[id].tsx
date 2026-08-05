@@ -136,10 +136,6 @@ export default function JobDetailScreen() {
         {/* Title + company */}
         <View style={s.heroBody}>
           <Text style={s.heroTitle}>{job.title}</Text>
-          <View style={s.heroMeta}>
-            <Feather name="map-pin" size={13} color="rgba(255,255,255,0.75)" />
-            <Text style={s.heroMetaTxt}>{job.location}</Text>
-          </View>
         </View>
 
         {/* Pay chip */}
