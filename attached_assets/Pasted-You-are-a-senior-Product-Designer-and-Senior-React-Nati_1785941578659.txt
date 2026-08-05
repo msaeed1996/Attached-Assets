@@ -1,0 +1,490 @@
+You are a senior Product Designer and Senior React Native (Expo) UI engineer. Your goal is to redesign my existing Job Details screen into a premium, modern mobile experience comparable to Airbnb, Uber, Linear, Stripe, and Apple Human Interface Guidelines.
+
+Goal
+
+Redesign the screen without changing any functionality.
+
+Only improve:
+
+UI
+UX
+Layout
+Information hierarchy
+Typography
+Spacing
+Animations
+Premium visual polish
+
+The design should feel like a high-end production application.
+
+Overall Design Language
+
+Create a clean premium interface.
+
+Avoid looking like a typical template.
+
+Use:
+
+Large whitespace
+Soft shadows
+Rounded corners (20-24px)
+Minimal borders
+Glass-like cards where appropriate
+Modern gradients
+Consistent spacing
+Elegant typography
+Smooth micro interactions
+
+The UI should instantly communicate professionalism and trust.
+
+Color Palette
+
+Primary:
+#2F5BFF
+
+Primary Gradient:
+#4D73FF → #2F5BFF
+
+Background:
+#F6F8FC
+
+Card:
+#FFFFFF
+
+Text Primary:
+#111827
+
+Text Secondary:
+#667085
+
+Border:
+#E8EDF5
+
+Success:
+#12B76A
+
+Warning:
+#F79009
+
+Error:
+#F04438
+
+Screen Structure
+
+Redesign the page in this order.
+
+1. Hero Section
+
+Create a beautiful gradient header.
+
+Include:
+
+Back button
+
+Save Job icon
+
+Urgent Hire badge
+
+Large Job Title
+
+Company Name
+
+Location
+
+Below that display:
+
+Large Salary
+
+Example:
+
+$22/hr
+
+Then below:
+
+$880 Total Earnings
+
+40 Hours
+
+Jul 28 – Aug 1
+
+7:00 AM – 3:00 PM
+
+Do NOT use three equal statistic boxes.
+
+The salary should dominate the screen.
+
+2. Quick Highlights
+
+Create horizontal chips.
+
+Example:
+
+📅 Mon–Fri
+
+⏰ 7AM – 3PM
+
+💰 Weekly Pay
+
+⚡ Immediate Start
+
+🚗 Parking Available
+
+Each chip should have:
+
+Soft blue background
+
+Rounded pill
+
+Minimal shadow
+
+3. Job Snapshot Card
+
+Add a premium summary card.
+
+Include:
+
+Salary
+
+Duration
+
+Shift
+
+Location
+
+Employment Type
+
+Urgency
+
+Use icons.
+
+This card should be highly scannable.
+
+4. Schedule
+
+Replace the table layout.
+
+Instead create timeline rows.
+
+Each day should be its own card.
+
+Example
+
+MON
+
+7:00 AM → 3:00 PM
+
+Each row has:
+
+Left colored day badge
+
+Center dotted divider
+
+Right time
+
+Spacing between rows
+
+Very clean.
+
+5. Location
+
+Create a premium location card.
+
+Include:
+
+Map preview placeholder
+
+Austin, TX
+
+Distance
+
+Get Directions button
+
+Button spans full width.
+
+6. Hiring Manager
+
+Replace initials avatar.
+
+Use modern circular avatar.
+
+Show
+
+Hiring Manager
+
+On-site Supervisor
+
+Optional:
+
+Message button
+
+Call button
+
+7. About Job
+
+Instead of bullet list,
+
+Create icon rows.
+
+Example
+
+📦 Pick customer orders
+
+🚚 Ship inventory
+
+📋 Quality inspection
+
+Each row has
+
+Icon
+
+Title
+
+Optional description
+
+8. Requirements
+
+Display inside cards.
+
+Each requirement:
+
+🥾 Steel Toe Boots
+
+🏋 Lift 50 lbs
+
+🛂 Background Check
+
+Each row:
+
+Rounded
+
+Soft shadow
+
+Leading icon
+
+9. Uniform
+
+Create horizontal checklist.
+
+Each item
+
+✔ Safety Vest
+
+✔ Steel Boots
+
+✔ Long Pants
+
+Do NOT use basic bullets.
+
+10. Instructions
+
+Create a highlighted information card.
+
+Title:
+
+Before You Arrive
+
+Checklist
+
+Bring ID
+
+Check in Gate B
+
+Collect Badge
+
+No Phones
+
+Use success icons.
+
+11. Company Section
+
+Add new card.
+
+Include
+
+Company Logo Placeholder
+
+Company Name
+
+Rating
+
+Employees
+
+View Company →
+
+12. Sticky Bottom CTA
+
+Floating button.
+
+Height:
+
+60px
+
+Radius:
+
+18px
+
+Gradient background
+
+Large text
+
+Apply Now
+
+Below title:
+
+Ready to start?
+
+Button should always remain visible while scrolling.
+
+Typography
+
+Use:
+
+Job Title
+
+30
+
+Bold
+
+Salary
+
+48
+
+Extra Bold
+
+Section Heading
+
+20
+
+SemiBold
+
+Card Title
+
+17
+
+Medium
+
+Body
+
+15
+
+Regular
+
+Caption
+
+13
+
+Medium
+
+Maintain excellent spacing.
+
+Cards
+
+Every card should have:
+
+Radius:
+
+22px
+
+Padding:
+
+20–24px
+
+Shadow:
+
+Very soft
+
+No heavy borders.
+
+Cards should feel like floating surfaces.
+
+Animations
+
+Use subtle animations.
+
+Fade-in on load.
+
+Cards slide upward.
+
+Buttons have press animation.
+
+Expandable sections animate smoothly.
+
+Sticky button slightly elevates while scrolling.
+
+Do not over animate.
+
+Everything should feel native.
+
+UX Improvements
+
+Improve scanability.
+
+Users should instantly know:
+
+How much they earn
+
+Where the job is
+
+When they work
+
+How to apply
+
+Reduce scrolling effort.
+
+Group related information.
+
+Avoid visual clutter.
+
+Use proper visual hierarchy.
+
+Responsive
+
+Optimize for:
+
+iPhone
+
+Android
+
+Small screens
+
+Large screens
+
+Respect SafeArea.
+
+Code Requirements
+
+Use reusable components.
+
+Suggested components:
+
+HeroCard
+
+QuickHighlights
+
+JobSnapshot
+
+ScheduleCard
+
+LocationCard
+
+ManagerCard
+
+RequirementCard
+
+InstructionCard
+
+CompanyCard
+
+StickyApplyButton
+
+Keep the code clean, modular, and production-ready.
+
+Important
+
+Do NOT change any business logic or APIs.
+
+Do NOT remove any existing information.
+
+Only redesign the UI and UX.
+
+The final result should look like a premium App Store-quality application that could compete with LinkedIn Jobs, Uber, Airbnb, and Indeed. Focus on exceptional spacing, hierarchy, and polish rather than adding unnecessary visual effects.
