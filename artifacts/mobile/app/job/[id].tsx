@@ -269,12 +269,6 @@ export default function JobDetailScreen() {
             </View>
             <View style={s.statDivider} />
             <View style={s.statItem}>
-              <Feather name="users" size={16} color={PURPLE} />
-              <Text style={s.statVal}>{job.applicantsCount}</Text>
-              <Label>Applied</Label>
-            </View>
-            <View style={s.statDivider} />
-            <View style={s.statItem}>
               <Feather name="clock" size={16} color={GREEN} />
               <Text style={s.statVal}>{job.timing ? job.timing.split("–")[0].trim() : "Flexible"}</Text>
               <Label>Start Time</Label>
