@@ -129,7 +129,7 @@ export default function JobDetailScreen() {
   const topPad     = Platform.OS === "web" ? insets.top + 67 : insets.top;
 
   // hero height = topPad + nav + title block + pay block + bottom padding
-  const HERO_H = topPad + 260;
+  const HERO_H = topPad + 160;
   const SHEET_OVERLAP = 28;
 
   if (!job) return (
